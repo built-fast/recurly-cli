@@ -13,6 +13,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly plans
+CMD recurly plans create
 CMD recurly plans get
 CMD recurly plans list
 FLAG recurly --api-key string
@@ -47,6 +48,42 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly plans create --accounting-code string
+FLAG recurly plans create --allow-any-item-on-subscriptions bool
+FLAG recurly plans create --auto-renew bool
+FLAG recurly plans create --avalara-service-type int
+FLAG recurly plans create --avalara-transaction-type int
+FLAG recurly plans create --bypass-confirmation bool
+FLAG recurly plans create --cancel-url string
+FLAG recurly plans create --code string
+FLAG recurly plans create --currency stringSlice
+FLAG recurly plans create --description string
+FLAG recurly plans create --display-quantity bool
+FLAG recurly plans create --dunning-campaign-id string
+FLAG recurly plans create --harmonized-system-code string
+FLAG recurly plans create --interval-length int
+FLAG recurly plans create --interval-unit string
+FLAG recurly plans create --liability-gl-account-id string
+FLAG recurly plans create --name string
+FLAG recurly plans create --performance-obligation-id string
+FLAG recurly plans create --pricing-model string
+FLAG recurly plans create --revenue-gl-account-id string
+FLAG recurly plans create --revenue-schedule-type string
+FLAG recurly plans create --setup-fee float64Slice
+FLAG recurly plans create --setup-fee-accounting-code string
+FLAG recurly plans create --setup-fee-liability-gl-account-id string
+FLAG recurly plans create --setup-fee-performance-obligation-id string
+FLAG recurly plans create --setup-fee-revenue-gl-account-id string
+FLAG recurly plans create --setup-fee-revenue-schedule-type string
+FLAG recurly plans create --success-url string
+FLAG recurly plans create --tax-code string
+FLAG recurly plans create --tax-exempt bool
+FLAG recurly plans create --total-billing-cycles int
+FLAG recurly plans create --trial-length int
+FLAG recurly plans create --trial-requires-billing-info bool
+FLAG recurly plans create --trial-unit string
+FLAG recurly plans create --unit-amount float64Slice
+FLAG recurly plans create --vertex-transaction-type string
 FLAG recurly plans list --all bool
 FLAG recurly plans list --limit int
 FLAG recurly plans list --order string

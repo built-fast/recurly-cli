@@ -19,6 +19,7 @@ func newPlansCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newPlansListCmd())
 	cmd.AddCommand(newPlansGetCmd())
+	cmd.AddCommand(newPlansCreateCmd())
 	return cmd
 }
 
@@ -74,6 +75,304 @@ func planDetailColumns() []output.Column {
 			return ""
 		}},
 	}
+}
+
+func float64Ptr(v float64) *float64 {
+	return &v
+}
+
+func newPlansCreateCmd() *cobra.Command {
+	var (
+		// Core
+		code         string
+		name         string
+		intervalUnit string
+		intervalLen  int
+		description  string
+		pricingModel string
+
+		// Multi-currency (repeatable slices, positionally matched)
+		currencies  []string
+		unitAmounts []float64
+		setupFees   []float64
+
+		// Trial
+		trialUnit                string
+		trialLength              int
+		trialRequiresBillingInfo bool
+
+		// Billing
+		autoRenew          bool
+		totalBillingCycles int
+
+		// Tax
+		taxCode              string
+		taxExempt            bool
+		avalaraTransType     int
+		avalaraServiceType   int
+		vertexTransType      string
+		harmonizedSystemCode string
+
+		// Accounting
+		accountingCode                 string
+		revenueScheduleType            string
+		liabilityGlAccountId           string
+		revenueGlAccountId             string
+		performanceObligationId        string
+		setupFeeAccountingCode         string
+		setupFeeRevenueScheduleType    string
+		setupFeeLiabilityGlAccountId   string
+		setupFeeRevenueGlAccountId     string
+		setupFeePerformanceObligationId string
+
+		// Hosted pages
+		successUrl         string
+		cancelUrl          string
+		bypassConfirmation bool
+		displayQuantity    bool
+
+		// Other
+		allowAnyItemOnSubscriptions bool
+		dunningCampaignId           string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a plan",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Validate currency/unit-amount pairing
+			if cmd.Flags().Changed("currency") || cmd.Flags().Changed("unit-amount") {
+				if len(currencies) != len(unitAmounts) {
+					return fmt.Errorf("number of --currency values must match --unit-amount values")
+				}
+			}
+			if cmd.Flags().Changed("setup-fee") {
+				if len(setupFees) != len(currencies) {
+					return fmt.Errorf("number of --setup-fee values must match --currency values")
+				}
+			}
+
+			c, err := newPlanAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.PlanCreate{}
+
+			// Core flags
+			if cmd.Flags().Changed("code") {
+				body.Code = recurly.String(code)
+			}
+			if cmd.Flags().Changed("name") {
+				body.Name = recurly.String(name)
+			}
+			if cmd.Flags().Changed("interval-unit") {
+				body.IntervalUnit = recurly.String(intervalUnit)
+			}
+			if cmd.Flags().Changed("interval-length") {
+				body.IntervalLength = recurly.Int(intervalLen)
+			}
+			if cmd.Flags().Changed("description") {
+				body.Description = recurly.String(description)
+			}
+			if cmd.Flags().Changed("pricing-model") {
+				body.PricingModel = recurly.String(pricingModel)
+			}
+
+			// Multi-currency
+			if cmd.Flags().Changed("currency") {
+				pricings := make([]recurly.PlanPricingCreate, len(currencies))
+				for i, cur := range currencies {
+					pricings[i] = recurly.PlanPricingCreate{
+						Currency:   recurly.String(cur),
+						UnitAmount: float64Ptr(unitAmounts[i]),
+					}
+				}
+				body.Currencies = &pricings
+			}
+
+			// Setup fees (separate top-level field)
+			if cmd.Flags().Changed("setup-fee") {
+				fees := make([]recurly.PlanSetupPricingCreate, len(currencies))
+				for i, cur := range currencies {
+					fees[i] = recurly.PlanSetupPricingCreate{
+						Currency:   recurly.String(cur),
+						UnitAmount: float64Ptr(setupFees[i]),
+					}
+				}
+				body.SetupFees = &fees
+			}
+
+			// Trial flags
+			if cmd.Flags().Changed("trial-unit") {
+				body.TrialUnit = recurly.String(trialUnit)
+			}
+			if cmd.Flags().Changed("trial-length") {
+				body.TrialLength = recurly.Int(trialLength)
+			}
+			if cmd.Flags().Changed("trial-requires-billing-info") {
+				body.TrialRequiresBillingInfo = recurly.Bool(trialRequiresBillingInfo)
+			}
+
+			// Billing flags
+			if cmd.Flags().Changed("auto-renew") {
+				body.AutoRenew = recurly.Bool(autoRenew)
+			}
+			if cmd.Flags().Changed("total-billing-cycles") {
+				body.TotalBillingCycles = recurly.Int(totalBillingCycles)
+			}
+
+			// Tax flags
+			if cmd.Flags().Changed("tax-code") {
+				body.TaxCode = recurly.String(taxCode)
+			}
+			if cmd.Flags().Changed("tax-exempt") {
+				body.TaxExempt = recurly.Bool(taxExempt)
+			}
+			if cmd.Flags().Changed("avalara-transaction-type") {
+				body.AvalaraTransactionType = recurly.Int(avalaraTransType)
+			}
+			if cmd.Flags().Changed("avalara-service-type") {
+				body.AvalaraServiceType = recurly.Int(avalaraServiceType)
+			}
+			if cmd.Flags().Changed("vertex-transaction-type") {
+				body.VertexTransactionType = recurly.String(vertexTransType)
+			}
+			if cmd.Flags().Changed("harmonized-system-code") {
+				body.HarmonizedSystemCode = recurly.String(harmonizedSystemCode)
+			}
+
+			// Accounting flags
+			if cmd.Flags().Changed("accounting-code") {
+				body.AccountingCode = recurly.String(accountingCode)
+			}
+			if cmd.Flags().Changed("revenue-schedule-type") {
+				body.RevenueScheduleType = recurly.String(revenueScheduleType)
+			}
+			if cmd.Flags().Changed("liability-gl-account-id") {
+				body.LiabilityGlAccountId = recurly.String(liabilityGlAccountId)
+			}
+			if cmd.Flags().Changed("revenue-gl-account-id") {
+				body.RevenueGlAccountId = recurly.String(revenueGlAccountId)
+			}
+			if cmd.Flags().Changed("performance-obligation-id") {
+				body.PerformanceObligationId = recurly.String(performanceObligationId)
+			}
+			if cmd.Flags().Changed("setup-fee-accounting-code") {
+				body.SetupFeeAccountingCode = recurly.String(setupFeeAccountingCode)
+			}
+			if cmd.Flags().Changed("setup-fee-revenue-schedule-type") {
+				body.SetupFeeRevenueScheduleType = recurly.String(setupFeeRevenueScheduleType)
+			}
+			if cmd.Flags().Changed("setup-fee-liability-gl-account-id") {
+				body.SetupFeeLiabilityGlAccountId = recurly.String(setupFeeLiabilityGlAccountId)
+			}
+			if cmd.Flags().Changed("setup-fee-revenue-gl-account-id") {
+				body.SetupFeeRevenueGlAccountId = recurly.String(setupFeeRevenueGlAccountId)
+			}
+			if cmd.Flags().Changed("setup-fee-performance-obligation-id") {
+				body.SetupFeePerformanceObligationId = recurly.String(setupFeePerformanceObligationId)
+			}
+
+			// Hosted pages flags
+			hasHostedPages := cmd.Flags().Changed("success-url") || cmd.Flags().Changed("cancel-url") ||
+				cmd.Flags().Changed("bypass-confirmation") || cmd.Flags().Changed("display-quantity")
+			if hasHostedPages {
+				hp := &recurly.PlanHostedPagesCreate{}
+				if cmd.Flags().Changed("success-url") {
+					hp.SuccessUrl = recurly.String(successUrl)
+				}
+				if cmd.Flags().Changed("cancel-url") {
+					hp.CancelUrl = recurly.String(cancelUrl)
+				}
+				if cmd.Flags().Changed("bypass-confirmation") {
+					hp.BypassConfirmation = recurly.Bool(bypassConfirmation)
+				}
+				if cmd.Flags().Changed("display-quantity") {
+					hp.DisplayQuantity = recurly.Bool(displayQuantity)
+				}
+				body.HostedPages = hp
+			}
+
+			// Other flags
+			if cmd.Flags().Changed("allow-any-item-on-subscriptions") {
+				body.AllowAnyItemOnSubscriptions = recurly.Bool(allowAnyItemOnSubscriptions)
+			}
+			if cmd.Flags().Changed("dunning-campaign-id") {
+				body.DunningCampaignId = recurly.String(dunningCampaignId)
+			}
+
+			plan, err := c.CreatePlan(body)
+			if err != nil {
+				return err
+			}
+
+			columns := planDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, plan)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	// Core flags
+	cmd.Flags().StringVar(&code, "code", "", "Unique plan code")
+	cmd.Flags().StringVar(&name, "name", "", "Plan name")
+	cmd.Flags().StringVar(&intervalUnit, "interval-unit", "", "Billing interval unit (day, week, month)")
+	cmd.Flags().IntVar(&intervalLen, "interval-length", 0, "Billing interval length")
+	cmd.Flags().StringVar(&description, "description", "", "Plan description")
+	cmd.Flags().StringVar(&pricingModel, "pricing-model", "", "Pricing model (fixed or ramp)")
+
+	// Multi-currency flags
+	cmd.Flags().StringSliceVar(&currencies, "currency", nil, "Currency code (repeatable, positionally matched with --unit-amount)")
+	cmd.Flags().Float64SliceVar(&unitAmounts, "unit-amount", nil, "Unit amount (repeatable, positionally matched with --currency)")
+	cmd.Flags().Float64SliceVar(&setupFees, "setup-fee", nil, "Setup fee (repeatable, positionally matched with --currency)")
+
+	// Trial flags
+	cmd.Flags().StringVar(&trialUnit, "trial-unit", "", "Trial period unit (day, week, month)")
+	cmd.Flags().IntVar(&trialLength, "trial-length", 0, "Trial period length")
+	cmd.Flags().BoolVar(&trialRequiresBillingInfo, "trial-requires-billing-info", false, "Require billing info for trial")
+
+	// Billing flags
+	cmd.Flags().BoolVar(&autoRenew, "auto-renew", false, "Auto-renew subscriptions")
+	cmd.Flags().IntVar(&totalBillingCycles, "total-billing-cycles", 0, "Total billing cycles before auto-termination")
+
+	// Tax flags
+	cmd.Flags().StringVar(&taxCode, "tax-code", "", "Tax code")
+	cmd.Flags().BoolVar(&taxExempt, "tax-exempt", false, "Tax exempt status")
+	cmd.Flags().IntVar(&avalaraTransType, "avalara-transaction-type", 0, "Avalara transaction type")
+	cmd.Flags().IntVar(&avalaraServiceType, "avalara-service-type", 0, "Avalara service type")
+	cmd.Flags().StringVar(&vertexTransType, "vertex-transaction-type", "", "Vertex transaction type (sale, rental, lease)")
+	cmd.Flags().StringVar(&harmonizedSystemCode, "harmonized-system-code", "", "Harmonized System (HS) code")
+
+	// Accounting flags
+	cmd.Flags().StringVar(&accountingCode, "accounting-code", "", "Accounting code")
+	cmd.Flags().StringVar(&revenueScheduleType, "revenue-schedule-type", "", "Revenue schedule type")
+	cmd.Flags().StringVar(&liabilityGlAccountId, "liability-gl-account-id", "", "Liability GL account ID")
+	cmd.Flags().StringVar(&revenueGlAccountId, "revenue-gl-account-id", "", "Revenue GL account ID")
+	cmd.Flags().StringVar(&performanceObligationId, "performance-obligation-id", "", "Performance obligation ID")
+	cmd.Flags().StringVar(&setupFeeAccountingCode, "setup-fee-accounting-code", "", "Setup fee accounting code")
+	cmd.Flags().StringVar(&setupFeeRevenueScheduleType, "setup-fee-revenue-schedule-type", "", "Setup fee revenue schedule type")
+	cmd.Flags().StringVar(&setupFeeLiabilityGlAccountId, "setup-fee-liability-gl-account-id", "", "Setup fee liability GL account ID")
+	cmd.Flags().StringVar(&setupFeeRevenueGlAccountId, "setup-fee-revenue-gl-account-id", "", "Setup fee revenue GL account ID")
+	cmd.Flags().StringVar(&setupFeePerformanceObligationId, "setup-fee-performance-obligation-id", "", "Setup fee performance obligation ID")
+
+	// Hosted pages flags
+	cmd.Flags().StringVar(&successUrl, "success-url", "", "Hosted page success redirect URL")
+	cmd.Flags().StringVar(&cancelUrl, "cancel-url", "", "Hosted page cancel redirect URL")
+	cmd.Flags().BoolVar(&bypassConfirmation, "bypass-confirmation", false, "Bypass hosted page confirmation")
+	cmd.Flags().BoolVar(&displayQuantity, "display-quantity", false, "Display quantity on hosted pages")
+
+	// Other flags
+	cmd.Flags().BoolVar(&allowAnyItemOnSubscriptions, "allow-any-item-on-subscriptions", false, "Allow any item as add-on")
+	cmd.Flags().StringVar(&dunningCampaignId, "dunning-campaign-id", "", "Dunning campaign ID")
+
+	return cmd
 }
 
 func newPlansGetCmd() *cobra.Command {
