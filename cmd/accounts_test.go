@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 )
@@ -165,5 +166,71 @@ func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "API key not configured") {
 		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestAccountsDeactivate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "deactivate") {
+		t.Error("expected accounts help to show 'deactivate' subcommand")
+	}
+}
+
+func TestAccountsDeactivateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("accounts", "deactivate", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected help output to contain --yes flag")
+	}
+}
+
+func TestAccountsDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("accounts", "deactivate")
+	if err == nil {
+		t.Fatal("expected error when no account ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("accounts", "deactivate", "abc123", "--yes")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "deactivate", "abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to deactivate this account? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "deactivate", "abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

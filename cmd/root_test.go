@@ -10,11 +10,18 @@ import (
 )
 
 func executeCommand(args ...string) (string, string, error) {
+	return executeCommandWithStdin(nil, args...)
+}
+
+func executeCommandWithStdin(stdin *bytes.Buffer, args ...string) (string, string, error) {
 	cmd := NewRootCmd()
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
 	cmd.SetOut(stdout)
 	cmd.SetErr(stderr)
+	if stdin != nil {
+		cmd.SetIn(stdin)
+	}
 	cmd.SetArgs(args)
 
 	err := cmd.Execute()

@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/client"
@@ -21,6 +23,7 @@ func newAccountsCmd() *cobra.Command {
 	cmd.AddCommand(newAccountsGetCmd())
 	cmd.AddCommand(newAccountsCreateCmd())
 	cmd.AddCommand(newAccountsUpdateCmd())
+	cmd.AddCommand(newAccountsDeactivateCmd())
 	return cmd
 }
 
@@ -323,6 +326,61 @@ func newAccountsUpdateCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&taxExempt, "tax-exempt", false, "Tax exempt status")
 	cmd.Flags().StringVar(&preferredLocale, "preferred-locale", "", "Preferred locale (e.g. en-US)")
 	cmd.Flags().StringVar(&billTo, "bill-to", "", "Billing target (self or parent)")
+
+	return cmd
+}
+
+func newAccountsDeactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "deactivate <account_id>",
+		Short: "Deactivate an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			accountID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate this account? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := client.NewClient()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			account, err := c.DeactivateAccount(accountID)
+			if err != nil {
+				return err
+			}
+
+			columns := accountDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, account)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }
