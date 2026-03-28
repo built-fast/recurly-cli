@@ -5,7 +5,7 @@ LDFLAGS  := -ldflags "-X $(MODULE)/cmd.version=$(VERSION)"
 
 .DEFAULT_GOAL := build
 
-.PHONY: all fmt vet lint test build clean
+.PHONY: all fmt vet lint test test-e2e check build clean
 
 all: fmt vet lint test build
 
@@ -20,6 +20,11 @@ lint:
 
 test:
 	go test ./...
+
+test-e2e:
+	./e2e/run.sh
+
+check: test test-e2e
 
 build:
 	go build $(LDFLAGS) -o $(BINARY) .
