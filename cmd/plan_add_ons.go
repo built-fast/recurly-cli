@@ -20,6 +20,7 @@ func newPlanAddOnsCmd() *cobra.Command {
 	cmd.AddCommand(newPlanAddOnsListCmd())
 	cmd.AddCommand(newPlanAddOnsGetCmd())
 	cmd.AddCommand(newPlanAddOnsCreateCmd())
+	cmd.AddCommand(newPlanAddOnsUpdateCmd())
 	return cmd
 }
 
@@ -302,6 +303,127 @@ func newPlanAddOnsCreateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&usageType, "usage-type", "", "Usage type (price or percentage)")
 	cmd.Flags().StringVar(&usageCalculationType, "usage-calculation-type", "", "Usage calculation type (cumulative or last_in_period)")
 	cmd.Flags().StringVar(&measuredUnitId, "measured-unit-id", "", "Measured unit ID")
+
+	// Multi-currency flags
+	cmd.Flags().StringSliceVar(&currencies, "currency", nil, "Currency code (repeatable, positionally matched with --unit-amount)")
+	cmd.Flags().Float64SliceVar(&unitAmounts, "unit-amount", nil, "Unit amount (repeatable, positionally matched with --currency)")
+
+	return cmd
+}
+
+func newPlanAddOnsUpdateCmd() *cobra.Command {
+	var (
+		code                 string
+		name                 string
+		defaultQuantity      int
+		optional             bool
+		displayQuantity      bool
+		accountingCode       string
+		taxCode              string
+		revenueScheduleType  string
+		usageCalculationType string
+		measuredUnitId       string
+		measuredUnitName     string
+
+		// Multi-currency (repeatable slices, positionally matched)
+		currencies  []string
+		unitAmounts []float64
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update <plan_id> <add_on_id>",
+		Short: "Update a plan add-on",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Validate currency/unit-amount pairing
+			if cmd.Flags().Changed("currency") || cmd.Flags().Changed("unit-amount") {
+				if len(currencies) != len(unitAmounts) {
+					return fmt.Errorf("number of --currency values must match --unit-amount values")
+				}
+			}
+
+			c, err := newPlanAddOnAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.AddOnUpdate{}
+
+			if cmd.Flags().Changed("code") {
+				body.Code = recurly.String(code)
+			}
+			if cmd.Flags().Changed("name") {
+				body.Name = recurly.String(name)
+			}
+			if cmd.Flags().Changed("default-quantity") {
+				body.DefaultQuantity = recurly.Int(defaultQuantity)
+			}
+			if cmd.Flags().Changed("optional") {
+				body.Optional = recurly.Bool(optional)
+			}
+			if cmd.Flags().Changed("display-quantity") {
+				body.DisplayQuantity = recurly.Bool(displayQuantity)
+			}
+			if cmd.Flags().Changed("accounting-code") {
+				body.AccountingCode = recurly.String(accountingCode)
+			}
+			if cmd.Flags().Changed("tax-code") {
+				body.TaxCode = recurly.String(taxCode)
+			}
+			if cmd.Flags().Changed("revenue-schedule-type") {
+				body.RevenueScheduleType = recurly.String(revenueScheduleType)
+			}
+			if cmd.Flags().Changed("usage-calculation-type") {
+				body.UsageCalculationType = recurly.String(usageCalculationType)
+			}
+			if cmd.Flags().Changed("measured-unit-id") {
+				body.MeasuredUnitId = recurly.String(measuredUnitId)
+			}
+			if cmd.Flags().Changed("measured-unit-name") {
+				body.MeasuredUnitName = recurly.String(measuredUnitName)
+			}
+
+			// Multi-currency
+			if cmd.Flags().Changed("currency") {
+				pricings := make([]recurly.AddOnPricingCreate, len(currencies))
+				for i, cur := range currencies {
+					pricings[i] = recurly.AddOnPricingCreate{
+						Currency:   recurly.String(cur),
+						UnitAmount: float64Ptr(unitAmounts[i]),
+					}
+				}
+				body.Currencies = &pricings
+			}
+
+			addOn, err := c.UpdatePlanAddOn(args[0], args[1], body)
+			if err != nil {
+				return err
+			}
+
+			columns := planAddOnDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, addOn)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&code, "code", "", "Add-on code")
+	cmd.Flags().StringVar(&name, "name", "", "Add-on name")
+	cmd.Flags().IntVar(&defaultQuantity, "default-quantity", 0, "Default quantity")
+	cmd.Flags().BoolVar(&optional, "optional", false, "Whether the add-on is optional")
+	cmd.Flags().BoolVar(&displayQuantity, "display-quantity", false, "Display quantity on hosted pages")
+	cmd.Flags().StringVar(&accountingCode, "accounting-code", "", "Accounting code")
+	cmd.Flags().StringVar(&taxCode, "tax-code", "", "Tax code")
+	cmd.Flags().StringVar(&revenueScheduleType, "revenue-schedule-type", "", "Revenue schedule type")
+	cmd.Flags().StringVar(&usageCalculationType, "usage-calculation-type", "", "Usage calculation type (cumulative or last_in_period)")
+	cmd.Flags().StringVar(&measuredUnitId, "measured-unit-id", "", "Measured unit ID")
+	cmd.Flags().StringVar(&measuredUnitName, "measured-unit-name", "", "Measured unit name")
 
 	// Multi-currency flags
 	cmd.Flags().StringSliceVar(&currencies, "currency", nil, "Currency code (repeatable, positionally matched with --unit-amount)")
