@@ -25,6 +25,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	cmd.AddCommand(newSubscriptionsUpdateCmd())
 	cmd.AddCommand(newSubscriptionsCancelCmd())
 	cmd.AddCommand(newSubscriptionsReactivateCmd())
+	cmd.AddCommand(newSubscriptionsPauseCmd())
 	return cmd
 }
 
@@ -671,6 +672,70 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newSubscriptionsPauseCmd() *cobra.Command {
+	var (
+		yes                  bool
+		remainingPauseCycles int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "pause <subscription_id>",
+		Short: "Pause a subscription",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			subscriptionID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to pause this subscription? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Pause cancelled.")
+					return err
+				}
+			}
+
+			c, err := newSubscriptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.SubscriptionPause{
+				RemainingPauseCycles: recurly.Int(remainingPauseCycles),
+			}
+
+			subscription, err := c.PauseSubscription(subscriptionID, body)
+			if err != nil {
+				return err
+			}
+
+			columns := subscriptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, subscription)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+	cmd.Flags().IntVar(&remainingPauseCycles, "remaining-pause-cycles", 0, "Number of billing cycles to pause")
+	_ = cmd.MarkFlagRequired("remaining-pause-cycles")
 
 	return cmd
 }
