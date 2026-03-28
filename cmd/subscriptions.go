@@ -19,6 +19,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newSubscriptionsListCmd())
 	cmd.AddCommand(newSubscriptionsGetCmd())
+	cmd.AddCommand(newSubscriptionsCreateCmd())
 	return cmd
 }
 
@@ -280,6 +281,162 @@ func newSubscriptionsListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&planID, "plan-id", "", "Filter by plan ID")
 	cmd.Flags().StringVar(&beginTime, "begin-time", "", "Filter by begin time (ISO8601 format)")
 	cmd.Flags().StringVar(&endTime, "end-time", "", "Filter by end time (ISO8601 format)")
+
+	return cmd
+}
+
+func newSubscriptionsCreateCmd() *cobra.Command {
+	var (
+		planCode             string
+		accountCode          string
+		currency             string
+		quantity             int
+		unitAmount           float64
+		autoRenew            bool
+		trialEndsAt          string
+		startsAt             string
+		nextBillDate         string
+		collectionMethod     string
+		poNumber             string
+		netTerms             int
+		netTermsType         string
+		totalBillingCycles   int
+		renewalBillingCycles int
+		couponCode           string
+		gatewayCode          string
+		billingInfoID        string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a subscription",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newSubscriptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.SubscriptionCreate{}
+
+			if cmd.Flags().Changed("plan-code") {
+				body.PlanCode = recurly.String(planCode)
+			}
+			if cmd.Flags().Changed("account-code") {
+				body.Account = &recurly.AccountCreate{
+					Code: recurly.String(accountCode),
+				}
+			}
+			if cmd.Flags().Changed("currency") {
+				body.Currency = recurly.String(currency)
+			}
+			if cmd.Flags().Changed("quantity") {
+				body.Quantity = recurly.Int(quantity)
+			}
+			if cmd.Flags().Changed("unit-amount") {
+				body.UnitAmount = float64Ptr(unitAmount)
+			}
+			if cmd.Flags().Changed("auto-renew") {
+				body.AutoRenew = recurly.Bool(autoRenew)
+			}
+
+			// Timestamp flags
+			if cmd.Flags().Changed("trial-ends-at") {
+				t, err := time.Parse(time.RFC3339, trialEndsAt)
+				if err != nil {
+					return fmt.Errorf("invalid --trial-ends-at: must be RFC3339 format (e.g. 2025-01-01T00:00:00Z): %w", err)
+				}
+				body.TrialEndsAt = &t
+			}
+			if cmd.Flags().Changed("starts-at") {
+				t, err := time.Parse(time.RFC3339, startsAt)
+				if err != nil {
+					return fmt.Errorf("invalid --starts-at: must be RFC3339 format (e.g. 2025-01-01T00:00:00Z): %w", err)
+				}
+				body.StartsAt = &t
+			}
+			if cmd.Flags().Changed("next-bill-date") {
+				t, err := time.Parse(time.RFC3339, nextBillDate)
+				if err != nil {
+					return fmt.Errorf("invalid --next-bill-date: must be RFC3339 format (e.g. 2025-01-01T00:00:00Z): %w", err)
+				}
+				body.NextBillDate = &t
+			}
+
+			// Billing flags
+			if cmd.Flags().Changed("collection-method") {
+				body.CollectionMethod = recurly.String(collectionMethod)
+			}
+			if cmd.Flags().Changed("po-number") {
+				body.PoNumber = recurly.String(poNumber)
+			}
+			if cmd.Flags().Changed("net-terms") {
+				body.NetTerms = recurly.Int(netTerms)
+			}
+			if cmd.Flags().Changed("net-terms-type") {
+				body.NetTermsType = recurly.String(netTermsType)
+			}
+			if cmd.Flags().Changed("total-billing-cycles") {
+				body.TotalBillingCycles = recurly.Int(totalBillingCycles)
+			}
+			if cmd.Flags().Changed("renewal-billing-cycles") {
+				body.RenewalBillingCycles = recurly.Int(renewalBillingCycles)
+			}
+
+			// Additional flags
+			if cmd.Flags().Changed("coupon-code") {
+				codes := []string{couponCode}
+				body.CouponCodes = &codes
+			}
+			if cmd.Flags().Changed("gateway-code") {
+				body.GatewayCode = recurly.String(gatewayCode)
+			}
+			if cmd.Flags().Changed("billing-info-id") {
+				body.BillingInfoId = recurly.String(billingInfoID)
+			}
+
+			subscription, err := c.CreateSubscription(body)
+			if err != nil {
+				return err
+			}
+
+			columns := subscriptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, subscription)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	// Core flags
+	cmd.Flags().StringVar(&planCode, "plan-code", "", "Plan code for the subscription")
+	cmd.Flags().StringVar(&accountCode, "account-code", "", "Account code for the subscription")
+	cmd.Flags().StringVar(&currency, "currency", "", "3-letter ISO 4217 currency code")
+	cmd.Flags().IntVar(&quantity, "quantity", 0, "Subscription quantity")
+	cmd.Flags().Float64Var(&unitAmount, "unit-amount", 0, "Override the plan's unit amount")
+	cmd.Flags().BoolVar(&autoRenew, "auto-renew", false, "Whether the subscription renews at the end of its term")
+
+	// Timing flags
+	cmd.Flags().StringVar(&trialEndsAt, "trial-ends-at", "", "Trial end date (RFC3339 format)")
+	cmd.Flags().StringVar(&startsAt, "starts-at", "", "Subscription start date (RFC3339 format)")
+	cmd.Flags().StringVar(&nextBillDate, "next-bill-date", "", "Next bill date (RFC3339 format)")
+
+	// Billing flags
+	cmd.Flags().StringVar(&collectionMethod, "collection-method", "", "Collection method (automatic or manual)")
+	cmd.Flags().StringVar(&poNumber, "po-number", "", "PO number for manual invoicing")
+	cmd.Flags().IntVar(&netTerms, "net-terms", 0, "Net terms in days")
+	cmd.Flags().StringVar(&netTermsType, "net-terms-type", "", "Net terms type (net or eom)")
+	cmd.Flags().IntVar(&totalBillingCycles, "total-billing-cycles", 0, "Total billing cycles in a term")
+	cmd.Flags().IntVar(&renewalBillingCycles, "renewal-billing-cycles", 0, "Billing cycles for renewal terms")
+
+	// Additional flags
+	cmd.Flags().StringVar(&couponCode, "coupon-code", "", "Coupon code to apply")
+	cmd.Flags().StringVar(&gatewayCode, "gateway-code", "", "Payment gateway code")
+	cmd.Flags().StringVar(&billingInfoID, "billing-info-id", "", "Billing info ID")
 
 	return cmd
 }
