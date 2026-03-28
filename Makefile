@@ -5,12 +5,15 @@ LDFLAGS  := -ldflags "-X $(MODULE)/cmd.version=$(VERSION)"
 
 .DEFAULT_GOAL := build
 
-.PHONY: all fmt vet lint test test-e2e check build clean surface check-surface
+.PHONY: all fmt fmt-check vet lint test test-e2e check build clean surface check-surface
 
 all: fmt vet lint test build
 
 fmt:
 	gofmt -w .
+
+fmt-check:
+	@test -z "$$(gofmt -l .)" || (gofmt -l . && exit 1)
 
 vet:
 	go vet ./...
