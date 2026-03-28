@@ -12,6 +12,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly plans
+CMD recurly plans list
 FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
@@ -44,3 +45,8 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly plans list --all bool
+FLAG recurly plans list --limit int
+FLAG recurly plans list --order string
+FLAG recurly plans list --sort string
+FLAG recurly plans list --state string
