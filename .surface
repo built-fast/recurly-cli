@@ -9,6 +9,9 @@ ARG recurly items update <item_id>
 ARG recurly plans deactivate <plan_id>
 ARG recurly plans get <plan_id>
 ARG recurly plans update <plan_id>
+ARG recurly subscriptions cancel <subscription_id>
+ARG recurly subscriptions get <subscription_id>
+ARG recurly subscriptions update <subscription_id>
 CMD recurly
 CMD recurly accounts
 CMD recurly accounts create
@@ -31,6 +34,12 @@ CMD recurly plans deactivate
 CMD recurly plans get
 CMD recurly plans list
 CMD recurly plans update
+CMD recurly subscriptions
+CMD recurly subscriptions cancel
+CMD recurly subscriptions create
+CMD recurly subscriptions get
+CMD recurly subscriptions list
+CMD recurly subscriptions update
 FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
@@ -173,3 +182,44 @@ FLAG recurly plans update --trial-requires-billing-info bool
 FLAG recurly plans update --trial-unit string
 FLAG recurly plans update --unit-amount float64Slice
 FLAG recurly plans update --vertex-transaction-type string
+FLAG recurly subscriptions cancel --timeframe string
+FLAG recurly subscriptions cancel --yes bool
+FLAG recurly subscriptions create --account-code string
+FLAG recurly subscriptions create --auto-renew bool
+FLAG recurly subscriptions create --billing-info-id string
+FLAG recurly subscriptions create --collection-method string
+FLAG recurly subscriptions create --coupon-code string
+FLAG recurly subscriptions create --currency string
+FLAG recurly subscriptions create --gateway-code string
+FLAG recurly subscriptions create --net-terms int
+FLAG recurly subscriptions create --net-terms-type string
+FLAG recurly subscriptions create --next-bill-date string
+FLAG recurly subscriptions create --plan-code string
+FLAG recurly subscriptions create --po-number string
+FLAG recurly subscriptions create --quantity int
+FLAG recurly subscriptions create --renewal-billing-cycles int
+FLAG recurly subscriptions create --starts-at string
+FLAG recurly subscriptions create --total-billing-cycles int
+FLAG recurly subscriptions create --trial-ends-at string
+FLAG recurly subscriptions create --unit-amount float64
+FLAG recurly subscriptions list --all bool
+FLAG recurly subscriptions list --begin-time string
+FLAG recurly subscriptions list --end-time string
+FLAG recurly subscriptions list --limit int
+FLAG recurly subscriptions list --order string
+FLAG recurly subscriptions list --plan-id string
+FLAG recurly subscriptions list --sort string
+FLAG recurly subscriptions list --state string
+FLAG recurly subscriptions update --auto-renew bool
+FLAG recurly subscriptions update --billing-info-id string
+FLAG recurly subscriptions update --collection-method string
+FLAG recurly subscriptions update --customer-notes string
+FLAG recurly subscriptions update --gateway-code string
+FLAG recurly subscriptions update --net-terms int
+FLAG recurly subscriptions update --net-terms-type string
+FLAG recurly subscriptions update --next-bill-date string
+FLAG recurly subscriptions update --po-number string
+FLAG recurly subscriptions update --remaining-billing-cycles int
+FLAG recurly subscriptions update --renewal-billing-cycles int
+FLAG recurly subscriptions update --revenue-schedule-type string
+FLAG recurly subscriptions update --terms-and-conditions string

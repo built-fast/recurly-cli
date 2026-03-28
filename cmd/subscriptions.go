@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -21,6 +23,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	cmd.AddCommand(newSubscriptionsGetCmd())
 	cmd.AddCommand(newSubscriptionsCreateCmd())
 	cmd.AddCommand(newSubscriptionsUpdateCmd())
+	cmd.AddCommand(newSubscriptionsCancelCmd())
 	return cmd
 }
 
@@ -546,6 +549,72 @@ func newSubscriptionsUpdateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&netTermsType, "net-terms-type", "", "Net terms type (net or eom)")
 	cmd.Flags().StringVar(&gatewayCode, "gateway-code", "", "Payment gateway code")
 	cmd.Flags().StringVar(&billingInfoID, "billing-info-id", "", "Billing info ID")
+
+	return cmd
+}
+
+func newSubscriptionsCancelCmd() *cobra.Command {
+	var (
+		yes       bool
+		timeframe string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "cancel <subscription_id>",
+		Short: "Cancel a subscription",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			subscriptionID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to cancel this subscription? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Cancellation cancelled.")
+					return err
+				}
+			}
+
+			c, err := newSubscriptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			params := &recurly.CancelSubscriptionParams{}
+			if cmd.Flags().Changed("timeframe") {
+				params.Body = &recurly.SubscriptionCancel{
+					Timeframe: recurly.String(timeframe),
+				}
+			}
+
+			subscription, err := c.CancelSubscription(subscriptionID, params)
+			if err != nil {
+				return err
+			}
+
+			columns := subscriptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, subscription)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+	cmd.Flags().StringVar(&timeframe, "timeframe", "", "Cancellation timeframe (bill_date or term_end)")
 
 	return cmd
 }
