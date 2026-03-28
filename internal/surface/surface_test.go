@@ -1,11 +1,33 @@
 package surface
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/built-fast/recurly-cli/cmd"
 	"github.com/spf13/cobra"
 )
+
+func TestGoldenSurface(t *testing.T) {
+	surfacePath := filepath.Join("..", "..", ".surface")
+
+	expected, err := os.ReadFile(surfacePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			t.Fatal(".surface file not found — run: make surface")
+		}
+		t.Fatalf("failed to read .surface: %v", err)
+	}
+
+	root := cmd.NewRootCmd()
+	actual := Generate(root)
+
+	if string(expected) != actual {
+		t.Fatalf("CLI surface has changed. If intentional, run: make surface\n\nExpected:\n%s\nActual:\n%s", string(expected), actual)
+	}
+}
 
 // helper to check a line exists in the output
 func assertContains(t *testing.T, output, line string) {

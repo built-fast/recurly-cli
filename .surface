@@ -1,0 +1,44 @@
+ARG recurly accounts deactivate <account_id>
+ARG recurly accounts get <account_id>
+ARG recurly accounts reactivate <account_id>
+ARG recurly accounts update <account_id>
+CMD recurly
+CMD recurly accounts
+CMD recurly accounts create
+CMD recurly accounts deactivate
+CMD recurly accounts get
+CMD recurly accounts list
+CMD recurly accounts reactivate
+CMD recurly accounts update
+CMD recurly configure
+FLAG recurly --api-key string
+FLAG recurly --output string
+FLAG recurly --region string
+FLAG recurly accounts create --bill-to string
+FLAG recurly accounts create --code string
+FLAG recurly accounts create --company string
+FLAG recurly accounts create --email string
+FLAG recurly accounts create --first-name string
+FLAG recurly accounts create --last-name string
+FLAG recurly accounts create --preferred-locale string
+FLAG recurly accounts create --tax-exempt bool
+FLAG recurly accounts create --vat-number string
+FLAG recurly accounts deactivate --yes bool
+FLAG recurly accounts list --all bool
+FLAG recurly accounts list --begin-time string
+FLAG recurly accounts list --email string
+FLAG recurly accounts list --end-time string
+FLAG recurly accounts list --limit int
+FLAG recurly accounts list --order string
+FLAG recurly accounts list --past-due bool
+FLAG recurly accounts list --sort string
+FLAG recurly accounts list --subscriber string
+FLAG recurly accounts reactivate --yes bool
+FLAG recurly accounts update --bill-to string
+FLAG recurly accounts update --company string
+FLAG recurly accounts update --email string
+FLAG recurly accounts update --first-name string
+FLAG recurly accounts update --last-name string
+FLAG recurly accounts update --preferred-locale string
+FLAG recurly accounts update --tax-exempt bool
+FLAG recurly accounts update --vat-number string

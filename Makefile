@@ -5,7 +5,7 @@ LDFLAGS  := -ldflags "-X $(MODULE)/cmd.version=$(VERSION)"
 
 .DEFAULT_GOAL := build
 
-.PHONY: all fmt vet lint test test-e2e check build clean
+.PHONY: all fmt vet lint test test-e2e check build clean surface
 
 all: fmt vet lint test build
 
@@ -25,6 +25,9 @@ test-e2e:
 	./e2e/run.sh
 
 check: test test-e2e
+
+surface:
+	go run ./internal/surface/cmd/gensurface > .surface
 
 build:
 	go build $(LDFLAGS) -o $(BINARY) .
