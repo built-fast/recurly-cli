@@ -452,19 +452,19 @@ func newSubscriptionsCreateCmd() *cobra.Command {
 
 func newSubscriptionsUpdateCmd() *cobra.Command {
 	var (
-		collectionMethod     string
+		collectionMethod       string
 		remainingBillingCycles int
-		renewalBillingCycles int
-		autoRenew            bool
-		nextBillDate         string
-		revenueScheduleType  string
-		termsAndConditions   string
-		customerNotes        string
-		poNumber             string
-		netTerms             int
-		netTermsType         string
-		gatewayCode          string
-		billingInfoID        string
+		renewalBillingCycles   int
+		autoRenew              bool
+		nextBillDate           string
+		revenueScheduleType    string
+		termsAndConditions     string
+		customerNotes          string
+		poNumber               string
+		netTerms               int
+		netTermsType           string
+		gatewayCode            string
+		billingInfoID          string
 	)
 
 	cmd := &cobra.Command{
