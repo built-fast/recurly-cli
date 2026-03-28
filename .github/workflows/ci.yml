@@ -38,3 +38,34 @@ jobs:
           cache: true
 
       - run: make test
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    env:
+      BATS_VERSION: v1.13.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+
+      - run: npm install -g @stoplight/prism-cli
+
+      - uses: actions/cache@v4
+        id: bats-cache
+        with:
+          path: /usr/local/lib/bats-core
+          key: bats-${{ env.BATS_VERSION }}
+
+      - name: Install BATS
+        if: steps.bats-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --branch $BATS_VERSION --depth 1 https://github.com/bats-core/bats-core.git
+          sudo bats-core/install.sh /usr/local
+
+      - run: make test-e2e
