@@ -27,7 +27,15 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		return config.Init()
+		if err := config.Init(); err != nil {
+			return err
+		}
+		if region := viper.GetString("region"); region != "" {
+			if err := client.ValidateRegion(region); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	rootCmd.PersistentFlags().String("api-key", "", "Recurly API key")

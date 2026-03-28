@@ -2,10 +2,26 @@ package client
 
 import (
 	"fmt"
+	"strings"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
 )
+
+// ValidRegions lists the accepted region values.
+var ValidRegions = []string{"us", "eu"}
+
+// ValidateRegion checks that region is a valid value (case-insensitive).
+// Returns an error listing valid options if the value is invalid.
+func ValidateRegion(region string) error {
+	lower := strings.ToLower(region)
+	for _, v := range ValidRegions {
+		if lower == v {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid region %q: valid options are %s", region, strings.Join(ValidRegions, ", "))
+}
 
 // NewClient creates a configured Recurly SDK client.
 // API key precedence: --api-key flag > RECURLY_API_KEY env var > config file api_key.
@@ -17,9 +33,15 @@ func NewClient() (*recurly.Client, error) {
 	}
 
 	regionStr := viper.GetString("region")
+	if regionStr == "" {
+		regionStr = "us"
+	}
+	if err := ValidateRegion(regionStr); err != nil {
+		return nil, err
+	}
 
 	opts := recurly.ClientOptions{Region: recurly.US}
-	if regionStr == "eu" {
+	if strings.EqualFold(regionStr, "eu") {
 		opts.Region = recurly.EU
 	}
 

@@ -1,10 +1,39 @@
 package client
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
 )
+
+func TestValidateRegion_ValidValues(t *testing.T) {
+	for _, region := range []string{"us", "eu", "US", "EU", "Us", "Eu"} {
+		if err := ValidateRegion(region); err != nil {
+			t.Errorf("ValidateRegion(%q) returned unexpected error: %v", region, err)
+		}
+	}
+}
+
+func TestValidateRegion_InvalidValue(t *testing.T) {
+	err := ValidateRegion("asia")
+	if err == nil {
+		t.Fatal("expected error for invalid region")
+	}
+	if !strings.Contains(err.Error(), `invalid region "asia"`) {
+		t.Errorf("expected error to mention invalid region, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "us, eu") {
+		t.Errorf("expected error to list valid options, got: %v", err)
+	}
+}
+
+func TestValidateRegion_EmptyString(t *testing.T) {
+	err := ValidateRegion("")
+	if err == nil {
+		t.Fatal("expected error for empty region")
+	}
+}
 
 func TestNewClient_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
@@ -87,6 +116,34 @@ func TestNewClient_EnvVarRegion(t *testing.T) {
 	}
 	if c == nil {
 		t.Fatal("expected non-nil client")
+	}
+}
+
+func TestNewClient_EURegionCaseInsensitive(t *testing.T) {
+	viper.Reset()
+	viper.Set("api_key", "test-key")
+	viper.Set("region", "EU")
+
+	c, err := NewClient()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil client")
+	}
+}
+
+func TestNewClient_InvalidRegion_ReturnsError(t *testing.T) {
+	viper.Reset()
+	viper.Set("api_key", "test-key")
+	viper.Set("region", "asia")
+
+	_, err := NewClient()
+	if err == nil {
+		t.Fatal("expected error for invalid region")
+	}
+	if !strings.Contains(err.Error(), "invalid region") {
+		t.Errorf("expected invalid region error, got: %v", err)
 	}
 }
 

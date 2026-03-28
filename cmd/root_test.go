@@ -74,3 +74,27 @@ func TestRootUnknownCommand_ReturnsError(t *testing.T) {
 		t.Errorf("expected stderr to contain 'unknown command', got %q", stderr)
 	}
 }
+
+func TestRootInvalidRegion_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("--region", "asia", "configure")
+	if err == nil {
+		t.Fatal("expected error for invalid region")
+	}
+	if !strings.Contains(stderr, "invalid region") {
+		t.Errorf("expected stderr to contain 'invalid region', got %q", stderr)
+	}
+	if !strings.Contains(stderr, "us, eu") {
+		t.Errorf("expected stderr to list valid options, got %q", stderr)
+	}
+}
+
+func TestRootValidRegion_CaseInsensitive(t *testing.T) {
+	// Passing --region=EU should not cause an error (help output for configure)
+	out, _, err := executeCommand("--region", "EU", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error with --region EU: %v", err)
+	}
+	if !strings.Contains(out, "Recurly CLI") {
+		t.Error("expected help output")
+	}
+}
