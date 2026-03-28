@@ -13,8 +13,9 @@ import (
 
 // mockPlanAddOnAPI implements PlanAddOnAPI for testing.
 type mockPlanAddOnAPI struct {
-	listPlanAddOnsFn func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error)
-	getPlanAddOnFn   func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error)
+	listPlanAddOnsFn  func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error)
+	getPlanAddOnFn    func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error)
+	createPlanAddOnFn func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error)
 }
 
 func (m *mockPlanAddOnAPI) ListPlanAddOns(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -29,6 +30,9 @@ func (m *mockPlanAddOnAPI) GetPlanAddOn(planId string, addOnId string, opts ...r
 }
 
 func (m *mockPlanAddOnAPI) CreatePlanAddOn(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+	if m.createPlanAddOnFn != nil {
+		return m.createPlanAddOnFn(planId, body, opts...)
+	}
 	return nil, nil
 }
 
@@ -612,6 +616,444 @@ func TestPlanAddOnsGet_SDKError(t *testing.T) {
 	defer cleanup()
 
 	_, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- plan add-ons create ---
+
+func TestPlanAddOnsCreate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("plans", "add-ons", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "create") {
+		t.Error("expected add-ons help to show 'create' subcommand")
+	}
+}
+
+func TestPlanAddOnsCreateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("plans", "add-ons", "create", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{
+		"--code", "--name", "--add-on-type", "--default-quantity", "--optional",
+		"--display-quantity", "--accounting-code", "--tax-code", "--revenue-schedule-type",
+		"--usage-type", "--usage-calculation-type", "--measured-unit-id",
+		"--currency", "--unit-amount",
+	} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestPlanAddOnsCreate_RequiresPlanID(t *testing.T) {
+	_, _, err := executeCommand("plans", "add-ons", "create")
+	if err == nil {
+		t.Fatal("expected error when plan_id is missing")
+	}
+}
+
+func TestPlanAddOnsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommand("plans", "add-ons", "create", "plan1", "--code", "test", "--name", "Test")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestPlanAddOnsCreate_CoreFlags(t *testing.T) {
+	var capturedPlanID string
+	var capturedBody *recurly.AddOnCreate
+	addOn := sampleAddOn()
+
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedPlanID = planId
+			capturedBody = body
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "code-plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedPlanID != "code-plan1" {
+		t.Errorf("expected planId=code-plan1, got %q", capturedPlanID)
+	}
+	if capturedBody.Code == nil || *capturedBody.Code != "extra-users" {
+		t.Errorf("expected code=extra-users, got %v", capturedBody.Code)
+	}
+	if capturedBody.Name == nil || *capturedBody.Name != "Extra Users" {
+		t.Errorf("expected name=Extra Users, got %v", capturedBody.Name)
+	}
+}
+
+func TestPlanAddOnsCreate_AllOptionalFlags(t *testing.T) {
+	var capturedBody *recurly.AddOnCreate
+	addOn := sampleAddOn()
+
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedBody = body
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+		"--add-on-type", "usage",
+		"--default-quantity", "5",
+		"--optional",
+		"--display-quantity",
+		"--accounting-code", "ac-123",
+		"--tax-code", "SW054000",
+		"--revenue-schedule-type", "evenly",
+		"--usage-type", "price",
+		"--usage-calculation-type", "cumulative",
+		"--measured-unit-id", "mu-123",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.AddOnType == nil || *capturedBody.AddOnType != "usage" {
+		t.Errorf("expected add-on-type=usage, got %v", capturedBody.AddOnType)
+	}
+	if capturedBody.DefaultQuantity == nil || *capturedBody.DefaultQuantity != 5 {
+		t.Errorf("expected default-quantity=5, got %v", capturedBody.DefaultQuantity)
+	}
+	if capturedBody.Optional == nil || !*capturedBody.Optional {
+		t.Error("expected optional=true")
+	}
+	if capturedBody.DisplayQuantity == nil || !*capturedBody.DisplayQuantity {
+		t.Error("expected display-quantity=true")
+	}
+	if capturedBody.AccountingCode == nil || *capturedBody.AccountingCode != "ac-123" {
+		t.Errorf("expected accounting-code=ac-123, got %v", capturedBody.AccountingCode)
+	}
+	if capturedBody.TaxCode == nil || *capturedBody.TaxCode != "SW054000" {
+		t.Errorf("expected tax-code=SW054000, got %v", capturedBody.TaxCode)
+	}
+	if capturedBody.RevenueScheduleType == nil || *capturedBody.RevenueScheduleType != "evenly" {
+		t.Errorf("expected revenue-schedule-type=evenly, got %v", capturedBody.RevenueScheduleType)
+	}
+	if capturedBody.UsageType == nil || *capturedBody.UsageType != "price" {
+		t.Errorf("expected usage-type=price, got %v", capturedBody.UsageType)
+	}
+	if capturedBody.UsageCalculationType == nil || *capturedBody.UsageCalculationType != "cumulative" {
+		t.Errorf("expected usage-calculation-type=cumulative, got %v", capturedBody.UsageCalculationType)
+	}
+	if capturedBody.MeasuredUnitId == nil || *capturedBody.MeasuredUnitId != "mu-123" {
+		t.Errorf("expected measured-unit-id=mu-123, got %v", capturedBody.MeasuredUnitId)
+	}
+}
+
+func TestPlanAddOnsCreate_MultiCurrencyFlags(t *testing.T) {
+	var capturedBody *recurly.AddOnCreate
+	addOn := sampleAddOn()
+
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedBody = body
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "5.00", "--unit-amount", "4.50",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	pricings := *capturedBody.Currencies
+	if len(pricings) != 2 {
+		t.Fatalf("expected 2 currencies, got %d", len(pricings))
+	}
+	if *pricings[0].Currency != "USD" || *pricings[0].UnitAmount != 5.00 {
+		t.Errorf("expected USD: 5.00, got %s: %v", *pricings[0].Currency, *pricings[0].UnitAmount)
+	}
+	if *pricings[1].Currency != "EUR" || *pricings[1].UnitAmount != 4.50 {
+		t.Errorf("expected EUR: 4.50, got %s: %v", *pricings[1].Currency, *pricings[1].UnitAmount)
+	}
+}
+
+func TestPlanAddOnsCreate_SingleCurrency(t *testing.T) {
+	var capturedBody *recurly.AddOnCreate
+	addOn := sampleAddOn()
+
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedBody = body
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+		"--currency", "USD",
+		"--unit-amount", "10.00",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	pricings := *capturedBody.Currencies
+	if len(pricings) != 1 {
+		t.Fatalf("expected 1 currency, got %d", len(pricings))
+	}
+	if *pricings[0].Currency != "USD" || *pricings[0].UnitAmount != 10.00 {
+		t.Errorf("expected USD: 10.00, got %s: %v", *pricings[0].Currency, *pricings[0].UnitAmount)
+	}
+}
+
+func TestPlanAddOnsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
+	addOn := sampleAddOn()
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "test",
+		"--name", "Test",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "5.00",
+	)
+	if err == nil {
+		t.Fatal("expected error for mismatched currency/unit-amount counts")
+	}
+	if !strings.Contains(err.Error(), "must match") {
+		t.Errorf("expected mismatch error, got: %v", err)
+	}
+}
+
+func TestPlanAddOnsCreate_UnsetFlagsNotSent(t *testing.T) {
+	var capturedBody *recurly.AddOnCreate
+	addOn := sampleAddOn()
+
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedBody = body
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "test",
+		"--name", "Test",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.AddOnType != nil {
+		t.Error("expected add-on-type to be nil when not set")
+	}
+	if capturedBody.DefaultQuantity != nil {
+		t.Error("expected default-quantity to be nil when not set")
+	}
+	if capturedBody.Optional != nil {
+		t.Error("expected optional to be nil when not set")
+	}
+	if capturedBody.DisplayQuantity != nil {
+		t.Error("expected display-quantity to be nil when not set")
+	}
+	if capturedBody.AccountingCode != nil {
+		t.Error("expected accounting-code to be nil when not set")
+	}
+	if capturedBody.TaxCode != nil {
+		t.Error("expected tax-code to be nil when not set")
+	}
+	if capturedBody.RevenueScheduleType != nil {
+		t.Error("expected revenue-schedule-type to be nil when not set")
+	}
+	if capturedBody.UsageType != nil {
+		t.Error("expected usage-type to be nil when not set")
+	}
+	if capturedBody.UsageCalculationType != nil {
+		t.Error("expected usage-calculation-type to be nil when not set")
+	}
+	if capturedBody.MeasuredUnitId != nil {
+		t.Error("expected measured-unit-id to be nil when not set")
+	}
+	if capturedBody.Currencies != nil {
+		t.Error("expected currencies to be nil when not set")
+	}
+}
+
+func TestPlanAddOnsCreate_TableOutput(t *testing.T) {
+	addOn := sampleAddOn()
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"ID", "a1234",
+		"Code", "extra-users",
+		"Name", "Extra Users",
+		"State", "active",
+		"Add-On Type", "fixed",
+		"USD: 5.00",
+		"EUR: 4.50",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
+	addOn := sampleAddOn()
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\noutput: %s", err, out)
+	}
+	if result["code"] != "extra-users" {
+		t.Errorf("expected code=extra-users in JSON, got %v", result["code"])
+	}
+}
+
+func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
+	addOn := sampleAddOn()
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json-pretty")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out, "\n") {
+		t.Error("expected pretty-printed JSON with newlines")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+}
+
+func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
+	addOn := sampleAddOn()
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return &addOn, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	viper.Set("jq", ".code")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "extra-users",
+		"--name", "Extra Users",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out, "extra-users") {
+		t.Errorf("expected jq output to contain 'extra-users', got: %s", out)
+	}
+}
+
+func TestPlanAddOnsCreate_SDKError(t *testing.T) {
+	mock := &mockPlanAddOnAPI{
+		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return nil, &recurly.Error{Message: "validation error"}
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+		"--code", "test",
+		"--name", "Test",
+	)
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
