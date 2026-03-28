@@ -35,6 +35,9 @@ func NewRootCmd() *cobra.Command {
 	_ = viper.BindPFlag("region", rootCmd.PersistentFlags().Lookup("region"))
 	_ = viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output"))
 
+	_ = viper.BindEnv("api_key", "RECURLY_API_KEY")
+	_ = viper.BindEnv("region", "RECURLY_REGION")
+
 	rootCmd.AddCommand(newConfigureCmd())
 
 	return rootCmd
