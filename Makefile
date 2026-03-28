@@ -5,7 +5,7 @@ LDFLAGS  := -ldflags "-X $(MODULE)/cmd.version=$(VERSION)"
 
 .DEFAULT_GOAL := build
 
-.PHONY: all fmt fmt-check tidy-check vet lint test test-e2e check build clean surface check-surface
+.PHONY: all fmt fmt-check tidy-check vet lint test test-e2e check build clean surface check-surface vuln
 
 all: fmt vet lint test build
 
@@ -46,6 +46,9 @@ surface:
 
 check-surface:
 	@go run ./internal/surface/cmd/gensurface | diff -u .surface - || (echo "CLI surface has changed. If intentional, run: make surface" && exit 1)
+
+vuln:
+	govulncheck ./...
 
 build:
 	go build $(LDFLAGS) -o $(BINARY) .
