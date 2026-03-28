@@ -311,6 +311,20 @@ load "test_helper"
   fi
 }
 
+@test "--jq on get extracts .email as raw string" {
+  run "$RECURLY_BINARY" accounts get "code-test123" --jq '.email'
+  assert_success
+  # Should produce a non-empty raw string (no surrounding quotes)
+  if [ -z "$output" ]; then
+    echo "expected non-empty output for .email" >&2
+    return 1
+  fi
+  if [[ "$output" == \"*\" ]]; then
+    echo "expected raw string without quotes, got '$output'" >&2
+    return 1
+  fi
+}
+
 @test "--jq on get does not have envelope fields" {
   run "$RECURLY_BINARY" accounts get "code-test123" --jq '.object'
   assert_success
@@ -320,4 +334,54 @@ load "test_helper"
     echo "expected bare resource (not list envelope)" >&2
     return 1
   fi
+}
+
+# --- jq Advanced Filtering ---
+
+@test "--jq select filter counts non-null states" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '[.data[] | select(.state != null)] | length'
+  assert_success
+  # Should be a number (accounts with non-null state)
+  if ! [[ "$output" =~ ^[0-9]+$ ]]; then
+    echo "expected numeric output, got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq @csv format produces CSV output" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[] | [.code, .email] | @csv'
+  assert_success
+  # CSV output should contain comma-separated quoted values
+  if [ -z "$output" ]; then
+    echo "expected non-empty CSV output" >&2
+    return 1
+  fi
+  assert_output_contains ","
+}
+
+@test "--jq @base64 encodes field value" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[0].code | @base64'
+  assert_success
+  # Base64 output should be non-empty and contain only valid base64 chars
+  if [ -z "$output" ]; then
+    echo "expected non-empty base64 output" >&2
+    return 1
+  fi
+  if ! [[ "$output" =~ ^[A-Za-z0-9+/=]+$ ]]; then
+    echo "expected valid base64, got '$output'" >&2
+    return 1
+  fi
+}
+
+# --- jq Error Handling ---
+
+@test "--jq with invalid expression exits non-zero" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq 'invalid[['
+  assert_failure
+}
+
+@test "--jq with --output table exits non-zero (mutual exclusion)" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.code' --output table
+  assert_failure
+  assert_output_contains "mutually exclusive"
 }
