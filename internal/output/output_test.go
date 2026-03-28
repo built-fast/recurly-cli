@@ -171,6 +171,30 @@ func TestFormatOneJSON(t *testing.T) {
 	}
 }
 
+func TestFormatOneJSON_NoEnvelope(t *testing.T) {
+	item := testItem{Name: "Alice", Email: "alice@example.com"}
+
+	out, err := FormatOne("json", testColumns, item)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// FormatOne must produce a bare object, not a list envelope
+	var raw map[string]any
+	if err := json.Unmarshal([]byte(out), &raw); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if _, ok := raw["object"]; ok {
+		t.Error("FormatOne should not wrap output in list envelope (found 'object' key)")
+	}
+	if _, ok := raw["data"]; ok {
+		t.Error("FormatOne should not wrap output in list envelope (found 'data' key)")
+	}
+	if raw["name"] != "Alice" {
+		t.Errorf("expected bare object with name=Alice, got %v", raw)
+	}
+}
+
 func TestFormatOneJSONPretty(t *testing.T) {
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 

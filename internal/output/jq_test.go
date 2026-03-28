@@ -309,6 +309,81 @@ func TestApplyJQ_RuntimeError(t *testing.T) {
 
 // --- FormatList with jq ---
 
+func TestFormatList_WithJQ_SelectFilter(t *testing.T) {
+	SetJQ(compileJQ(t, `.data | map(select(.state == "active"))`))
+	defer SetJQ(nil)
+
+	items := []any{
+		map[string]any{"code": "a1", "state": "active"},
+		map[string]any{"code": "b2", "state": "expired"},
+		map[string]any{"code": "c3", "state": "active"},
+	}
+	out, err := FormatList("json", testColumns, items, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var result []map[string]any
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(result) != 2 {
+		t.Errorf("expected 2 active items, got %d", len(result))
+	}
+	for _, item := range result {
+		if item["state"] != "active" {
+			t.Errorf("expected state=active, got %v", item["state"])
+		}
+	}
+}
+
+func TestFormatList_WithJQ_DataLength(t *testing.T) {
+	SetJQ(compileJQ(t, `.data | length`))
+	defer SetJQ(nil)
+
+	items := []any{
+		testItem{Name: "Alice", Email: "alice@example.com"},
+		testItem{Name: "Bob", Email: "bob@example.com"},
+		testItem{Name: "Carol", Email: "carol@example.com"},
+	}
+	out, err := FormatList("json", testColumns, items, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out != "3" {
+		t.Errorf("expected 3, got %q", out)
+	}
+}
+
+func TestFormatList_WithJQ_PipeChainProjection(t *testing.T) {
+	SetJQ(compileJQ(t, `.data[] | {name, email}`))
+	defer SetJQ(nil)
+
+	items := []any{
+		testItem{Name: "Alice", Email: "alice@example.com"},
+		testItem{Name: "Bob", Email: "bob@example.com"},
+	}
+	out, err := FormatList("json", testColumns, items, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	lines := strings.Split(out, "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 projected objects, got %d", len(lines))
+	}
+	for _, line := range lines {
+		var obj map[string]any
+		if err := json.Unmarshal([]byte(line), &obj); err != nil {
+			t.Fatalf("invalid JSON line %q: %v", line, err)
+		}
+		if _, ok := obj["name"]; !ok {
+			t.Errorf("expected projected object to have 'name', got %v", obj)
+		}
+		if _, ok := obj["email"]; !ok {
+			t.Errorf("expected projected object to have 'email', got %v", obj)
+		}
+	}
+}
+
 func TestFormatList_WithJQ_EnvelopeInput(t *testing.T) {
 	// jq input for FormatList is the full envelope, so .data[].name works
 	SetJQ(compileJQ(t, ".data[].name"))
