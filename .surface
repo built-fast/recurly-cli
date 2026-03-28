@@ -1,4 +1,5 @@
 ARG recurly accounts billing-info get <account_id>
+ARG recurly accounts billing-info update <account_id>
 ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
@@ -30,6 +31,7 @@ CMD recurly
 CMD recurly accounts
 CMD recurly accounts billing-info
 CMD recurly accounts billing-info get
+CMD recurly accounts billing-info update
 CMD recurly accounts create
 CMD recurly accounts deactivate
 CMD recurly accounts get
@@ -71,6 +73,20 @@ FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
 FLAG recurly --region string
+FLAG recurly accounts billing-info update --address-city string
+FLAG recurly accounts billing-info update --address-country string
+FLAG recurly accounts billing-info update --address-postal-code string
+FLAG recurly accounts billing-info update --address-region string
+FLAG recurly accounts billing-info update --address-street1 string
+FLAG recurly accounts billing-info update --address-street2 string
+FLAG recurly accounts billing-info update --backup-payment-method bool
+FLAG recurly accounts billing-info update --company string
+FLAG recurly accounts billing-info update --currency string
+FLAG recurly accounts billing-info update --first-name string
+FLAG recurly accounts billing-info update --last-name string
+FLAG recurly accounts billing-info update --primary-payment-method bool
+FLAG recurly accounts billing-info update --token-id string
+FLAG recurly accounts billing-info update --vat-number string
 FLAG recurly accounts create --bill-to string
 FLAG recurly accounts create --code string
 FLAG recurly accounts create --company string

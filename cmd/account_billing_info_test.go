@@ -248,3 +248,260 @@ func TestAccountBillingInfoGet_SDKError(t *testing.T) {
 		t.Fatal("expected error from SDK")
 	}
 }
+
+// --- billing-info update ---
+
+func TestAccountBillingInfoUpdate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "billing-info", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "update") {
+		t.Error("expected billing-info help to show 'update' subcommand")
+	}
+}
+
+func TestAccountBillingInfoUpdate_RequiresAccountID(t *testing.T) {
+	_, _, err := executeCommand("accounts", "billing-info", "update")
+	if err == nil {
+		t.Fatal("expected error when no account_id provided")
+	}
+}
+
+func TestAccountBillingInfoUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommand("accounts", "billing-info", "update", "acct1", "--first-name", "Jane")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestAccountBillingInfoUpdate_PositionalArg(t *testing.T) {
+	var capturedAccountID string
+	bi := sampleBillingInfo()
+
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			capturedAccountID = accountId
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedAccountID != "code-acct1" {
+		t.Errorf("expected accountId=code-acct1, got %q", capturedAccountID)
+	}
+}
+
+func TestAccountBillingInfoUpdate_OnlyChangedFields(t *testing.T) {
+	var capturedBody *recurly.BillingInfoCreate
+	bi := sampleBillingInfo()
+
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			capturedBody = body
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane", "--company", "NewCo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.FirstName == nil || *capturedBody.FirstName != "Jane" {
+		t.Errorf("expected FirstName=Jane, got %v", capturedBody.FirstName)
+	}
+	if capturedBody.Company == nil || *capturedBody.Company != "NewCo" {
+		t.Errorf("expected Company=NewCo, got %v", capturedBody.Company)
+	}
+	// Fields not set should be nil
+	if capturedBody.LastName != nil {
+		t.Errorf("expected LastName=nil (not changed), got %v", *capturedBody.LastName)
+	}
+	if capturedBody.VatNumber != nil {
+		t.Errorf("expected VatNumber=nil (not changed), got %v", *capturedBody.VatNumber)
+	}
+	if capturedBody.TokenId != nil {
+		t.Errorf("expected TokenId=nil (not changed), got %v", *capturedBody.TokenId)
+	}
+}
+
+func TestAccountBillingInfoUpdate_BoolFlags(t *testing.T) {
+	var capturedBody *recurly.BillingInfoCreate
+	bi := sampleBillingInfo()
+
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			capturedBody = body
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--primary-payment-method", "--backup-payment-method")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.PrimaryPaymentMethod == nil || !*capturedBody.PrimaryPaymentMethod {
+		t.Error("expected PrimaryPaymentMethod=true")
+	}
+	if capturedBody.BackupPaymentMethod == nil || !*capturedBody.BackupPaymentMethod {
+		t.Error("expected BackupPaymentMethod=true")
+	}
+}
+
+func TestAccountBillingInfoUpdate_AddressFlags(t *testing.T) {
+	var capturedBody *recurly.BillingInfoCreate
+	bi := sampleBillingInfo()
+
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			capturedBody = body
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1",
+		"--address-street1", "123 Main St",
+		"--address-street2", "Apt 4",
+		"--address-city", "San Francisco",
+		"--address-region", "CA",
+		"--address-postal-code", "94105",
+		"--address-country", "US",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Address == nil {
+		t.Fatal("expected Address to be set")
+	}
+	if *capturedBody.Address.Street1 != "123 Main St" {
+		t.Errorf("expected Street1=123 Main St, got %v", *capturedBody.Address.Street1)
+	}
+	if *capturedBody.Address.Street2 != "Apt 4" {
+		t.Errorf("expected Street2=Apt 4, got %v", *capturedBody.Address.Street2)
+	}
+	if *capturedBody.Address.City != "San Francisco" {
+		t.Errorf("expected City=San Francisco, got %v", *capturedBody.Address.City)
+	}
+	if *capturedBody.Address.Region != "CA" {
+		t.Errorf("expected Region=CA, got %v", *capturedBody.Address.Region)
+	}
+	if *capturedBody.Address.PostalCode != "94105" {
+		t.Errorf("expected PostalCode=94105, got %v", *capturedBody.Address.PostalCode)
+	}
+	if *capturedBody.Address.Country != "US" {
+		t.Errorf("expected Country=US, got %v", *capturedBody.Address.Country)
+	}
+}
+
+func TestAccountBillingInfoUpdate_NoAddressWhenNotSet(t *testing.T) {
+	var capturedBody *recurly.BillingInfoCreate
+	bi := sampleBillingInfo()
+
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			capturedBody = body
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Address != nil {
+		t.Error("expected Address=nil when no address flags set")
+	}
+}
+
+func TestAccountBillingInfoUpdate_TableOutput(t *testing.T) {
+	bi := sampleBillingInfo()
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"ID", "bill1234",
+		"Account ID", "code-acct1",
+		"First Name", "John",
+		"Last Name", "Doe",
+		"Company", "Acme Inc",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
+	bi := sampleBillingInfo()
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			return bi, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\noutput: %s", err, out)
+	}
+	if result["id"] != "bill1234" {
+		t.Errorf("expected id=bill1234 in JSON, got %v", result["id"])
+	}
+}
+
+func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
+	mock := &mockAccountBillingInfoAPI{
+		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+			return nil, &recurly.Error{Message: "validation error"}
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}

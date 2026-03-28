@@ -16,6 +16,7 @@ func newAccountBillingInfoCmd() *cobra.Command {
 		Short: "Manage account billing info",
 	}
 	cmd.AddCommand(newAccountBillingInfoGetCmd())
+	cmd.AddCommand(newAccountBillingInfoUpdateCmd())
 	return cmd
 }
 
@@ -81,6 +82,132 @@ func newAccountBillingInfoGetCmd() *cobra.Command {
 			return err
 		},
 	}
+
+	return cmd
+}
+
+func newAccountBillingInfoUpdateCmd() *cobra.Command {
+	var (
+		firstName            string
+		lastName             string
+		company              string
+		vatNumber            string
+		tokenId              string
+		currency             string
+		primaryPaymentMethod bool
+		backupPaymentMethod  bool
+
+		// Address fields
+		addressStreet1    string
+		addressStreet2    string
+		addressCity       string
+		addressRegion     string
+		addressPostalCode string
+		addressCountry    string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update <account_id>",
+		Short: "Update billing info for an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newAccountBillingInfoAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.BillingInfoCreate{}
+
+			if cmd.Flags().Changed("first-name") {
+				body.FirstName = recurly.String(firstName)
+			}
+			if cmd.Flags().Changed("last-name") {
+				body.LastName = recurly.String(lastName)
+			}
+			if cmd.Flags().Changed("company") {
+				body.Company = recurly.String(company)
+			}
+			if cmd.Flags().Changed("vat-number") {
+				body.VatNumber = recurly.String(vatNumber)
+			}
+			if cmd.Flags().Changed("token-id") {
+				body.TokenId = recurly.String(tokenId)
+			}
+			if cmd.Flags().Changed("currency") {
+				body.Currency = recurly.String(currency)
+			}
+			if cmd.Flags().Changed("primary-payment-method") {
+				body.PrimaryPaymentMethod = recurly.Bool(primaryPaymentMethod)
+			}
+			if cmd.Flags().Changed("backup-payment-method") {
+				body.BackupPaymentMethod = recurly.Bool(backupPaymentMethod)
+			}
+
+			// Address fields
+			addressChanged := false
+			addr := &recurly.AddressCreate{}
+			if cmd.Flags().Changed("address-street1") {
+				addr.Street1 = recurly.String(addressStreet1)
+				addressChanged = true
+			}
+			if cmd.Flags().Changed("address-street2") {
+				addr.Street2 = recurly.String(addressStreet2)
+				addressChanged = true
+			}
+			if cmd.Flags().Changed("address-city") {
+				addr.City = recurly.String(addressCity)
+				addressChanged = true
+			}
+			if cmd.Flags().Changed("address-region") {
+				addr.Region = recurly.String(addressRegion)
+				addressChanged = true
+			}
+			if cmd.Flags().Changed("address-postal-code") {
+				addr.PostalCode = recurly.String(addressPostalCode)
+				addressChanged = true
+			}
+			if cmd.Flags().Changed("address-country") {
+				addr.Country = recurly.String(addressCountry)
+				addressChanged = true
+			}
+			if addressChanged {
+				body.Address = addr
+			}
+
+			billingInfo, err := c.UpdateBillingInfo(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := billingInfoDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, billingInfo)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&firstName, "first-name", "", "First name")
+	cmd.Flags().StringVar(&lastName, "last-name", "", "Last name")
+	cmd.Flags().StringVar(&company, "company", "", "Company name")
+	cmd.Flags().StringVar(&vatNumber, "vat-number", "", "VAT number")
+	cmd.Flags().StringVar(&tokenId, "token-id", "", "Token ID from Recurly.js")
+	cmd.Flags().StringVar(&currency, "currency", "", "3-letter ISO 4217 currency code")
+	cmd.Flags().BoolVar(&primaryPaymentMethod, "primary-payment-method", false, "Designate as primary payment method")
+	cmd.Flags().BoolVar(&backupPaymentMethod, "backup-payment-method", false, "Designate as backup payment method")
+
+	// Address flags
+	cmd.Flags().StringVar(&addressStreet1, "address-street1", "", "Street address line 1")
+	cmd.Flags().StringVar(&addressStreet2, "address-street2", "", "Street address line 2")
+	cmd.Flags().StringVar(&addressCity, "address-city", "", "City")
+	cmd.Flags().StringVar(&addressRegion, "address-region", "", "State or province")
+	cmd.Flags().StringVar(&addressPostalCode, "address-postal-code", "", "Zip or postal code")
+	cmd.Flags().StringVar(&addressCountry, "address-country", "", "Country (2-letter ISO 3166-1 alpha-2 code)")
 
 	return cmd
 }
