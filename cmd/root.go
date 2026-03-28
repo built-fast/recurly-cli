@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/built-fast/recurly-cli/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -21,6 +22,10 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd.SetVersionTemplate("recurly-cli {{.Version}}\n")
+
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		return config.Init()
+	}
 
 	rootCmd.PersistentFlags().String("api-key", "", "Recurly API key")
 	rootCmd.PersistentFlags().String("region", "us", "Recurly region (us or eu)")
