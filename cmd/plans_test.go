@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -1737,5 +1738,213 @@ func TestPlansUpdate_SDKError(t *testing.T) {
 	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- plans deactivate ---
+
+func TestPlansDeactivate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("plans", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "deactivate") {
+		t.Error("expected plans help to show 'deactivate' subcommand")
+	}
+}
+
+func TestPlansDeactivateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("plans", "deactivate", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected help output to contain --yes flag")
+	}
+}
+
+func TestPlansDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("plans", "deactivate")
+	if err == nil {
+		t.Fatal("expected error when no plan ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestPlansDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to deactivate this plan? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestPlansDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
+
+func TestPlansDeactivate_ConfirmYes_Succeeds(t *testing.T) {
+	viper.Reset()
+	var capturedID string
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedID = planId
+			p := samplePlanDetail()
+			p.State = "inactive"
+			return p, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-789")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "plan-789" {
+		t.Errorf("expected plan ID 'plan-789', got %q", capturedID)
+	}
+	if !strings.Contains(stderr, "Are you sure") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "inactive") {
+		t.Errorf("expected plan details in output, got:\n%s", out)
+	}
+}
+
+func TestPlansDeactivate_ConfirmYES_CaseInsensitive(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			p := samplePlanDetail()
+			p.State = "inactive"
+			return p, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("YES\n")
+	out, _, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-789")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "inactive") {
+		t.Errorf("expected plan details in output, got:\n%s", out)
+	}
+}
+
+func TestPlansDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	viper.Reset()
+	var capturedID string
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedID = planId
+			p := samplePlanDetail()
+			p.State = "inactive"
+			return p, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("plans", "deactivate", "plan-789", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "plan-789" {
+		t.Errorf("expected plan ID 'plan-789', got %q", capturedID)
+	}
+	if strings.Contains(stderr, "Are you sure") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "inactive") {
+		t.Errorf("expected plan details in output, got:\n%s", out)
+	}
+}
+
+func TestPlansDeactivate_SDKError(t *testing.T) {
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "Couldn't find Plan",
+			}
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("plans", "deactivate", "nonexistent", "--yes")
+	if err == nil {
+		t.Fatal("expected error for not found")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected 'not found' error, got %q", stderr)
+	}
+}
+
+func TestPlansDeactivate_JSON_Output(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			p := samplePlanDetail()
+			p.State = "inactive"
+			return p, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "deactivate", "plan-789", "--yes", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\nOutput: %s", err, out)
+	}
+	if result["state"] != "inactive" {
+		t.Errorf("expected state 'inactive', got %v", result["state"])
+	}
+}
+
+func TestPlansDeactivate_UsesDetailColumns(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "deactivate", "plan-789", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify planDetailColumns() fields are present
+	for _, field := range []string{"Id", "Code", "Name", "State", "Pricing Model", "Interval Unit"} {
+		if !strings.Contains(out, field) {
+			t.Errorf("expected output to contain %q, got:\n%s", field, out)
+		}
 	}
 }

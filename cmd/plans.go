@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ func newPlansCmd() *cobra.Command {
 	cmd.AddCommand(newPlansGetCmd())
 	cmd.AddCommand(newPlansCreateCmd())
 	cmd.AddCommand(newPlansUpdateCmd())
+	cmd.AddCommand(newPlansDeactivateCmd())
 	return cmd
 }
 
@@ -782,6 +784,61 @@ func newPlansListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&order, "order", "", "Sort order (asc or desc)")
 	cmd.Flags().StringVar(&sort, "sort", "", "Sort field (e.g. created_at, updated_at)")
 	cmd.Flags().StringVar(&state, "state", "", "Filter by state (active or inactive)")
+
+	return cmd
+}
+
+func newPlansDeactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "deactivate <plan_id>",
+		Short: "Deactivate a plan",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			planID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate this plan? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := newPlanAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			plan, err := c.RemovePlan(planID)
+			if err != nil {
+				return err
+			}
+
+			columns := planDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, plan)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }
