@@ -3,6 +3,7 @@ ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
 ARG recurly accounts update <account_id>
 ARG recurly plans get <plan_id>
+ARG recurly plans update <plan_id>
 CMD recurly
 CMD recurly accounts
 CMD recurly accounts create
@@ -16,6 +17,7 @@ CMD recurly plans
 CMD recurly plans create
 CMD recurly plans get
 CMD recurly plans list
+CMD recurly plans update
 FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
@@ -89,3 +91,36 @@ FLAG recurly plans list --limit int
 FLAG recurly plans list --order string
 FLAG recurly plans list --sort string
 FLAG recurly plans list --state string
+FLAG recurly plans update --accounting-code string
+FLAG recurly plans update --allow-any-item-on-subscriptions bool
+FLAG recurly plans update --auto-renew bool
+FLAG recurly plans update --avalara-service-type int
+FLAG recurly plans update --avalara-transaction-type int
+FLAG recurly plans update --bypass-confirmation bool
+FLAG recurly plans update --cancel-url string
+FLAG recurly plans update --code string
+FLAG recurly plans update --currency stringSlice
+FLAG recurly plans update --description string
+FLAG recurly plans update --display-quantity bool
+FLAG recurly plans update --dunning-campaign-id string
+FLAG recurly plans update --harmonized-system-code string
+FLAG recurly plans update --liability-gl-account-id string
+FLAG recurly plans update --name string
+FLAG recurly plans update --performance-obligation-id string
+FLAG recurly plans update --revenue-gl-account-id string
+FLAG recurly plans update --revenue-schedule-type string
+FLAG recurly plans update --setup-fee float64Slice
+FLAG recurly plans update --setup-fee-accounting-code string
+FLAG recurly plans update --setup-fee-liability-gl-account-id string
+FLAG recurly plans update --setup-fee-performance-obligation-id string
+FLAG recurly plans update --setup-fee-revenue-gl-account-id string
+FLAG recurly plans update --setup-fee-revenue-schedule-type string
+FLAG recurly plans update --success-url string
+FLAG recurly plans update --tax-code string
+FLAG recurly plans update --tax-exempt bool
+FLAG recurly plans update --total-billing-cycles int
+FLAG recurly plans update --trial-length int
+FLAG recurly plans update --trial-requires-billing-info bool
+FLAG recurly plans update --trial-unit string
+FLAG recurly plans update --unit-amount float64Slice
+FLAG recurly plans update --vertex-transaction-type string

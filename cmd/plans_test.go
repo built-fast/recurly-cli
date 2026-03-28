@@ -1175,3 +1175,567 @@ func TestPlansGet_EmptyCurrencies(t *testing.T) {
 		t.Errorf("expected output to contain 'basic', got:\n%s", out)
 	}
 }
+
+// --- plans update ---
+
+func TestPlansUpdate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("plans", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "update") {
+		t.Error("expected plans help to show 'update' subcommand")
+	}
+}
+
+func TestPlansUpdateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("plans", "update", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{
+		"--code", "--name", "--description",
+		"--currency", "--unit-amount", "--setup-fee",
+		"--trial-unit", "--trial-length", "--trial-requires-billing-info",
+		"--auto-renew", "--total-billing-cycles",
+		"--tax-code", "--tax-exempt", "--avalara-transaction-type", "--avalara-service-type",
+		"--vertex-transaction-type", "--harmonized-system-code",
+		"--accounting-code", "--revenue-schedule-type", "--liability-gl-account-id", "--revenue-gl-account-id",
+		"--performance-obligation-id", "--setup-fee-accounting-code", "--setup-fee-revenue-schedule-type",
+		"--setup-fee-liability-gl-account-id", "--setup-fee-revenue-gl-account-id", "--setup-fee-performance-obligation-id",
+		"--success-url", "--cancel-url", "--bypass-confirmation", "--display-quantity",
+		"--allow-any-item-on-subscriptions", "--dunning-campaign-id",
+	} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestPlansUpdateHelp_NoImmutableFlags(t *testing.T) {
+	out, _, err := executeCommand("plans", "update", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{"--interval-unit", "--interval-length", "--pricing-model"} {
+		if strings.Contains(out, flag) {
+			t.Errorf("expected help output NOT to contain immutable flag %q", flag)
+		}
+	}
+}
+
+func TestPlansUpdate_MissingArg(t *testing.T) {
+	_, _, err := executeCommand("plans", "update")
+	if err == nil {
+		t.Fatal("expected error when plan_id argument is missing")
+	}
+}
+
+func TestPlansUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("plans", "update", "p1234", "--name", "New Name")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestPlansUpdate_PlanIdArg(t *testing.T) {
+	var capturedPlanId string
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedPlanId = planId
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Updated")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedPlanId != "p1234" {
+		t.Errorf("expected planId=p1234, got %v", capturedPlanId)
+	}
+}
+
+func TestPlansUpdate_CoreFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--code", "gold-v2",
+		"--name", "Gold Plan V2",
+		"--description", "Updated plan",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody == nil {
+		t.Fatal("expected body to be captured")
+	}
+	if *capturedBody.Code != "gold-v2" {
+		t.Errorf("expected code=gold-v2, got %v", *capturedBody.Code)
+	}
+	if *capturedBody.Name != "Gold Plan V2" {
+		t.Errorf("expected name=Gold Plan V2, got %v", *capturedBody.Name)
+	}
+	if *capturedBody.Description != "Updated plan" {
+		t.Errorf("expected description=Updated plan, got %v", *capturedBody.Description)
+	}
+}
+
+func TestPlansUpdate_MultiCurrencyFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "15.00", "--unit-amount", "13.00",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	pricings := *capturedBody.Currencies
+	if len(pricings) != 2 {
+		t.Fatalf("expected 2 currencies, got %d", len(pricings))
+	}
+	if *pricings[0].Currency != "USD" || *pricings[0].UnitAmount != 15.00 {
+		t.Errorf("unexpected first currency: %v", pricings[0])
+	}
+	if *pricings[1].Currency != "EUR" || *pricings[1].UnitAmount != 13.00 {
+		t.Errorf("unexpected second currency: %v", pricings[1])
+	}
+}
+
+func TestPlansUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00",
+	)
+	if err == nil {
+		t.Fatal("expected error for currency/unit-amount mismatch")
+	}
+	if !strings.Contains(err.Error(), "must match") {
+		t.Errorf("expected mismatch error, got: %v", err)
+	}
+}
+
+func TestPlansUpdate_SetupFeeFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00", "--unit-amount", "9.00",
+		"--setup-fee", "5.00", "--setup-fee", "4.50",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.SetupFees == nil {
+		t.Fatal("expected setup-fees to be set")
+	}
+	fees := *capturedBody.SetupFees
+	if len(fees) != 2 {
+		t.Fatalf("expected 2 setup fees, got %d", len(fees))
+	}
+	if *fees[0].Currency != "USD" || *fees[0].UnitAmount != 5.00 {
+		t.Errorf("unexpected first setup fee: %v", fees[0])
+	}
+	if *fees[1].Currency != "EUR" || *fees[1].UnitAmount != 4.50 {
+		t.Errorf("unexpected second setup fee: %v", fees[1])
+	}
+}
+
+func TestPlansUpdate_SetupFeeCurrencyMismatch(t *testing.T) {
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--currency", "USD",
+		"--unit-amount", "10.00",
+		"--setup-fee", "5.00", "--setup-fee", "4.50",
+	)
+	if err == nil {
+		t.Fatal("expected error for setup-fee/currency mismatch")
+	}
+	if !strings.Contains(err.Error(), "must match") {
+		t.Errorf("expected mismatch error, got: %v", err)
+	}
+}
+
+func TestPlansUpdate_TrialFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--trial-unit", "day",
+		"--trial-length", "14",
+		"--trial-requires-billing-info",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.TrialUnit != "day" {
+		t.Errorf("expected trial-unit=day, got %v", *capturedBody.TrialUnit)
+	}
+	if *capturedBody.TrialLength != 14 {
+		t.Errorf("expected trial-length=14, got %v", *capturedBody.TrialLength)
+	}
+	if *capturedBody.TrialRequiresBillingInfo != true {
+		t.Errorf("expected trial-requires-billing-info=true, got %v", *capturedBody.TrialRequiresBillingInfo)
+	}
+}
+
+func TestPlansUpdate_BillingFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--auto-renew",
+		"--total-billing-cycles", "12",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.AutoRenew != true {
+		t.Errorf("expected auto-renew=true, got %v", *capturedBody.AutoRenew)
+	}
+	if *capturedBody.TotalBillingCycles != 12 {
+		t.Errorf("expected total-billing-cycles=12, got %v", *capturedBody.TotalBillingCycles)
+	}
+}
+
+func TestPlansUpdate_TaxFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--tax-code", "digital",
+		"--tax-exempt",
+		"--avalara-transaction-type", "600",
+		"--avalara-service-type", "100",
+		"--vertex-transaction-type", "sale",
+		"--harmonized-system-code", "1234",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.TaxCode != "digital" {
+		t.Errorf("expected tax-code=digital, got %v", *capturedBody.TaxCode)
+	}
+	if *capturedBody.TaxExempt != true {
+		t.Errorf("expected tax-exempt=true, got %v", *capturedBody.TaxExempt)
+	}
+	if *capturedBody.AvalaraTransactionType != 600 {
+		t.Errorf("expected avalara-transaction-type=600, got %v", *capturedBody.AvalaraTransactionType)
+	}
+	if *capturedBody.AvalaraServiceType != 100 {
+		t.Errorf("expected avalara-service-type=100, got %v", *capturedBody.AvalaraServiceType)
+	}
+	if *capturedBody.VertexTransactionType != "sale" {
+		t.Errorf("expected vertex-transaction-type=sale, got %v", *capturedBody.VertexTransactionType)
+	}
+	if *capturedBody.HarmonizedSystemCode != "1234" {
+		t.Errorf("expected harmonized-system-code=1234, got %v", *capturedBody.HarmonizedSystemCode)
+	}
+}
+
+func TestPlansUpdate_AccountingFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--accounting-code", "PLAN-001",
+		"--revenue-schedule-type", "evenly",
+		"--liability-gl-account-id", "gl-001",
+		"--revenue-gl-account-id", "gl-002",
+		"--performance-obligation-id", "po-001",
+		"--setup-fee-accounting-code", "SETUP-001",
+		"--setup-fee-revenue-schedule-type", "at_invoice",
+		"--setup-fee-liability-gl-account-id", "gl-003",
+		"--setup-fee-revenue-gl-account-id", "gl-004",
+		"--setup-fee-performance-obligation-id", "po-002",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.AccountingCode != "PLAN-001" {
+		t.Errorf("expected accounting-code=PLAN-001, got %v", *capturedBody.AccountingCode)
+	}
+	if *capturedBody.RevenueScheduleType != "evenly" {
+		t.Errorf("expected revenue-schedule-type=evenly, got %v", *capturedBody.RevenueScheduleType)
+	}
+	if *capturedBody.LiabilityGlAccountId != "gl-001" {
+		t.Errorf("expected liability-gl-account-id=gl-001, got %v", *capturedBody.LiabilityGlAccountId)
+	}
+	if *capturedBody.RevenueGlAccountId != "gl-002" {
+		t.Errorf("expected revenue-gl-account-id=gl-002, got %v", *capturedBody.RevenueGlAccountId)
+	}
+	if *capturedBody.PerformanceObligationId != "po-001" {
+		t.Errorf("expected performance-obligation-id=po-001, got %v", *capturedBody.PerformanceObligationId)
+	}
+	if *capturedBody.SetupFeeAccountingCode != "SETUP-001" {
+		t.Errorf("expected setup-fee-accounting-code=SETUP-001, got %v", *capturedBody.SetupFeeAccountingCode)
+	}
+	if *capturedBody.SetupFeeRevenueScheduleType != "at_invoice" {
+		t.Errorf("expected setup-fee-revenue-schedule-type=at_invoice, got %v", *capturedBody.SetupFeeRevenueScheduleType)
+	}
+	if *capturedBody.SetupFeeLiabilityGlAccountId != "gl-003" {
+		t.Errorf("expected setup-fee-liability-gl-account-id=gl-003, got %v", *capturedBody.SetupFeeLiabilityGlAccountId)
+	}
+	if *capturedBody.SetupFeeRevenueGlAccountId != "gl-004" {
+		t.Errorf("expected setup-fee-revenue-gl-account-id=gl-004, got %v", *capturedBody.SetupFeeRevenueGlAccountId)
+	}
+	if *capturedBody.SetupFeePerformanceObligationId != "po-002" {
+		t.Errorf("expected setup-fee-performance-obligation-id=po-002, got %v", *capturedBody.SetupFeePerformanceObligationId)
+	}
+}
+
+func TestPlansUpdate_HostedPagesFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--success-url", "https://example.com/success",
+		"--cancel-url", "https://example.com/cancel",
+		"--bypass-confirmation",
+		"--display-quantity",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.HostedPages == nil {
+		t.Fatal("expected hosted-pages to be set")
+	}
+	hp := capturedBody.HostedPages
+	if *hp.SuccessUrl != "https://example.com/success" {
+		t.Errorf("expected success-url, got %v", *hp.SuccessUrl)
+	}
+	if *hp.CancelUrl != "https://example.com/cancel" {
+		t.Errorf("expected cancel-url, got %v", *hp.CancelUrl)
+	}
+	if *hp.BypassConfirmation != true {
+		t.Errorf("expected bypass-confirmation=true, got %v", *hp.BypassConfirmation)
+	}
+	if *hp.DisplayQuantity != true {
+		t.Errorf("expected display-quantity=true, got %v", *hp.DisplayQuantity)
+	}
+}
+
+func TestPlansUpdate_OtherFlags(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234",
+		"--allow-any-item-on-subscriptions",
+		"--dunning-campaign-id", "dc-001",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.AllowAnyItemOnSubscriptions != true {
+		t.Errorf("expected allow-any-item=true, got %v", *capturedBody.AllowAnyItemOnSubscriptions)
+	}
+	if *capturedBody.DunningCampaignId != "dc-001" {
+		t.Errorf("expected dunning-campaign-id=dc-001, got %v", *capturedBody.DunningCampaignId)
+	}
+}
+
+func TestPlansUpdate_UnsetFlagsNotSent(t *testing.T) {
+	var capturedBody *recurly.PlanUpdate
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Updated")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Code != nil {
+		t.Error("expected code to be nil when not set")
+	}
+	if capturedBody.Description != nil {
+		t.Error("expected description to be nil when not set")
+	}
+	if capturedBody.Currencies != nil {
+		t.Error("expected currencies to be nil when not set")
+	}
+	if capturedBody.SetupFees != nil {
+		t.Error("expected setup-fees to be nil when not set")
+	}
+	if capturedBody.TrialUnit != nil {
+		t.Error("expected trial-unit to be nil when not set")
+	}
+	if capturedBody.AutoRenew != nil {
+		t.Error("expected auto-renew to be nil when not set")
+	}
+	if capturedBody.TaxCode != nil {
+		t.Error("expected tax-code to be nil when not set")
+	}
+	if capturedBody.HostedPages != nil {
+		t.Error("expected hosted-pages to be nil when not set")
+	}
+	if capturedBody.AllowAnyItemOnSubscriptions != nil {
+		t.Error("expected allow-any-item-on-subscriptions to be nil when not set")
+	}
+}
+
+func TestPlansUpdate_TableOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "update", "p1234", "--name", "Gold Plan")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{"Id", "p1234", "Code", "gold", "Name", "Gold Plan"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestPlansUpdate_JSONOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "update", "p1234", "--name", "Gold", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "gold" {
+		t.Errorf("expected code=gold, got %v", result["code"])
+	}
+}
+
+func TestPlansUpdate_SDKError(t *testing.T) {
+	mock := &mockPlanAPI{
+		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
+			return nil, fmt.Errorf("not found")
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Bad")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
