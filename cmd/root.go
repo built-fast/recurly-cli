@@ -82,6 +82,7 @@ func NewRootCmd() *cobra.Command {
 
 	rootCmd.AddCommand(newConfigureCmd())
 	rootCmd.AddCommand(newAccountsCmd())
+	rootCmd.AddCommand(newPlansCmd())
 
 	return rootCmd
 }

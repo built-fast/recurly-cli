@@ -11,6 +11,7 @@ CMD recurly accounts list
 CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
+CMD recurly plans
 FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
