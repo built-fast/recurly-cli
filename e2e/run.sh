@@ -42,7 +42,6 @@ echo "==> Starting Prism mock server on port ${PRISM_PORT}..."
 npx @stoplight/prism-cli mock openapi/api.yaml \
   --port "$PRISM_PORT" \
   --host 127.0.0.1 \
-  --dynamic \
   > /dev/null 2>&1 &
 PRISM_PID=$!
 
