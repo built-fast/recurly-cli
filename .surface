@@ -2,6 +2,7 @@ ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly plans get <plan_id>
 CMD recurly
 CMD recurly accounts
 CMD recurly accounts create
@@ -12,6 +13,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly plans
+CMD recurly plans get
 CMD recurly plans list
 FLAG recurly --api-key string
 FLAG recurly --jq string

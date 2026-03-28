@@ -9,6 +9,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/viper"
 )
 
 // mockPlanAPI implements PlanAPI for testing.
@@ -98,6 +99,34 @@ func samplePlan() recurly.Plan {
 			{Currency: "USD", UnitAmount: 10.00},
 		},
 		CreatedAt: &now,
+	}
+}
+
+// samplePlanDetail returns a test plan pointer with all detail fields populated.
+func samplePlanDetail() *recurly.Plan {
+	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
+	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
+	return &recurly.Plan{
+		Id:             "p1234",
+		Code:           "gold",
+		Name:           "Gold Plan",
+		State:          "active",
+		PricingModel:   "fixed",
+		IntervalUnit:   "month",
+		IntervalLength: 1,
+		Description:    "A premium plan",
+		Currencies: []recurly.PlanPricing{
+			{Currency: "USD", UnitAmount: 10.00, SetupFee: 5.00},
+			{Currency: "EUR", UnitAmount: 9.00, SetupFee: 4.50},
+		},
+		TrialUnit:          "day",
+		TrialLength:        14,
+		AutoRenew:          true,
+		TotalBillingCycles: 12,
+		TaxCode:            "digital",
+		TaxExempt:          false,
+		CreatedAt:          &now,
+		UpdatedAt:          &updated,
 	}
 }
 
@@ -351,5 +380,237 @@ func TestPlansList_SDKError(t *testing.T) {
 	_, _, err := executeCommand("plans", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- plans get ---
+
+func TestPlansGet_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("plans", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "get") {
+		t.Error("expected plans help to show 'get' subcommand")
+	}
+}
+
+func TestPlansGet_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("plans", "get")
+	if err == nil {
+		t.Fatal("expected error when no plan ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestPlansGet_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("plans", "get", "p1234")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestPlansGet_PositionalArg(t *testing.T) {
+	var capturedID string
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedID = planId
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "get", "my-plan-id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "my-plan-id" {
+		t.Errorf("expected plan ID 'my-plan-id', got %q", capturedID)
+	}
+}
+
+func TestPlansGet_TableOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "get", "p1234", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"Id", "p1234",
+		"Code", "gold",
+		"Name", "Gold Plan",
+		"State", "active",
+		"Pricing Model", "fixed",
+		"Interval Unit", "month",
+		"Interval Length", "1",
+		"Description", "A premium plan",
+		"Currencies", "USD: 10.00 (setup: 5.00)",
+		"EUR: 9.00 (setup: 4.50)",
+		"Trial Unit", "day",
+		"Trial Length", "14",
+		"Auto Renew", "true",
+		"Total Billing Cycles", "12",
+		"Tax Code", "digital",
+		"Tax Exempt", "false",
+		"Created At",
+		"Updated At",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestPlansGet_JSONOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "get", "p1234", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "gold" {
+		t.Errorf("expected code=gold in JSON, got %v", result["code"])
+	}
+	// JSON output should be bare object, no envelope
+	if _, ok := result["object"]; ok {
+		// object field may exist from the Plan struct but should not be "list"
+		if result["object"] == "list" {
+			t.Error("expected single plan object, not list envelope")
+		}
+	}
+}
+
+func TestPlansGet_JQFilter(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "get", "p1234", "--jq", ".code")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "gold" {
+		t.Errorf("expected jq output 'gold', got %q", trimmed)
+	}
+}
+
+func TestPlansGet_SDKError(t *testing.T) {
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return nil, fmt.Errorf("connection refused")
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "get", "p1234")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+func TestPlansGet_NotFound(t *testing.T) {
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "Couldn't find Plan with id = nonexistent",
+			}
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("plans", "get", "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for not found plan")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected 'not found' error, got %q", stderr)
+	}
+}
+
+func TestPlansGet_CurrenciesFormatting(t *testing.T) {
+	viper.Reset()
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "get", "p1234", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should contain both currencies formatted with setup fees
+	if !strings.Contains(out, "USD: 10.00 (setup: 5.00)") {
+		t.Errorf("expected USD currency formatting, got:\n%s", out)
+	}
+	if !strings.Contains(out, "EUR: 9.00 (setup: 4.50)") {
+		t.Errorf("expected EUR currency formatting, got:\n%s", out)
+	}
+}
+
+func TestPlansGet_EmptyCurrencies(t *testing.T) {
+	viper.Reset()
+	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
+	mock := &mockPlanAPI{
+		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
+			return &recurly.Plan{
+				Id:        "p999",
+				Code:      "basic",
+				Name:      "Basic Plan",
+				CreatedAt: &now,
+			}, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "get", "p999", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out, "basic") {
+		t.Errorf("expected output to contain 'basic', got:\n%s", out)
 	}
 }

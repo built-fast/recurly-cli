@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -17,6 +18,94 @@ func newPlansCmd() *cobra.Command {
 		Short: "Manage plans",
 	}
 	cmd.AddCommand(newPlansListCmd())
+	cmd.AddCommand(newPlansGetCmd())
+	return cmd
+}
+
+func planDetailColumns() []output.Column {
+	return []output.Column{
+		{Header: "Id", Extract: func(v any) string { return v.(*recurly.Plan).Id }},
+		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Plan).Code }},
+		{Header: "Name", Extract: func(v any) string { return v.(*recurly.Plan).Name }},
+		{Header: "State", Extract: func(v any) string { return v.(*recurly.Plan).State }},
+		{Header: "Pricing Model", Extract: func(v any) string { return v.(*recurly.Plan).PricingModel }},
+		{Header: "Interval Unit", Extract: func(v any) string { return v.(*recurly.Plan).IntervalUnit }},
+		{Header: "Interval Length", Extract: func(v any) string {
+			return fmt.Sprintf("%d", v.(*recurly.Plan).IntervalLength)
+		}},
+		{Header: "Description", Extract: func(v any) string { return v.(*recurly.Plan).Description }},
+		{Header: "Currencies", Extract: func(v any) string {
+			p := v.(*recurly.Plan)
+			if len(p.Currencies) == 0 {
+				return ""
+			}
+			var parts []string
+			for _, c := range p.Currencies {
+				parts = append(parts, fmt.Sprintf("%s: %.2f (setup: %.2f)", c.Currency, c.UnitAmount, c.SetupFee))
+			}
+			return strings.Join(parts, ", ")
+		}},
+		{Header: "Trial Unit", Extract: func(v any) string { return v.(*recurly.Plan).TrialUnit }},
+		{Header: "Trial Length", Extract: func(v any) string {
+			return fmt.Sprintf("%d", v.(*recurly.Plan).TrialLength)
+		}},
+		{Header: "Auto Renew", Extract: func(v any) string {
+			return fmt.Sprintf("%t", v.(*recurly.Plan).AutoRenew)
+		}},
+		{Header: "Total Billing Cycles", Extract: func(v any) string {
+			return fmt.Sprintf("%d", v.(*recurly.Plan).TotalBillingCycles)
+		}},
+		{Header: "Tax Code", Extract: func(v any) string { return v.(*recurly.Plan).TaxCode }},
+		{Header: "Tax Exempt", Extract: func(v any) string {
+			return fmt.Sprintf("%t", v.(*recurly.Plan).TaxExempt)
+		}},
+		{Header: "Created At", Extract: func(v any) string {
+			p := v.(*recurly.Plan)
+			if p.CreatedAt != nil {
+				return p.CreatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Updated At", Extract: func(v any) string {
+			p := v.(*recurly.Plan)
+			if p.UpdatedAt != nil {
+				return p.UpdatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+	}
+}
+
+func newPlansGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <plan_id>",
+		Short: "Get plan details",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newPlanAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			plan, err := c.GetPlan(args[0])
+			if err != nil {
+				return err
+			}
+
+			columns := planDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, plan)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
 	return cmd
 }
 
