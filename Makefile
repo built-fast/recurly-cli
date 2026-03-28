@@ -24,7 +24,7 @@ test:
 test-e2e:
 	./e2e/run.sh
 
-check: test test-e2e
+check: test test-e2e check-surface
 
 surface:
 	go run ./internal/surface/cmd/gensurface > .surface
