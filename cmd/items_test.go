@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -1412,6 +1413,189 @@ func TestItemsUpdate_SDKError(t *testing.T) {
 	defer cleanup()
 
 	_, _, err := executeCommand("items", "update", "item-123", "--name", "bad")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- Deactivate tests ---
+
+func TestItemsDeactivate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("items", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "deactivate") {
+		t.Error("expected 'deactivate' in items help output")
+	}
+}
+
+func TestItemsDeactivateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("items", "deactivate", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected --yes flag in help output")
+	}
+}
+
+func TestItemsDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	_, _, err := executeCommand("items", "deactivate")
+	if err == nil {
+		t.Fatal("expected error for missing argument")
+	}
+}
+
+func TestItemsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	viper.Set("api_key", "")
+	defer viper.Set("api_key", "")
+
+	_, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
+	if err == nil {
+		t.Fatal("expected error when no API key is set")
+	}
+}
+
+func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to deactivate item item-123? [y/N]") {
+		t.Error("expected confirmation prompt with item ID in stderr")
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestItemsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Deactivation cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
+
+func TestItemsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			item := sampleItemDetail()
+			item.State = "inactive"
+			return item, nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-789")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "item-789" {
+		t.Errorf("expected item ID 'item-789', got %q", capturedID)
+	}
+	if !strings.Contains(stderr, "Are you sure") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "widget-1") {
+		t.Errorf("expected item details in output, got:\n%s", out)
+	}
+}
+
+func TestItemsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			item := sampleItemDetail()
+			item.State = "inactive"
+			return item, nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("items", "deactivate", "item-456", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "item-456" {
+		t.Errorf("expected item ID 'item-456', got %q", capturedID)
+	}
+	if strings.Contains(stderr, "Are you sure") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "widget-1") {
+		t.Errorf("expected item details in output, got:\n%s", out)
+	}
+}
+
+func TestItemsDeactivate_TableOutput(t *testing.T) {
+	mock := &mockItemAPI{
+		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			item := sampleItemDetail()
+			item.State = "inactive"
+			return item, nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "inactive") {
+		t.Errorf("expected 'inactive' state in output, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Premium Widget") {
+		t.Errorf("expected item name in output, got:\n%s", out)
+	}
+}
+
+func TestItemsDeactivate_JSONOutput(t *testing.T) {
+	mock := &mockItemAPI{
+		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			item := sampleItemDetail()
+			item.State = "inactive"
+			return item, nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "deactivate", "item-123", "--yes", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\nOutput: %s", err, out)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1 in JSON, got %v", result["code"])
+	}
+}
+
+func TestItemsDeactivate_SDKError(t *testing.T) {
+	mock := &mockItemAPI{
+		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, fmt.Errorf("not found")
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}

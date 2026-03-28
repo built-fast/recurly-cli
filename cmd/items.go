@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -21,6 +23,7 @@ func newItemsCmd() *cobra.Command {
 	cmd.AddCommand(newItemsGetCmd())
 	cmd.AddCommand(newItemsCreateCmd())
 	cmd.AddCommand(newItemsUpdateCmd())
+	cmd.AddCommand(newItemsDeactivateCmd())
 	return cmd
 }
 
@@ -96,19 +99,19 @@ func newItemsGetCmd() *cobra.Command {
 
 func newItemsCreateCmd() *cobra.Command {
 	var (
-		code                   string
-		name                   string
-		description            string
-		externalSku            string
-		accountingCode         string
-		revenueScheduleType    string
-		taxCode                string
-		taxExempt              bool
-		avalaraTransType       int
-		avalaraServiceType     int
-		harmonizedSystemCode   string
-		currencies             []string
-		unitAmounts            []float64
+		code                 string
+		name                 string
+		description          string
+		externalSku          string
+		accountingCode       string
+		revenueScheduleType  string
+		taxCode              string
+		taxExempt            bool
+		avalaraTransType     int
+		avalaraServiceType   int
+		harmonizedSystemCode string
+		currencies           []string
+		unitAmounts          []float64
 	)
 
 	cmd := &cobra.Command{
@@ -424,6 +427,61 @@ func newItemsListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&state, "state", "", "Filter by state (active or inactive)")
 	cmd.Flags().StringVar(&beginTime, "begin-time", "", "Filter by begin time (ISO8601 format)")
 	cmd.Flags().StringVar(&endTime, "end-time", "", "Filter by end time (ISO8601 format)")
+
+	return cmd
+}
+
+func newItemsDeactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "deactivate <item_id>",
+		Short: "Deactivate an item",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			itemID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate item %s? [y/N] ", itemID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := newItemAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			item, err := c.DeactivateItem(itemID)
+			if err != nil {
+				return err
+			}
+
+			columns := itemDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, item)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }

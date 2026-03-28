@@ -2,6 +2,7 @@ ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
 ARG recurly items update <item_id>
 ARG recurly plans deactivate <plan_id>
@@ -18,6 +19,7 @@ CMD recurly accounts update
 CMD recurly configure
 CMD recurly items
 CMD recurly items create
+CMD recurly items deactivate
 CMD recurly items get
 CMD recurly items list
 CMD recurly items update
@@ -72,6 +74,7 @@ FLAG recurly items create --revenue-schedule-type string
 FLAG recurly items create --tax-code string
 FLAG recurly items create --tax-exempt bool
 FLAG recurly items create --unit-amount float64Slice
+FLAG recurly items deactivate --yes bool
 FLAG recurly items list --all bool
 FLAG recurly items list --begin-time string
 FLAG recurly items list --end-time string
