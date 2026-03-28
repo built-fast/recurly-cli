@@ -4,6 +4,7 @@ ARG recurly accounts billing-info update <account_id>
 ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
+ARG recurly accounts subscriptions list <account_id>
 ARG recurly accounts update <account_id>
 ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
@@ -39,6 +40,8 @@ CMD recurly accounts deactivate
 CMD recurly accounts get
 CMD recurly accounts list
 CMD recurly accounts reactivate
+CMD recurly accounts subscriptions
+CMD recurly accounts subscriptions list
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly items
@@ -110,6 +113,11 @@ FLAG recurly accounts list --past-due bool
 FLAG recurly accounts list --sort string
 FLAG recurly accounts list --subscriber string
 FLAG recurly accounts reactivate --yes bool
+FLAG recurly accounts subscriptions list --all bool
+FLAG recurly accounts subscriptions list --limit int
+FLAG recurly accounts subscriptions list --order string
+FLAG recurly accounts subscriptions list --sort string
+FLAG recurly accounts subscriptions list --state string
 FLAG recurly accounts update --bill-to string
 FLAG recurly accounts update --company string
 FLAG recurly accounts update --email string
