@@ -28,6 +28,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	cmd.AddCommand(newSubscriptionsPauseCmd())
 	cmd.AddCommand(newSubscriptionsResumeCmd())
 	cmd.AddCommand(newSubscriptionsTerminateCmd())
+	cmd.AddCommand(newSubscriptionsConvertTrialCmd())
 	return cmd
 }
 
@@ -862,6 +863,61 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 	cmd.Flags().StringVar(&refund, "refund", "", "Refund type (full, partial, or none)")
 	cmd.Flags().BoolVar(&charge, "charge", false, "Invoice unbilled usage on the final invoice")
+
+	return cmd
+}
+
+func newSubscriptionsConvertTrialCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "convert-trial <subscription_id>",
+		Short: "Convert a trial subscription to a paid subscription",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			subscriptionID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to convert this trial subscription? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Conversion cancelled.")
+					return err
+				}
+			}
+
+			c, err := newSubscriptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			subscription, err := c.ConvertTrial(subscriptionID)
+			if err != nil {
+				return err
+			}
+
+			columns := subscriptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, subscription)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }
