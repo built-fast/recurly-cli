@@ -27,6 +27,7 @@ func newAccountsCmd() *cobra.Command {
 	cmd.AddCommand(newAccountBillingInfoCmd())
 	cmd.AddCommand(newAccountSubscriptionsCmd())
 	cmd.AddCommand(newAccountInvoicesCmd())
+	cmd.AddCommand(newAccountTransactionsCmd())
 	return cmd
 }
 
