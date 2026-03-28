@@ -91,3 +91,36 @@ func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
 		t.Errorf("expected 'API key not configured' error, got %q", stderr)
 	}
 }
+
+func TestAccountsCreate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "create") {
+		t.Error("expected accounts help to show 'create' subcommand")
+	}
+}
+
+func TestAccountsCreateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("accounts", "create", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{"--code", "--email", "--first-name", "--last-name", "--company", "--vat-number", "--tax-exempt", "--preferred-locale", "--bill-to"} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("accounts", "create", "--code", "test")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}

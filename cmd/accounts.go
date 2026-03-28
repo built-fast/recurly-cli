@@ -19,6 +19,7 @@ func newAccountsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountsListCmd())
 	cmd.AddCommand(newAccountsGetCmd())
+	cmd.AddCommand(newAccountsCreateCmd())
 	return cmd
 }
 
@@ -136,6 +137,115 @@ func newAccountsListCmd() *cobra.Command {
 	return cmd
 }
 
+func newAccountsCreateCmd() *cobra.Command {
+	var (
+		code            string
+		email           string
+		firstName       string
+		lastName        string
+		company         string
+		vatNumber       string
+		taxExempt       bool
+		preferredLocale string
+		billTo          string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create an account",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := client.NewClient()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.AccountCreate{}
+
+			if cmd.Flags().Changed("code") {
+				body.Code = recurly.String(code)
+			}
+			if cmd.Flags().Changed("email") {
+				body.Email = recurly.String(email)
+			}
+			if cmd.Flags().Changed("first-name") {
+				body.FirstName = recurly.String(firstName)
+			}
+			if cmd.Flags().Changed("last-name") {
+				body.LastName = recurly.String(lastName)
+			}
+			if cmd.Flags().Changed("company") {
+				body.Company = recurly.String(company)
+			}
+			if cmd.Flags().Changed("vat-number") {
+				body.VatNumber = recurly.String(vatNumber)
+			}
+			if cmd.Flags().Changed("tax-exempt") {
+				body.TaxExempt = recurly.Bool(taxExempt)
+			}
+			if cmd.Flags().Changed("preferred-locale") {
+				body.PreferredLocale = recurly.String(preferredLocale)
+			}
+			if cmd.Flags().Changed("bill-to") {
+				body.BillTo = recurly.String(billTo)
+			}
+
+			account, err := c.CreateAccount(body)
+			if err != nil {
+				return err
+			}
+
+			columns := accountDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, account)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&code, "code", "", "Unique account code")
+	cmd.Flags().StringVar(&email, "email", "", "Account email address")
+	cmd.Flags().StringVar(&firstName, "first-name", "", "First name")
+	cmd.Flags().StringVar(&lastName, "last-name", "", "Last name")
+	cmd.Flags().StringVar(&company, "company", "", "Company name")
+	cmd.Flags().StringVar(&vatNumber, "vat-number", "", "VAT number")
+	cmd.Flags().BoolVar(&taxExempt, "tax-exempt", false, "Tax exempt status")
+	cmd.Flags().StringVar(&preferredLocale, "preferred-locale", "", "Preferred locale (e.g. en-US)")
+	cmd.Flags().StringVar(&billTo, "bill-to", "", "Billing target (self or parent)")
+
+	return cmd
+}
+
+func accountDetailColumns() []output.Column {
+	return []output.Column{
+		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Account).Code }},
+		{Header: "Email", Extract: func(v any) string { return v.(*recurly.Account).Email }},
+		{Header: "First Name", Extract: func(v any) string { return v.(*recurly.Account).FirstName }},
+		{Header: "Last Name", Extract: func(v any) string { return v.(*recurly.Account).LastName }},
+		{Header: "Company", Extract: func(v any) string { return v.(*recurly.Account).Company }},
+		{Header: "State", Extract: func(v any) string { return v.(*recurly.Account).State }},
+		{Header: "Created At", Extract: func(v any) string {
+			a := v.(*recurly.Account)
+			if a.CreatedAt != nil {
+				return a.CreatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Updated At", Extract: func(v any) string {
+			a := v.(*recurly.Account)
+			if a.UpdatedAt != nil {
+				return a.UpdatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+	}
+}
+
 func newAccountsGetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get <account_id>",
@@ -154,28 +264,7 @@ func newAccountsGetCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(*recurly.Account).Code }},
-				{Header: "Email", Extract: func(v any) string { return v.(*recurly.Account).Email }},
-				{Header: "First Name", Extract: func(v any) string { return v.(*recurly.Account).FirstName }},
-				{Header: "Last Name", Extract: func(v any) string { return v.(*recurly.Account).LastName }},
-				{Header: "Company", Extract: func(v any) string { return v.(*recurly.Account).Company }},
-				{Header: "State", Extract: func(v any) string { return v.(*recurly.Account).State }},
-				{Header: "Created At", Extract: func(v any) string {
-					a := v.(*recurly.Account)
-					if a.CreatedAt != nil {
-						return a.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-				{Header: "Updated At", Extract: func(v any) string {
-					a := v.(*recurly.Account)
-					if a.UpdatedAt != nil {
-						return a.UpdatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			columns := accountDetailColumns()
 
 			formatted, err := output.FormatOne(format, columns, account)
 			if err != nil {
