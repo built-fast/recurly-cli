@@ -6,6 +6,8 @@ import (
 
 	"github.com/built-fast/recurly-cli/internal/client"
 	"github.com/built-fast/recurly-cli/internal/config"
+	"github.com/built-fast/recurly-cli/internal/output"
+	"github.com/itchyny/gojq"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,6 +29,33 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		output.SetJQ(nil)
+		jqExpr, _ := cmd.Flags().GetString("jq")
+		if jqExpr != "" {
+			outputChanged := cmd.Flags().Changed("output")
+			outputFormat, _ := cmd.Flags().GetString("output")
+
+			if outputChanged && outputFormat == "table" {
+				return fmt.Errorf("--jq and --output table are mutually exclusive")
+			}
+
+			if !outputChanged {
+				viper.Set("output", "json")
+			}
+
+			query, err := gojq.Parse(jqExpr)
+			if err != nil {
+				return fmt.Errorf("invalid jq expression: %w", err)
+			}
+
+			code, err := gojq.Compile(query)
+			if err != nil {
+				return fmt.Errorf("compiling jq expression: %w", err)
+			}
+
+			output.SetJQ(code)
+		}
+
 		if err := config.Init(); err != nil {
 			return err
 		}
@@ -35,10 +64,12 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 		}
+
 		return nil
 	}
 
 	rootCmd.PersistentFlags().String("api-key", "", "Recurly API key")
+	rootCmd.PersistentFlags().String("jq", "", "Filter JSON output with a jq expression (built-in, no external jq required)")
 	rootCmd.PersistentFlags().String("region", "us", "Recurly region (us or eu)")
 	rootCmd.PersistentFlags().String("output", "table", "Output format (table, json, json-pretty)")
 

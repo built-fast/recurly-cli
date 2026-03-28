@@ -12,6 +12,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 FLAG recurly --api-key string
+FLAG recurly --jq string
 FLAG recurly --output string
 FLAG recurly --region string
 FLAG recurly accounts create --bill-to string

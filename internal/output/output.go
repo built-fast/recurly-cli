@@ -42,6 +42,14 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 		return "", err
 	}
 
+	if HasJQ() {
+		data := items
+		if data == nil {
+			data = []any{}
+		}
+		return applyJQ(data)
+	}
+
 	switch format {
 	case "json", "json-pretty":
 		data := items
@@ -67,6 +75,10 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 func FormatOne(format string, columns []Column, item any) (string, error) {
 	if err := ValidateFormat(format); err != nil {
 		return "", err
+	}
+
+	if HasJQ() {
+		return applyJQ(item)
 	}
 
 	switch format {

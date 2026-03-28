@@ -105,3 +105,49 @@ func TestRootValidRegion_CaseInsensitive(t *testing.T) {
 		t.Error("expected help output")
 	}
 }
+
+func TestRootJQFlag_InvalidExpression(t *testing.T) {
+	_, stderr, err := executeCommand("--jq", "invalid[[[", "configure")
+	if err == nil {
+		t.Fatal("expected error for invalid jq expression")
+	}
+	if !strings.Contains(stderr, "invalid jq expression") {
+		t.Errorf("expected stderr to contain 'invalid jq expression', got %q", stderr)
+	}
+}
+
+func TestRootJQFlag_MutuallyExclusiveWithTable(t *testing.T) {
+	_, stderr, err := executeCommand("--jq", ".name", "--output", "table", "configure")
+	if err == nil {
+		t.Fatal("expected error for --jq with --output table")
+	}
+	if !strings.Contains(stderr, "mutually exclusive") {
+		t.Errorf("expected stderr to contain 'mutually exclusive', got %q", stderr)
+	}
+}
+
+func TestRootJQFlag_AllowedWithJSON(t *testing.T) {
+	// --jq with --output json should not produce a mutual exclusivity error
+	_, stderr, err := executeCommand("--jq", ".", "--output", "json", "configure")
+	if err != nil && strings.Contains(stderr, "mutually exclusive") {
+		t.Error("--jq with --output json should not be mutually exclusive")
+	}
+}
+
+func TestRootJQFlag_AllowedWithJSONPretty(t *testing.T) {
+	// --jq with --output json-pretty should not produce a mutual exclusivity error
+	_, stderr, err := executeCommand("--jq", ".", "--output", "json-pretty", "configure")
+	if err != nil && strings.Contains(stderr, "mutually exclusive") {
+		t.Error("--jq with --output json-pretty should not be mutually exclusive")
+	}
+}
+
+func TestRootJQFlag_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--jq") {
+		t.Error("expected help output to contain --jq flag")
+	}
+}
