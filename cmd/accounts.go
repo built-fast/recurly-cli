@@ -18,6 +18,7 @@ func newAccountsCmd() *cobra.Command {
 		Short: "Manage accounts",
 	}
 	cmd.AddCommand(newAccountsListCmd())
+	cmd.AddCommand(newAccountsGetCmd())
 	return cmd
 }
 
@@ -131,6 +132,60 @@ func newAccountsListCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&pastDue, "past-due", false, "Filter for accounts with past-due invoices")
 	cmd.Flags().StringVar(&beginTime, "begin-time", "", "Filter by begin time (ISO8601 format)")
 	cmd.Flags().StringVar(&endTime, "end-time", "", "Filter by end time (ISO8601 format)")
+
+	return cmd
+}
+
+func newAccountsGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <account_id>",
+		Short: "Get account details",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := client.NewClient()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			account, err := c.GetAccount(args[0])
+			if err != nil {
+				return err
+			}
+
+			columns := []output.Column{
+				{Header: "Code", Extract: func(v any) string { return v.(*recurly.Account).Code }},
+				{Header: "Email", Extract: func(v any) string { return v.(*recurly.Account).Email }},
+				{Header: "First Name", Extract: func(v any) string { return v.(*recurly.Account).FirstName }},
+				{Header: "Last Name", Extract: func(v any) string { return v.(*recurly.Account).LastName }},
+				{Header: "Company", Extract: func(v any) string { return v.(*recurly.Account).Company }},
+				{Header: "State", Extract: func(v any) string { return v.(*recurly.Account).State }},
+				{Header: "Created At", Extract: func(v any) string {
+					a := v.(*recurly.Account)
+					if a.CreatedAt != nil {
+						return a.CreatedAt.Format(time.RFC3339)
+					}
+					return ""
+				}},
+				{Header: "Updated At", Extract: func(v any) string {
+					a := v.(*recurly.Account)
+					if a.UpdatedAt != nil {
+						return a.UpdatedAt.Format(time.RFC3339)
+					}
+					return ""
+				}},
+			}
+
+			formatted, err := output.FormatOne(format, columns, account)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
 
 	return cmd
 }

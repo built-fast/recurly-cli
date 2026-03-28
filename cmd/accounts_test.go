@@ -60,3 +60,34 @@ func TestAccountsList_InvalidEndTime_ReturnsError(t *testing.T) {
 		t.Errorf("expected 'invalid --end-time' error, got %q", stderr)
 	}
 }
+
+func TestAccountsGet_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "get") {
+		t.Error("expected accounts help to show 'get' subcommand")
+	}
+}
+
+func TestAccountsGet_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("accounts", "get")
+	if err == nil {
+		t.Fatal("expected error when no account ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("accounts", "get", "abc123")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
