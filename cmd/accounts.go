@@ -24,6 +24,7 @@ func newAccountsCmd() *cobra.Command {
 	cmd.AddCommand(newAccountsCreateCmd())
 	cmd.AddCommand(newAccountsUpdateCmd())
 	cmd.AddCommand(newAccountsDeactivateCmd())
+	cmd.AddCommand(newAccountsReactivateCmd())
 	return cmd
 }
 
@@ -364,6 +365,61 @@ func newAccountsDeactivateCmd() *cobra.Command {
 			format := viper.GetString("output")
 
 			account, err := c.DeactivateAccount(accountID)
+			if err != nil {
+				return err
+			}
+
+			columns := accountDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, account)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newAccountsReactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "reactivate <account_id>",
+		Short: "Reactivate an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			accountID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to reactivate this account? [y/N] "); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := client.NewClient()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			account, err := c.ReactivateAccount(accountID)
 			if err != nil {
 				return err
 			}

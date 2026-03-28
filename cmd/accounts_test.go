@@ -234,3 +234,69 @@ func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
+
+func TestAccountsReactivate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "reactivate") {
+		t.Error("expected accounts help to show 'reactivate' subcommand")
+	}
+}
+
+func TestAccountsReactivateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("accounts", "reactivate", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected help output to contain --yes flag")
+	}
+}
+
+func TestAccountsReactivate_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("accounts", "reactivate")
+	if err == nil {
+		t.Fatal("expected error when no account ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("accounts", "reactivate", "abc123", "--yes")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "reactivate", "abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to reactivate this account? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Reactivation cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestAccountsReactivate_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "reactivate", "abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Reactivation cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
