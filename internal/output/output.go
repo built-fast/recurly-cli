@@ -47,7 +47,12 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 		if data == nil {
 			data = []any{}
 		}
-		return applyJQ(data)
+		envelope := listEnvelope{
+			Object:  "list",
+			HasMore: hasMore,
+			Data:    data,
+		}
+		return applyJQ(envelope, format)
 	}
 
 	switch format {
@@ -78,7 +83,7 @@ func FormatOne(format string, columns []Column, item any) (string, error) {
 	}
 
 	if HasJQ() {
-		return applyJQ(item)
+		return applyJQ(item, format)
 	}
 
 	switch format {

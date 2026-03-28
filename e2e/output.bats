@@ -184,3 +184,140 @@ load "test_helper"
   assert_failure
   assert_output_contains "invalid output format"
 }
+
+# --- jq Filtering (List) ---
+
+@test "--jq on list receives full envelope with .object field" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.object'
+  assert_success
+  if [ "$output" != "list" ]; then
+    echo "expected 'list', got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq on list can access .has_more boolean" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.has_more'
+  assert_success
+  # has_more should be true or false
+  if [ "$output" != "true" ] && [ "$output" != "false" ]; then
+    echo "expected true or false, got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq on list can access .data array" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data | type'
+  assert_success
+  if [ "$output" != "array" ]; then
+    echo "expected 'array', got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq on list extracts field from data items" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[0].code'
+  assert_success
+  # Should produce a non-empty string (the account code)
+  if [ -z "$output" ]; then
+    echo "expected non-empty output for .data[0].code" >&2
+    return 1
+  fi
+}
+
+@test "--jq on list with .data[] produces multiple lines" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[].code'
+  assert_success
+  # At least one line of output
+  local line_count
+  line_count="$(echo "$output" | wc -l | tr -d ' ')"
+  if [ "$line_count" -lt 1 ]; then
+    echo "expected at least 1 line, got $line_count" >&2
+    return 1
+  fi
+}
+
+@test "--jq string result prints raw (no quotes)" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.object'
+  assert_success
+  # Should not have surrounding quotes
+  if [[ "$output" == \"*\" ]]; then
+    echo "expected raw string without quotes, got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq null result prints literal null" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.nonexistent_field'
+  assert_success
+  if [ "$output" != "null" ]; then
+    echo "expected 'null', got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq numeric result prints number" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data | length'
+  assert_success
+  # Should be a number (at least 1 since we got results)
+  if ! [[ "$output" =~ ^[0-9]+$ ]]; then
+    echo "expected numeric output, got '$output'" >&2
+    return 1
+  fi
+}
+
+@test "--jq object result with --output json is compact" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[0] | {code: .code}' --output json
+  assert_success
+  is_valid_json
+  local line_count
+  line_count="$(echo "$output" | wc -l | tr -d ' ')"
+  if [ "$line_count" -ne 1 ]; then
+    echo "expected compact JSON on 1 line, got $line_count" >&2
+    return 1
+  fi
+}
+
+@test "--jq object result with --output json-pretty is indented" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[0] | {code: .code}' --output json-pretty
+  assert_success
+  is_valid_json
+  local line_count
+  line_count="$(echo "$output" | wc -l | tr -d ' ')"
+  if [ "$line_count" -le 1 ]; then
+    echo "expected indented JSON (multi-line), got $line_count line(s)" >&2
+    return 1
+  fi
+}
+
+@test "--jq empty result produces no output" {
+  run "$RECURLY_BINARY" accounts list --limit 1 --jq '.data[] | select(.code == "IMPOSSIBLE_CODE_VALUE_XYZ")'
+  assert_success
+  if [ -n "$output" ]; then
+    echo "expected empty output, got '$output'" >&2
+    return 1
+  fi
+}
+
+# --- jq Filtering (Detail / Get) ---
+
+@test "--jq on get receives bare resource object" {
+  run "$RECURLY_BINARY" accounts get "code-test123" --jq '.code'
+  assert_success
+  # Should produce a non-empty string (the account code)
+  if [ -z "$output" ]; then
+    echo "expected non-empty output for .code" >&2
+    return 1
+  fi
+}
+
+@test "--jq on get does not have envelope fields" {
+  run "$RECURLY_BINARY" accounts get "code-test123" --jq '.object'
+  assert_success
+  # For a bare resource, .object is typically "account" or similar —
+  # but definitely not "list" (which would indicate envelope wrapping)
+  if [ "$output" = "list" ]; then
+    echo "expected bare resource (not list envelope)" >&2
+    return 1
+  fi
+}
