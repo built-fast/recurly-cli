@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/built-fast/recurly-cli/internal/client"
 	"github.com/built-fast/recurly-cli/internal/output"
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -45,7 +44,7 @@ func newAccountsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List accounts",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
@@ -159,7 +158,7 @@ func newAccountsCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create an account",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
@@ -268,7 +267,7 @@ func newAccountsUpdateCmd() *cobra.Command {
 		Short: "Update an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
@@ -357,7 +356,7 @@ func newAccountsDeactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
@@ -412,7 +411,7 @@ func newAccountsReactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
@@ -447,7 +446,7 @@ func newAccountsGetCmd() *cobra.Command {
 		Short: "Get account details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := client.NewClient()
+			c, err := newAccountAPI()
 			if err != nil {
 				return err
 			}
