@@ -39,7 +39,7 @@ test:
 test-e2e:
 	./e2e/run.sh
 
-check: test test-e2e check-surface
+check: fmt-check vet lint tidy-check check-surface test test-e2e vuln
 
 surface:
 	go run ./internal/surface/cmd/gensurface > .surface
