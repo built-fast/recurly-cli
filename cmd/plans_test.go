@@ -156,7 +156,9 @@ func TestPlansListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansList_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("plans", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -384,6 +386,56 @@ func TestPlansList_SDKError(t *testing.T) {
 	}
 }
 
+func TestPlansList_EmptyResults(t *testing.T) {
+	mock := &mockPlanAPI{
+		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
+			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "list")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Table output should still have headers but no data rows
+	if strings.Contains(out, "gold") {
+		t.Error("expected no plan data in empty results")
+	}
+}
+
+func TestPlansList_EmptyResults_JSON(t *testing.T) {
+	mock := &mockPlanAPI{
+		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
+			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "list", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var envelope struct {
+		Object  string        `json:"object"`
+		HasMore bool          `json:"has_more"`
+		Data    []interface{} `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &envelope); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if envelope.Object != "list" {
+		t.Errorf("expected object=list, got %s", envelope.Object)
+	}
+	if len(envelope.Data) != 0 {
+		t.Errorf("expected empty data array, got %d items", len(envelope.Data))
+	}
+}
+
 // --- plans get ---
 
 func TestPlansGet_ShowsInHelp(t *testing.T) {
@@ -407,7 +459,9 @@ func TestPlansGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestPlansGet_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("plans", "get", "p1234")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -627,7 +681,9 @@ func TestPlansCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("plans", "create", "--code", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -716,6 +772,163 @@ func TestPlansCreate_MultiCurrencyFlags(t *testing.T) {
 	}
 	if *currencies[1].Currency != "EUR" || *currencies[1].UnitAmount != 9.00 {
 		t.Errorf("expected EUR/9.00, got %s/%.2f", *currencies[1].Currency, *currencies[1].UnitAmount)
+	}
+}
+
+func TestPlansCreate_SingleCurrency(t *testing.T) {
+	var capturedBody *recurly.PlanCreate
+	mock := &mockPlanAPI{
+		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "create",
+		"--code", "single",
+		"--name", "Single Currency",
+		"--currency", "USD",
+		"--unit-amount", "19.99",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	currencies := *capturedBody.Currencies
+	if len(currencies) != 1 {
+		t.Fatalf("expected 1 currency, got %d", len(currencies))
+	}
+	if *currencies[0].Currency != "USD" || *currencies[0].UnitAmount != 19.99 {
+		t.Errorf("expected USD/19.99, got %s/%.2f", *currencies[0].Currency, *currencies[0].UnitAmount)
+	}
+}
+
+func TestPlansCreate_AllFlagsPopulated(t *testing.T) {
+	var capturedBody *recurly.PlanCreate
+	mock := &mockPlanAPI{
+		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
+			capturedBody = body
+			return samplePlanDetail(), nil
+		},
+	}
+	cleanup := setMockPlanAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "create",
+		// Core
+		"--code", "full",
+		"--name", "Full Plan",
+		"--interval-unit", "month",
+		"--interval-length", "1",
+		"--description", "All flags test",
+		"--pricing-model", "fixed",
+		// Currency
+		"--currency", "USD",
+		"--unit-amount", "29.99",
+		"--setup-fee", "10.00",
+		// Trial
+		"--trial-unit", "day",
+		"--trial-length", "7",
+		"--trial-requires-billing-info",
+		// Billing
+		"--auto-renew",
+		"--total-billing-cycles", "24",
+		// Tax
+		"--tax-code", "digital",
+		"--tax-exempt",
+		"--avalara-transaction-type", "100",
+		"--avalara-service-type", "200",
+		"--vertex-transaction-type", "sale",
+		"--harmonized-system-code", "8471.30",
+		// Accounting
+		"--accounting-code", "PLAN-FULL",
+		"--revenue-schedule-type", "evenly",
+		"--liability-gl-account-id", "gl-1",
+		"--revenue-gl-account-id", "gl-2",
+		"--performance-obligation-id", "po-1",
+		"--setup-fee-accounting-code", "SF-FULL",
+		"--setup-fee-revenue-schedule-type", "at_range_start",
+		"--setup-fee-liability-gl-account-id", "gl-3",
+		"--setup-fee-revenue-gl-account-id", "gl-4",
+		"--setup-fee-performance-obligation-id", "po-2",
+		// Hosted pages
+		"--success-url", "https://example.com/ok",
+		"--cancel-url", "https://example.com/cancel",
+		"--bypass-confirmation",
+		"--display-quantity",
+		// Other
+		"--allow-any-item-on-subscriptions",
+		"--dunning-campaign-id", "dc-full",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify all flag groups were captured
+	if *capturedBody.Code != "full" {
+		t.Errorf("expected code=full, got %v", *capturedBody.Code)
+	}
+	if *capturedBody.Name != "Full Plan" {
+		t.Errorf("expected name=Full Plan, got %v", *capturedBody.Name)
+	}
+	if *capturedBody.IntervalUnit != "month" {
+		t.Errorf("expected interval-unit=month, got %v", *capturedBody.IntervalUnit)
+	}
+	if *capturedBody.IntervalLength != 1 {
+		t.Errorf("expected interval-length=1, got %v", *capturedBody.IntervalLength)
+	}
+	if *capturedBody.Description != "All flags test" {
+		t.Errorf("expected description, got %v", *capturedBody.Description)
+	}
+	if *capturedBody.PricingModel != "fixed" {
+		t.Errorf("expected pricing-model=fixed, got %v", *capturedBody.PricingModel)
+	}
+	if capturedBody.Currencies == nil || len(*capturedBody.Currencies) != 1 {
+		t.Fatal("expected 1 currency")
+	}
+	if capturedBody.SetupFees == nil || len(*capturedBody.SetupFees) != 1 {
+		t.Fatal("expected 1 setup fee")
+	}
+	if *capturedBody.TrialUnit != "day" {
+		t.Errorf("expected trial-unit=day, got %v", *capturedBody.TrialUnit)
+	}
+	if *capturedBody.TrialLength != 7 {
+		t.Errorf("expected trial-length=7, got %v", *capturedBody.TrialLength)
+	}
+	if *capturedBody.TrialRequiresBillingInfo != true {
+		t.Error("expected trial-requires-billing-info=true")
+	}
+	if *capturedBody.AutoRenew != true {
+		t.Error("expected auto-renew=true")
+	}
+	if *capturedBody.TotalBillingCycles != 24 {
+		t.Errorf("expected total-billing-cycles=24, got %v", *capturedBody.TotalBillingCycles)
+	}
+	if *capturedBody.TaxCode != "digital" {
+		t.Errorf("expected tax-code=digital, got %v", *capturedBody.TaxCode)
+	}
+	if *capturedBody.TaxExempt != true {
+		t.Error("expected tax-exempt=true")
+	}
+	if *capturedBody.AccountingCode != "PLAN-FULL" {
+		t.Errorf("expected accounting-code=PLAN-FULL, got %v", *capturedBody.AccountingCode)
+	}
+	if capturedBody.HostedPages == nil {
+		t.Fatal("expected hosted pages to be set")
+	}
+	if *capturedBody.HostedPages.SuccessUrl != "https://example.com/ok" {
+		t.Errorf("expected success-url, got %v", *capturedBody.HostedPages.SuccessUrl)
+	}
+	if *capturedBody.AllowAnyItemOnSubscriptions != true {
+		t.Error("expected allow-any-item-on-subscriptions=true")
+	}
+	if *capturedBody.DunningCampaignId != "dc-full" {
+		t.Errorf("expected dunning-campaign-id=dc-full, got %v", *capturedBody.DunningCampaignId)
 	}
 }
 
@@ -1233,7 +1446,9 @@ func TestPlansUpdate_MissingArg(t *testing.T) {
 }
 
 func TestPlansUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("plans", "update", "p1234", "--name", "New Name")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
