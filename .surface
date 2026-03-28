@@ -6,6 +6,14 @@ ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
 ARG recurly items reactivate <item_id>
 ARG recurly items update <item_id>
+ARG recurly plans add-ons create <plan_id>
+ARG recurly plans add-ons delete <add_on_id>
+ARG recurly plans add-ons delete <plan_id>
+ARG recurly plans add-ons get <add_on_id>
+ARG recurly plans add-ons get <plan_id>
+ARG recurly plans add-ons list <plan_id>
+ARG recurly plans add-ons update <add_on_id>
+ARG recurly plans add-ons update <plan_id>
 ARG recurly plans deactivate <plan_id>
 ARG recurly plans get <plan_id>
 ARG recurly plans update <plan_id>
@@ -34,6 +42,12 @@ CMD recurly items list
 CMD recurly items reactivate
 CMD recurly items update
 CMD recurly plans
+CMD recurly plans add-ons
+CMD recurly plans add-ons create
+CMD recurly plans add-ons delete
+CMD recurly plans add-ons get
+CMD recurly plans add-ons list
+CMD recurly plans add-ons update
 CMD recurly plans create
 CMD recurly plans deactivate
 CMD recurly plans get
@@ -117,6 +131,39 @@ FLAG recurly items update --revenue-schedule-type string
 FLAG recurly items update --tax-code string
 FLAG recurly items update --tax-exempt bool
 FLAG recurly items update --unit-amount float64Slice
+FLAG recurly plans add-ons create --accounting-code string
+FLAG recurly plans add-ons create --add-on-type string
+FLAG recurly plans add-ons create --code string
+FLAG recurly plans add-ons create --currency stringSlice
+FLAG recurly plans add-ons create --default-quantity int
+FLAG recurly plans add-ons create --display-quantity bool
+FLAG recurly plans add-ons create --measured-unit-id string
+FLAG recurly plans add-ons create --name string
+FLAG recurly plans add-ons create --optional bool
+FLAG recurly plans add-ons create --revenue-schedule-type string
+FLAG recurly plans add-ons create --tax-code string
+FLAG recurly plans add-ons create --unit-amount float64Slice
+FLAG recurly plans add-ons create --usage-calculation-type string
+FLAG recurly plans add-ons create --usage-type string
+FLAG recurly plans add-ons delete --yes bool
+FLAG recurly plans add-ons list --all bool
+FLAG recurly plans add-ons list --limit int
+FLAG recurly plans add-ons list --order string
+FLAG recurly plans add-ons list --sort string
+FLAG recurly plans add-ons list --state string
+FLAG recurly plans add-ons update --accounting-code string
+FLAG recurly plans add-ons update --code string
+FLAG recurly plans add-ons update --currency stringSlice
+FLAG recurly plans add-ons update --default-quantity int
+FLAG recurly plans add-ons update --display-quantity bool
+FLAG recurly plans add-ons update --measured-unit-id string
+FLAG recurly plans add-ons update --measured-unit-name string
+FLAG recurly plans add-ons update --name string
+FLAG recurly plans add-ons update --optional bool
+FLAG recurly plans add-ons update --revenue-schedule-type string
+FLAG recurly plans add-ons update --tax-code string
+FLAG recurly plans add-ons update --unit-amount float64Slice
+FLAG recurly plans add-ons update --usage-calculation-type string
 FLAG recurly plans create --accounting-code string
 FLAG recurly plans create --allow-any-item-on-subscriptions bool
 FLAG recurly plans create --auto-renew bool

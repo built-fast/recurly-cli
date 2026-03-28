@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ func newPlanAddOnsCmd() *cobra.Command {
 	cmd.AddCommand(newPlanAddOnsGetCmd())
 	cmd.AddCommand(newPlanAddOnsCreateCmd())
 	cmd.AddCommand(newPlanAddOnsUpdateCmd())
+	cmd.AddCommand(newPlanAddOnsDeleteCmd())
 	return cmd
 }
 
@@ -428,6 +430,62 @@ func newPlanAddOnsUpdateCmd() *cobra.Command {
 	// Multi-currency flags
 	cmd.Flags().StringSliceVar(&currencies, "currency", nil, "Currency code (repeatable, positionally matched with --unit-amount)")
 	cmd.Flags().Float64SliceVar(&unitAmounts, "unit-amount", nil, "Unit amount (repeatable, positionally matched with --currency)")
+
+	return cmd
+}
+
+func newPlanAddOnsDeleteCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "delete <plan_id> <add_on_id>",
+		Short: "Delete a plan add-on",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			planID := args[0]
+			addOnID := args[1]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Delete add-on %s from plan %s? [y/N] ", addOnID, planID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deletion cancelled.")
+					return err
+				}
+			}
+
+			c, err := newPlanAddOnAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			addOn, err := c.RemovePlanAddOn(planID, addOnID)
+			if err != nil {
+				return err
+			}
+
+			columns := planAddOnDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, addOn)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }

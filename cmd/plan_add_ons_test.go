@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"strings"
@@ -17,6 +18,7 @@ type mockPlanAddOnAPI struct {
 	getPlanAddOnFn    func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error)
 	createPlanAddOnFn func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error)
 	updatePlanAddOnFn func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error)
+	removePlanAddOnFn func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error)
 }
 
 func (m *mockPlanAddOnAPI) ListPlanAddOns(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -45,6 +47,9 @@ func (m *mockPlanAddOnAPI) UpdatePlanAddOn(planId string, addOnId string, body *
 }
 
 func (m *mockPlanAddOnAPI) RemovePlanAddOn(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+	if m.removePlanAddOnFn != nil {
+		return m.removePlanAddOnFn(planId, addOnId, opts...)
+	}
 	return nil, nil
 }
 
@@ -1453,6 +1458,189 @@ func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
 	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Test",
 	)
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- Delete tests ---
+
+func TestPlanAddOnsDelete_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("plans", "add-ons", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "delete") {
+		t.Error("expected 'delete' in add-ons help output")
+	}
+}
+
+func TestPlanAddOnsDeleteHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("plans", "add-ons", "delete", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected --yes flag in help output")
+	}
+}
+
+func TestPlanAddOnsDelete_MissingArgs_ReturnsError(t *testing.T) {
+	_, _, err := executeCommand("plans", "add-ons", "delete")
+	if err == nil {
+		t.Fatal("expected error for missing arguments")
+	}
+
+	_, _, err = executeCommand("plans", "add-ons", "delete", "plan1")
+	if err == nil {
+		t.Fatal("expected error for missing add_on_id argument")
+	}
+}
+
+func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Delete add-on addon-456 from plan plan-123? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Deletion cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestPlanAddOnsDelete_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Deletion cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
+
+func TestPlanAddOnsDelete_ConfirmYes_Succeeds(t *testing.T) {
+	var capturedPlanID, capturedAddOnID string
+	mock := &mockPlanAddOnAPI{
+		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedPlanID = planId
+			capturedAddOnID = addOnId
+			a := sampleAddOn()
+			a.State = "inactive"
+			return &a, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-789", "addon-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedPlanID != "plan-789" {
+		t.Errorf("expected plan ID 'plan-789', got %q", capturedPlanID)
+	}
+	if capturedAddOnID != "addon-123" {
+		t.Errorf("expected add-on ID 'addon-123', got %q", capturedAddOnID)
+	}
+	if !strings.Contains(stderr, "Delete add-on") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "extra-users") {
+		t.Errorf("expected add-on details in output, got:\n%s", out)
+	}
+}
+
+func TestPlanAddOnsDelete_YesFlag_SkipsPrompt(t *testing.T) {
+	var capturedPlanID, capturedAddOnID string
+	mock := &mockPlanAddOnAPI{
+		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+			capturedPlanID = planId
+			capturedAddOnID = addOnId
+			a := sampleAddOn()
+			a.State = "inactive"
+			return &a, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("plans", "add-ons", "delete", "plan-456", "addon-789", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedPlanID != "plan-456" {
+		t.Errorf("expected plan ID 'plan-456', got %q", capturedPlanID)
+	}
+	if capturedAddOnID != "addon-789" {
+		t.Errorf("expected add-on ID 'addon-789', got %q", capturedAddOnID)
+	}
+	if strings.Contains(stderr, "Delete add-on") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "extra-users") {
+		t.Errorf("expected add-on details in output, got:\n%s", out)
+	}
+}
+
+func TestPlanAddOnsDelete_DetailView(t *testing.T) {
+	mock := &mockPlanAddOnAPI{
+		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+			a := sampleAddOn()
+			return &a, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, expected := range []string{"a1234", "extra-users", "Extra Users", "active", "fixed"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected detail output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestPlanAddOnsDelete_JSONOutput(t *testing.T) {
+	mock := &mockPlanAddOnAPI{
+		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+			a := sampleAddOn()
+			return &a, nil
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\nOutput: %s", err, out)
+	}
+	if result["code"] != "extra-users" {
+		t.Errorf("expected code 'extra-users', got %v", result["code"])
+	}
+}
+
+func TestPlanAddOnsDelete_SDKError(t *testing.T) {
+	mock := &mockPlanAddOnAPI{
+		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
+			return nil, &recurly.Error{Message: "not found"}
+		},
+	}
+	cleanup := setMockPlanAddOnAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
