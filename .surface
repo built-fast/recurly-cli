@@ -14,6 +14,8 @@ CMD recurly accounts list
 CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
+CMD recurly items
+CMD recurly items list
 CMD recurly plans
 CMD recurly plans create
 CMD recurly plans deactivate
@@ -52,6 +54,13 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly items list --all bool
+FLAG recurly items list --begin-time string
+FLAG recurly items list --end-time string
+FLAG recurly items list --limit int
+FLAG recurly items list --order string
+FLAG recurly items list --sort string
+FLAG recurly items list --state string
 FLAG recurly plans create --accounting-code string
 FLAG recurly plans create --allow-any-item-on-subscriptions bool
 FLAG recurly plans create --auto-renew bool
