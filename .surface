@@ -10,7 +10,12 @@ ARG recurly plans deactivate <plan_id>
 ARG recurly plans get <plan_id>
 ARG recurly plans update <plan_id>
 ARG recurly subscriptions cancel <subscription_id>
+ARG recurly subscriptions convert-trial <subscription_id>
 ARG recurly subscriptions get <subscription_id>
+ARG recurly subscriptions pause <subscription_id>
+ARG recurly subscriptions reactivate <subscription_id>
+ARG recurly subscriptions resume <subscription_id>
+ARG recurly subscriptions terminate <subscription_id>
 ARG recurly subscriptions update <subscription_id>
 CMD recurly
 CMD recurly accounts
@@ -36,9 +41,14 @@ CMD recurly plans list
 CMD recurly plans update
 CMD recurly subscriptions
 CMD recurly subscriptions cancel
+CMD recurly subscriptions convert-trial
 CMD recurly subscriptions create
 CMD recurly subscriptions get
 CMD recurly subscriptions list
+CMD recurly subscriptions pause
+CMD recurly subscriptions reactivate
+CMD recurly subscriptions resume
+CMD recurly subscriptions terminate
 CMD recurly subscriptions update
 FLAG recurly --api-key string
 FLAG recurly --jq string
@@ -184,6 +194,7 @@ FLAG recurly plans update --unit-amount float64Slice
 FLAG recurly plans update --vertex-transaction-type string
 FLAG recurly subscriptions cancel --timeframe string
 FLAG recurly subscriptions cancel --yes bool
+FLAG recurly subscriptions convert-trial --yes bool
 FLAG recurly subscriptions create --account-code string
 FLAG recurly subscriptions create --auto-renew bool
 FLAG recurly subscriptions create --billing-info-id string
@@ -210,6 +221,13 @@ FLAG recurly subscriptions list --order string
 FLAG recurly subscriptions list --plan-id string
 FLAG recurly subscriptions list --sort string
 FLAG recurly subscriptions list --state string
+FLAG recurly subscriptions pause --remaining-pause-cycles int
+FLAG recurly subscriptions pause --yes bool
+FLAG recurly subscriptions reactivate --yes bool
+FLAG recurly subscriptions resume --yes bool
+FLAG recurly subscriptions terminate --charge bool
+FLAG recurly subscriptions terminate --refund string
+FLAG recurly subscriptions terminate --yes bool
 FLAG recurly subscriptions update --auto-renew bool
 FLAG recurly subscriptions update --billing-info-id string
 FLAG recurly subscriptions update --collection-method string
