@@ -669,3 +669,409 @@ func TestItemsList_EmptyResults_JSON(t *testing.T) {
 		t.Errorf("expected empty data array, got %d items", len(envelope.Data))
 	}
 }
+
+// --- items create ---
+
+func TestItemsCreate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("items", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "create") {
+		t.Error("expected items help to show 'create' subcommand")
+	}
+}
+
+func TestItemsCreateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("items", "create", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{
+		"--code", "--name", "--description", "--external-sku",
+		"--accounting-code", "--revenue-schedule-type", "--tax-code",
+		"--tax-exempt", "--avalara-transaction-type", "--avalara-service-type",
+		"--harmonized-system-code", "--currency", "--unit-amount",
+	} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestItemsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommand("items", "create", "--code", "test")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestItemsCreate_CoreFlags(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create",
+		"--code", "widget-1",
+		"--name", "Premium Widget",
+		"--description", "A high-quality widget",
+		"--external-sku", "SKU-001",
+		"--accounting-code", "ACC-100",
+		"--revenue-schedule-type", "evenly",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody == nil {
+		t.Fatal("expected body to be captured")
+	}
+	if *capturedBody.Code != "widget-1" {
+		t.Errorf("expected code=widget-1, got %v", *capturedBody.Code)
+	}
+	if *capturedBody.Name != "Premium Widget" {
+		t.Errorf("expected name=Premium Widget, got %v", *capturedBody.Name)
+	}
+	if *capturedBody.Description != "A high-quality widget" {
+		t.Errorf("expected description, got %v", *capturedBody.Description)
+	}
+	if *capturedBody.ExternalSku != "SKU-001" {
+		t.Errorf("expected external-sku=SKU-001, got %v", *capturedBody.ExternalSku)
+	}
+	if *capturedBody.AccountingCode != "ACC-100" {
+		t.Errorf("expected accounting-code=ACC-100, got %v", *capturedBody.AccountingCode)
+	}
+	if *capturedBody.RevenueScheduleType != "evenly" {
+		t.Errorf("expected revenue-schedule-type=evenly, got %v", *capturedBody.RevenueScheduleType)
+	}
+}
+
+func TestItemsCreate_TaxFlags(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create",
+		"--code", "tax-item",
+		"--tax-code", "digital",
+		"--tax-exempt",
+		"--avalara-transaction-type", "3",
+		"--avalara-service-type", "6",
+		"--harmonized-system-code", "8471.30",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.TaxCode != "digital" {
+		t.Errorf("expected tax-code=digital, got %v", *capturedBody.TaxCode)
+	}
+	if *capturedBody.TaxExempt != true {
+		t.Error("expected tax-exempt=true")
+	}
+	if *capturedBody.AvalaraTransactionType != 3 {
+		t.Errorf("expected avalara-transaction-type=3, got %v", *capturedBody.AvalaraTransactionType)
+	}
+	if *capturedBody.AvalaraServiceType != 6 {
+		t.Errorf("expected avalara-service-type=6, got %v", *capturedBody.AvalaraServiceType)
+	}
+	if *capturedBody.HarmonizedSystemCode != "8471.30" {
+		t.Errorf("expected harmonized-system-code=8471.30, got %v", *capturedBody.HarmonizedSystemCode)
+	}
+}
+
+func TestItemsCreate_MultiCurrencyFlags(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create",
+		"--code", "multi",
+		"--name", "Multi Currency Item",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00", "--unit-amount", "9.00",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	currencies := *capturedBody.Currencies
+	if len(currencies) != 2 {
+		t.Fatalf("expected 2 currencies, got %d", len(currencies))
+	}
+	if *currencies[0].Currency != "USD" || *currencies[0].UnitAmount != 10.00 {
+		t.Errorf("expected USD/10.00, got %s/%.2f", *currencies[0].Currency, *currencies[0].UnitAmount)
+	}
+	if *currencies[1].Currency != "EUR" || *currencies[1].UnitAmount != 9.00 {
+		t.Errorf("expected EUR/9.00, got %s/%.2f", *currencies[1].Currency, *currencies[1].UnitAmount)
+	}
+}
+
+func TestItemsCreate_SingleCurrency(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create",
+		"--code", "single",
+		"--name", "Single Currency Item",
+		"--currency", "USD",
+		"--unit-amount", "19.99",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	currencies := *capturedBody.Currencies
+	if len(currencies) != 1 {
+		t.Fatalf("expected 1 currency, got %d", len(currencies))
+	}
+	if *currencies[0].Currency != "USD" || *currencies[0].UnitAmount != 19.99 {
+		t.Errorf("expected USD/19.99, got %s/%.2f", *currencies[0].Currency, *currencies[0].UnitAmount)
+	}
+}
+
+func TestItemsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("items", "create",
+		"--code", "bad",
+		"--name", "Bad Item",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00",
+	)
+	if err == nil {
+		t.Fatal("expected error for mismatched currency/unit-amount")
+	}
+	if !strings.Contains(stderr, "number of --currency values must match --unit-amount values") {
+		t.Errorf("expected mismatch error, got %q", stderr)
+	}
+}
+
+func TestItemsCreate_UnsetFlagsNotSent(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create", "--code", "minimal")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Name != nil {
+		t.Error("expected name to be nil when not set")
+	}
+	if capturedBody.Description != nil {
+		t.Error("expected description to be nil when not set")
+	}
+	if capturedBody.ExternalSku != nil {
+		t.Error("expected external-sku to be nil when not set")
+	}
+	if capturedBody.AccountingCode != nil {
+		t.Error("expected accounting-code to be nil when not set")
+	}
+	if capturedBody.RevenueScheduleType != nil {
+		t.Error("expected revenue-schedule-type to be nil when not set")
+	}
+	if capturedBody.TaxCode != nil {
+		t.Error("expected tax-code to be nil when not set")
+	}
+	if capturedBody.TaxExempt != nil {
+		t.Error("expected tax-exempt to be nil when not set")
+	}
+	if capturedBody.AvalaraTransactionType != nil {
+		t.Error("expected avalara-transaction-type to be nil when not set")
+	}
+	if capturedBody.AvalaraServiceType != nil {
+		t.Error("expected avalara-service-type to be nil when not set")
+	}
+	if capturedBody.HarmonizedSystemCode != nil {
+		t.Error("expected harmonized-system-code to be nil when not set")
+	}
+	if capturedBody.Currencies != nil {
+		t.Error("expected currencies to be nil when not set")
+	}
+}
+
+func TestItemsCreate_AllFlagsPopulated(t *testing.T) {
+	var capturedBody *recurly.ItemCreate
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create",
+		"--code", "full",
+		"--name", "Full Item",
+		"--description", "All flags test",
+		"--external-sku", "SKU-FULL",
+		"--accounting-code", "ACC-FULL",
+		"--revenue-schedule-type", "evenly",
+		"--tax-code", "digital",
+		"--tax-exempt",
+		"--avalara-transaction-type", "3",
+		"--avalara-service-type", "6",
+		"--harmonized-system-code", "8471.30",
+		"--currency", "USD",
+		"--unit-amount", "29.99",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.Code != "full" {
+		t.Errorf("expected code=full, got %v", *capturedBody.Code)
+	}
+	if *capturedBody.Name != "Full Item" {
+		t.Errorf("expected name=Full Item, got %v", *capturedBody.Name)
+	}
+	if *capturedBody.Description != "All flags test" {
+		t.Errorf("expected description, got %v", *capturedBody.Description)
+	}
+	if *capturedBody.ExternalSku != "SKU-FULL" {
+		t.Errorf("expected external-sku=SKU-FULL, got %v", *capturedBody.ExternalSku)
+	}
+	if *capturedBody.AccountingCode != "ACC-FULL" {
+		t.Errorf("expected accounting-code=ACC-FULL, got %v", *capturedBody.AccountingCode)
+	}
+	if *capturedBody.RevenueScheduleType != "evenly" {
+		t.Errorf("expected revenue-schedule-type=evenly, got %v", *capturedBody.RevenueScheduleType)
+	}
+	if *capturedBody.TaxCode != "digital" {
+		t.Errorf("expected tax-code=digital, got %v", *capturedBody.TaxCode)
+	}
+	if *capturedBody.TaxExempt != true {
+		t.Error("expected tax-exempt=true")
+	}
+	if *capturedBody.AvalaraTransactionType != 3 {
+		t.Errorf("expected avalara-transaction-type=3, got %v", *capturedBody.AvalaraTransactionType)
+	}
+	if *capturedBody.AvalaraServiceType != 6 {
+		t.Errorf("expected avalara-service-type=6, got %v", *capturedBody.AvalaraServiceType)
+	}
+	if *capturedBody.HarmonizedSystemCode != "8471.30" {
+		t.Errorf("expected harmonized-system-code=8471.30, got %v", *capturedBody.HarmonizedSystemCode)
+	}
+	if capturedBody.Currencies == nil || len(*capturedBody.Currencies) != 1 {
+		t.Fatal("expected 1 currency")
+	}
+}
+
+func TestItemsCreate_TableOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "create", "--code", "widget-1", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"Code", "widget-1",
+		"Name", "Premium Widget",
+		"Description", "A high-quality widget",
+		"External SKU", "SKU-001",
+		"State", "active",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestItemsCreate_JSONOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "create", "--code", "widget-1", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1 in JSON, got %v", result["code"])
+	}
+}
+
+func TestItemsCreate_SDKError(t *testing.T) {
+	mock := &mockItemAPI{
+		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, fmt.Errorf("validation failed")
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "create", "--code", "bad")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}

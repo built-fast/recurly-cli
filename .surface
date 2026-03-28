@@ -16,6 +16,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly items
+CMD recurly items create
 CMD recurly items get
 CMD recurly items list
 CMD recurly plans
@@ -56,6 +57,19 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly items create --accounting-code string
+FLAG recurly items create --avalara-service-type int
+FLAG recurly items create --avalara-transaction-type int
+FLAG recurly items create --code string
+FLAG recurly items create --currency stringSlice
+FLAG recurly items create --description string
+FLAG recurly items create --external-sku string
+FLAG recurly items create --harmonized-system-code string
+FLAG recurly items create --name string
+FLAG recurly items create --revenue-schedule-type string
+FLAG recurly items create --tax-code string
+FLAG recurly items create --tax-exempt bool
+FLAG recurly items create --unit-amount float64Slice
 FLAG recurly items list --all bool
 FLAG recurly items list --begin-time string
 FLAG recurly items list --end-time string
