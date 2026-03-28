@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -38,6 +39,11 @@ func NewClient() (*recurly.Client, error) {
 	}
 	if err := ValidateRegion(regionStr); err != nil {
 		return nil, err
+	}
+
+	// Allow overriding the API base URL (e.g., for local Prism mock server in e2e tests).
+	if apiURL := os.Getenv("RECURLY_API_URL"); apiURL != "" {
+		recurly.APIHost = apiURL
 	}
 
 	opts := recurly.ClientOptions{Region: recurly.US}

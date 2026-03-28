@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
 )
 
@@ -159,5 +160,44 @@ func TestNewClient_FlagOverridesEnv(t *testing.T) {
 	}
 	if c == nil {
 		t.Fatal("expected non-nil client")
+	}
+}
+
+func TestNewClient_APIURLOverride(t *testing.T) {
+	viper.Reset()
+	viper.Set("api_key", "test-key")
+	recurly.APIHost = ""
+	t.Setenv("RECURLY_API_URL", "http://localhost:4010")
+
+	c, err := NewClient()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil client")
+	}
+	if recurly.APIHost != "http://localhost:4010" {
+		t.Errorf("expected APIHost to be %q, got %q", "http://localhost:4010", recurly.APIHost)
+	}
+	// Clean up
+	recurly.APIHost = ""
+}
+
+func TestNewClient_APIURLOverride_NotSet(t *testing.T) {
+	viper.Reset()
+	viper.Set("api_key", "test-key")
+	recurly.APIHost = ""
+	// Ensure RECURLY_API_URL is not set
+	t.Setenv("RECURLY_API_URL", "")
+
+	c, err := NewClient()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil client")
+	}
+	if recurly.APIHost != "" {
+		t.Errorf("expected APIHost to remain empty, got %q", recurly.APIHost)
 	}
 }
