@@ -1075,3 +1075,344 @@ func TestItemsCreate_SDKError(t *testing.T) {
 		t.Fatal("expected error from SDK")
 	}
 }
+
+// --- items update ---
+
+func TestItemsUpdate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("items", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "update") {
+		t.Error("expected items help to show 'update' subcommand")
+	}
+}
+
+func TestItemsUpdateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("items", "update", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{
+		"--code", "--name", "--description", "--external-sku",
+		"--accounting-code", "--revenue-schedule-type", "--tax-code",
+		"--tax-exempt", "--avalara-transaction-type", "--avalara-service-type",
+		"--harmonized-system-code", "--currency", "--unit-amount",
+	} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestItemsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update")
+	if err == nil {
+		t.Fatal("expected error when item_id is missing")
+	}
+}
+
+func TestItemsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommand("items", "update", "item-123", "--name", "test")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestItemsUpdate_PositionalArg(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-abc123", "--name", "Updated")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "item-abc123" {
+		t.Errorf("expected item_id=item-abc123, got %q", capturedID)
+	}
+}
+
+func TestItemsUpdate_CoreFlags(t *testing.T) {
+	var capturedBody *recurly.ItemUpdate
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-123",
+		"--code", "widget-1",
+		"--name", "Premium Widget",
+		"--description", "A high-quality widget",
+		"--external-sku", "SKU-001",
+		"--accounting-code", "ACC-100",
+		"--revenue-schedule-type", "evenly",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody == nil {
+		t.Fatal("expected body to be captured")
+	}
+	if *capturedBody.Code != "widget-1" {
+		t.Errorf("expected code=widget-1, got %v", *capturedBody.Code)
+	}
+	if *capturedBody.Name != "Premium Widget" {
+		t.Errorf("expected name=Premium Widget, got %v", *capturedBody.Name)
+	}
+	if *capturedBody.Description != "A high-quality widget" {
+		t.Errorf("expected description, got %v", *capturedBody.Description)
+	}
+	if *capturedBody.ExternalSku != "SKU-001" {
+		t.Errorf("expected external-sku=SKU-001, got %v", *capturedBody.ExternalSku)
+	}
+	if *capturedBody.AccountingCode != "ACC-100" {
+		t.Errorf("expected accounting-code=ACC-100, got %v", *capturedBody.AccountingCode)
+	}
+	if *capturedBody.RevenueScheduleType != "evenly" {
+		t.Errorf("expected revenue-schedule-type=evenly, got %v", *capturedBody.RevenueScheduleType)
+	}
+}
+
+func TestItemsUpdate_TaxFlags(t *testing.T) {
+	var capturedBody *recurly.ItemUpdate
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-123",
+		"--tax-code", "digital",
+		"--tax-exempt",
+		"--avalara-transaction-type", "3",
+		"--avalara-service-type", "6",
+		"--harmonized-system-code", "8471.30",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedBody.TaxCode != "digital" {
+		t.Errorf("expected tax-code=digital, got %v", *capturedBody.TaxCode)
+	}
+	if *capturedBody.TaxExempt != true {
+		t.Error("expected tax-exempt=true")
+	}
+	if *capturedBody.AvalaraTransactionType != 3 {
+		t.Errorf("expected avalara-transaction-type=3, got %v", *capturedBody.AvalaraTransactionType)
+	}
+	if *capturedBody.AvalaraServiceType != 6 {
+		t.Errorf("expected avalara-service-type=6, got %v", *capturedBody.AvalaraServiceType)
+	}
+	if *capturedBody.HarmonizedSystemCode != "8471.30" {
+		t.Errorf("expected harmonized-system-code=8471.30, got %v", *capturedBody.HarmonizedSystemCode)
+	}
+}
+
+func TestItemsUpdate_MultiCurrencyFlags(t *testing.T) {
+	var capturedBody *recurly.ItemUpdate
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-123",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00", "--unit-amount", "9.00",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Currencies == nil {
+		t.Fatal("expected currencies to be set")
+	}
+	pricings := *capturedBody.Currencies
+	if len(pricings) != 2 {
+		t.Fatalf("expected 2 pricings, got %d", len(pricings))
+	}
+	if *pricings[0].Currency != "USD" {
+		t.Errorf("expected first currency=USD, got %v", *pricings[0].Currency)
+	}
+	if *pricings[0].UnitAmount != 10.00 {
+		t.Errorf("expected first unit-amount=10.00, got %v", *pricings[0].UnitAmount)
+	}
+	if *pricings[1].Currency != "EUR" {
+		t.Errorf("expected second currency=EUR, got %v", *pricings[1].Currency)
+	}
+	if *pricings[1].UnitAmount != 9.00 {
+		t.Errorf("expected second unit-amount=9.00, got %v", *pricings[1].UnitAmount)
+	}
+}
+
+func TestItemsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("items", "update", "item-123",
+		"--currency", "USD", "--currency", "EUR",
+		"--unit-amount", "10.00",
+	)
+	if err == nil {
+		t.Fatal("expected error for mismatched currency/unit-amount")
+	}
+	if !strings.Contains(stderr, "number of --currency values must match --unit-amount values") {
+		t.Errorf("expected mismatch error, got %q", stderr)
+	}
+}
+
+func TestItemsUpdate_UnsetFlagsNotSent(t *testing.T) {
+	var capturedBody *recurly.ItemUpdate
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedBody = body
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-123", "--name", "Only Name")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedBody.Code != nil {
+		t.Error("expected code to be nil when not set")
+	}
+	if capturedBody.Description != nil {
+		t.Error("expected description to be nil when not set")
+	}
+	if capturedBody.ExternalSku != nil {
+		t.Error("expected external-sku to be nil when not set")
+	}
+	if capturedBody.AccountingCode != nil {
+		t.Error("expected accounting-code to be nil when not set")
+	}
+	if capturedBody.RevenueScheduleType != nil {
+		t.Error("expected revenue-schedule-type to be nil when not set")
+	}
+	if capturedBody.TaxCode != nil {
+		t.Error("expected tax-code to be nil when not set")
+	}
+	if capturedBody.TaxExempt != nil {
+		t.Error("expected tax-exempt to be nil when not set")
+	}
+	if capturedBody.AvalaraTransactionType != nil {
+		t.Error("expected avalara-transaction-type to be nil when not set")
+	}
+	if capturedBody.AvalaraServiceType != nil {
+		t.Error("expected avalara-service-type to be nil when not set")
+	}
+	if capturedBody.HarmonizedSystemCode != nil {
+		t.Error("expected harmonized-system-code to be nil when not set")
+	}
+	if capturedBody.Currencies != nil {
+		t.Error("expected currencies to be nil when not set")
+	}
+}
+
+func TestItemsUpdate_TableOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "update", "item-123", "--name", "Updated", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"Code", "widget-1",
+		"Name", "Premium Widget",
+		"Description", "A high-quality widget",
+		"External SKU", "SKU-001",
+		"State", "active",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestItemsUpdate_JSONOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "update", "item-123", "--name", "Updated", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1 in JSON, got %v", result["code"])
+	}
+}
+
+func TestItemsUpdate_SDKError(t *testing.T) {
+	mock := &mockItemAPI{
+		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, fmt.Errorf("validation failed")
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "update", "item-123", "--name", "bad")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}

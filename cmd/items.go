@@ -20,6 +20,7 @@ func newItemsCmd() *cobra.Command {
 	cmd.AddCommand(newItemsListCmd())
 	cmd.AddCommand(newItemsGetCmd())
 	cmd.AddCommand(newItemsCreateCmd())
+	cmd.AddCommand(newItemsUpdateCmd())
 	return cmd
 }
 
@@ -176,6 +177,123 @@ func newItemsCreateCmd() *cobra.Command {
 			}
 
 			item, err := c.CreateItem(body)
+			if err != nil {
+				return err
+			}
+
+			columns := itemDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, item)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&code, "code", "", "Unique item code")
+	cmd.Flags().StringVar(&name, "name", "", "Item name")
+	cmd.Flags().StringVar(&description, "description", "", "Item description")
+	cmd.Flags().StringVar(&externalSku, "external-sku", "", "External stock keeping unit")
+	cmd.Flags().StringVar(&accountingCode, "accounting-code", "", "Accounting code")
+	cmd.Flags().StringVar(&revenueScheduleType, "revenue-schedule-type", "", "Revenue schedule type")
+	cmd.Flags().StringVar(&taxCode, "tax-code", "", "Tax code")
+	cmd.Flags().BoolVar(&taxExempt, "tax-exempt", false, "Tax exempt status")
+	cmd.Flags().IntVar(&avalaraTransType, "avalara-transaction-type", 0, "Avalara transaction type")
+	cmd.Flags().IntVar(&avalaraServiceType, "avalara-service-type", 0, "Avalara service type")
+	cmd.Flags().StringVar(&harmonizedSystemCode, "harmonized-system-code", "", "Harmonized System (HS) code")
+	cmd.Flags().StringSliceVar(&currencies, "currency", nil, "Currency code (repeatable, positionally matched with --unit-amount)")
+	cmd.Flags().Float64SliceVar(&unitAmounts, "unit-amount", nil, "Unit amount (repeatable, positionally matched with --currency)")
+
+	return cmd
+}
+
+func newItemsUpdateCmd() *cobra.Command {
+	var (
+		code                 string
+		name                 string
+		description          string
+		externalSku          string
+		accountingCode       string
+		revenueScheduleType  string
+		taxCode              string
+		taxExempt            bool
+		avalaraTransType     int
+		avalaraServiceType   int
+		harmonizedSystemCode string
+		currencies           []string
+		unitAmounts          []float64
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update <item_id>",
+		Short: "Update an item",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Validate currency/unit-amount pairing
+			if cmd.Flags().Changed("currency") || cmd.Flags().Changed("unit-amount") {
+				if len(currencies) != len(unitAmounts) {
+					return fmt.Errorf("number of --currency values must match --unit-amount values")
+				}
+			}
+
+			c, err := newItemAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.ItemUpdate{}
+
+			if cmd.Flags().Changed("code") {
+				body.Code = recurly.String(code)
+			}
+			if cmd.Flags().Changed("name") {
+				body.Name = recurly.String(name)
+			}
+			if cmd.Flags().Changed("description") {
+				body.Description = recurly.String(description)
+			}
+			if cmd.Flags().Changed("external-sku") {
+				body.ExternalSku = recurly.String(externalSku)
+			}
+			if cmd.Flags().Changed("accounting-code") {
+				body.AccountingCode = recurly.String(accountingCode)
+			}
+			if cmd.Flags().Changed("revenue-schedule-type") {
+				body.RevenueScheduleType = recurly.String(revenueScheduleType)
+			}
+			if cmd.Flags().Changed("tax-code") {
+				body.TaxCode = recurly.String(taxCode)
+			}
+			if cmd.Flags().Changed("tax-exempt") {
+				body.TaxExempt = recurly.Bool(taxExempt)
+			}
+			if cmd.Flags().Changed("avalara-transaction-type") {
+				body.AvalaraTransactionType = recurly.Int(avalaraTransType)
+			}
+			if cmd.Flags().Changed("avalara-service-type") {
+				body.AvalaraServiceType = recurly.Int(avalaraServiceType)
+			}
+			if cmd.Flags().Changed("harmonized-system-code") {
+				body.HarmonizedSystemCode = recurly.String(harmonizedSystemCode)
+			}
+
+			// Multi-currency pricing
+			if cmd.Flags().Changed("currency") {
+				pricings := make([]recurly.PricingCreate, len(currencies))
+				for i, cur := range currencies {
+					pricings[i] = recurly.PricingCreate{
+						Currency:   recurly.String(cur),
+						UnitAmount: float64Ptr(unitAmounts[i]),
+					}
+				}
+				body.Currencies = &pricings
+			}
+
+			item, err := c.UpdateItem(args[0], body)
 			if err != nil {
 				return err
 			}
