@@ -117,15 +117,15 @@ func newPlansCreateCmd() *cobra.Command {
 		harmonizedSystemCode string
 
 		// Accounting
-		accountingCode                 string
-		revenueScheduleType            string
-		liabilityGlAccountId           string
-		revenueGlAccountId             string
-		performanceObligationId        string
-		setupFeeAccountingCode         string
-		setupFeeRevenueScheduleType    string
-		setupFeeLiabilityGlAccountId   string
-		setupFeeRevenueGlAccountId     string
+		accountingCode                  string
+		revenueScheduleType             string
+		liabilityGlAccountId            string
+		revenueGlAccountId              string
+		performanceObligationId         string
+		setupFeeAccountingCode          string
+		setupFeeRevenueScheduleType     string
+		setupFeeLiabilityGlAccountId    string
+		setupFeeRevenueGlAccountId      string
 		setupFeePerformanceObligationId string
 
 		// Hosted pages

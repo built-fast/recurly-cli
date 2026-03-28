@@ -18,6 +18,77 @@ func newItemsCmd() *cobra.Command {
 		Short: "Manage items",
 	}
 	cmd.AddCommand(newItemsListCmd())
+	cmd.AddCommand(newItemsGetCmd())
+	return cmd
+}
+
+func itemDetailColumns() []output.Column {
+	return []output.Column{
+		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Item).Code }},
+		{Header: "Name", Extract: func(v any) string { return v.(*recurly.Item).Name }},
+		{Header: "Description", Extract: func(v any) string { return v.(*recurly.Item).Description }},
+		{Header: "External SKU", Extract: func(v any) string { return v.(*recurly.Item).ExternalSku }},
+		{Header: "Accounting Code", Extract: func(v any) string { return v.(*recurly.Item).AccountingCode }},
+		{Header: "Revenue Schedule Type", Extract: func(v any) string { return v.(*recurly.Item).RevenueScheduleType }},
+		{Header: "Tax Code", Extract: func(v any) string { return v.(*recurly.Item).TaxCode }},
+		{Header: "Tax Exempt", Extract: func(v any) string {
+			return fmt.Sprintf("%t", v.(*recurly.Item).TaxExempt)
+		}},
+		{Header: "Avalara Transaction Type", Extract: func(v any) string {
+			return fmt.Sprintf("%d", v.(*recurly.Item).AvalaraTransactionType)
+		}},
+		{Header: "Avalara Service Type", Extract: func(v any) string {
+			return fmt.Sprintf("%d", v.(*recurly.Item).AvalaraServiceType)
+		}},
+		{Header: "Harmonized System Code", Extract: func(v any) string { return v.(*recurly.Item).HarmonizedSystemCode }},
+		{Header: "State", Extract: func(v any) string { return v.(*recurly.Item).State }},
+		{Header: "Created At", Extract: func(v any) string {
+			item := v.(*recurly.Item)
+			if item.CreatedAt != nil {
+				return item.CreatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Updated At", Extract: func(v any) string {
+			item := v.(*recurly.Item)
+			if item.UpdatedAt != nil {
+				return item.UpdatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+	}
+}
+
+func newItemsGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <item_id>",
+		Short: "Get item details",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newItemAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			item, err := c.GetItem(args[0])
+			if err != nil {
+				return err
+			}
+
+			columns := itemDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, item)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
 	return cmd
 }
 

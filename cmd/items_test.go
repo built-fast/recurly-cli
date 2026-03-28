@@ -103,6 +103,234 @@ func sampleItem() recurly.Item {
 	}
 }
 
+// sampleItemDetail returns a test item with all detail fields populated.
+func sampleItemDetail() *recurly.Item {
+	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
+	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
+	return &recurly.Item{
+		Code:                   "widget-1",
+		Name:                   "Premium Widget",
+		Description:            "A high-quality widget",
+		ExternalSku:            "SKU-001",
+		AccountingCode:         "ACC-100",
+		RevenueScheduleType:    "evenly",
+		TaxCode:                "digital",
+		TaxExempt:              false,
+		AvalaraTransactionType: 3,
+		AvalaraServiceType:     6,
+		HarmonizedSystemCode:   "8471.30",
+		State:                  "active",
+		CreatedAt:              &now,
+		UpdatedAt:              &updated,
+	}
+}
+
+// --- items get ---
+
+func TestItemsGet_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("items", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "get") {
+		t.Error("expected items help to show 'get' subcommand")
+	}
+}
+
+func TestItemsGet_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("items", "get")
+	if err == nil {
+		t.Fatal("expected error when no item ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestItemsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommand("items", "get", "item123")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestItemsGet_PositionalArg(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "get", "my-item-id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "my-item-id" {
+		t.Errorf("expected item ID 'my-item-id', got %q", capturedID)
+	}
+}
+
+func TestItemsGet_TableOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "get", "item123", "--output", "table")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"Code", "widget-1",
+		"Name", "Premium Widget",
+		"Description", "A high-quality widget",
+		"External SKU", "SKU-001",
+		"Accounting Code", "ACC-100",
+		"Revenue Schedule Type", "evenly",
+		"Tax Code", "digital",
+		"Tax Exempt", "false",
+		"Avalara Transaction Type", "3",
+		"Avalara Service Type", "6",
+		"Harmonized System Code", "8471.30",
+		"State", "active",
+		"Created At",
+		"Updated At",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q, got:\n%s", expected, out)
+		}
+	}
+}
+
+func TestItemsGet_JSONOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "get", "item123", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1 in JSON, got %v", result["code"])
+	}
+	if _, ok := result["object"]; ok {
+		if result["object"] == "list" {
+			t.Error("expected single item object, not list envelope")
+		}
+	}
+}
+
+func TestItemsGet_JSONPrettyOutput(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "get", "item123", "--output", "json-pretty")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out, "  ") {
+		t.Error("expected indented JSON output for json-pretty format")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1, got %v", result["code"])
+	}
+}
+
+func TestItemsGet_JQFilter(t *testing.T) {
+	viper.Reset()
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "get", "item123", "--jq", ".code")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "widget-1" {
+		t.Errorf("expected jq output 'widget-1', got %q", trimmed)
+	}
+}
+
+func TestItemsGet_SDKError(t *testing.T) {
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, fmt.Errorf("connection refused")
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "get", "item123")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+func TestItemsGet_NotFound(t *testing.T) {
+	mock := &mockItemAPI{
+		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "Couldn't find Item with id = nonexistent",
+			}
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("items", "get", "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for not found item")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected 'not found' error, got %q", stderr)
+	}
+}
+
 // --- items list ---
 
 func TestItemsList_ShowsInHelp(t *testing.T) {

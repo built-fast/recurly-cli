@@ -2,6 +2,7 @@ ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly items get <item_id>
 ARG recurly plans deactivate <plan_id>
 ARG recurly plans get <plan_id>
 ARG recurly plans update <plan_id>
@@ -15,6 +16,7 @@ CMD recurly accounts reactivate
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly items
+CMD recurly items get
 CMD recurly items list
 CMD recurly plans
 CMD recurly plans create
