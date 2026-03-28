@@ -1,3 +1,4 @@
+ARG recurly accounts billing-info get <account_id>
 ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts reactivate <account_id>
@@ -27,6 +28,8 @@ ARG recurly subscriptions terminate <subscription_id>
 ARG recurly subscriptions update <subscription_id>
 CMD recurly
 CMD recurly accounts
+CMD recurly accounts billing-info
+CMD recurly accounts billing-info get
 CMD recurly accounts create
 CMD recurly accounts deactivate
 CMD recurly accounts get
