@@ -48,15 +48,35 @@ load "test_helper"
   fi
 }
 
-@test "--output json for list produces a JSON array" {
+@test "--output json for list produces a list envelope" {
   run "$RECURLY_BINARY" accounts list --limit 1 --output json
   assert_success
   is_valid_json
-  # Verify it's an array
-  local arr_type
-  arr_type="$(echo "$output" | jq -r 'type')"
-  if [ "$arr_type" != "array" ]; then
-    echo "expected JSON array, got $arr_type" >&2
+  # Verify it's an object with list envelope fields
+  local obj_type
+  obj_type="$(echo "$output" | jq -r 'type')"
+  if [ "$obj_type" != "object" ]; then
+    echo "expected JSON object (list envelope), got $obj_type" >&2
+    return 1
+  fi
+  local object_field
+  object_field="$(echo "$output" | jq -r '.object')"
+  if [ "$object_field" != "list" ]; then
+    echo "expected .object=list, got $object_field" >&2
+    return 1
+  fi
+  # Verify has_more is a boolean
+  local has_more_type
+  has_more_type="$(echo "$output" | jq -r '.has_more | type')"
+  if [ "$has_more_type" != "boolean" ]; then
+    echo "expected .has_more to be boolean, got $has_more_type" >&2
+    return 1
+  fi
+  # Verify data is an array
+  local data_type
+  data_type="$(echo "$output" | jq -r '.data | type')"
+  if [ "$data_type" != "array" ]; then
+    echo "expected .data to be array, got $data_type" >&2
     return 1
   fi
 }
@@ -65,9 +85,9 @@ load "test_helper"
   run "$RECURLY_BINARY" accounts list --limit 1 --output json
   assert_success
   is_valid_json
-  # Verify expected account fields exist in the first element
+  # Verify expected account fields exist in the first element of .data
   local has_code
-  has_code="$(echo "$output" | jq '.[0] | has("code")')"
+  has_code="$(echo "$output" | jq '.data[0] | has("code")')"
   if [ "$has_code" != "true" ]; then
     echo "expected JSON objects to have 'code' field" >&2
     echo "output: $output" >&2
@@ -81,17 +101,13 @@ load "test_helper"
   run "$RECURLY_BINARY" accounts list --limit 1 --output json-pretty
   assert_success
   is_valid_json
-  # Pretty JSON should have multiple lines when results exist.
-  # An empty array "[]" is valid but single-line — only assert multi-line
-  # when Prism returns data.
-  if [ "$output" != "[]" ]; then
-    local line_count
-    line_count="$(echo "$output" | wc -l | tr -d ' ')"
-    if [ "$line_count" -le 1 ]; then
-      echo "expected multi-line indented JSON, got $line_count line(s)" >&2
-      echo "output: $output" >&2
-      return 1
-    fi
+  # Envelope always has multiple lines in pretty mode
+  local line_count
+  line_count="$(echo "$output" | wc -l | tr -d ' ')"
+  if [ "$line_count" -le 1 ]; then
+    echo "expected multi-line indented JSON, got $line_count line(s)" >&2
+    echo "output: $output" >&2
+    return 1
   fi
 }
 
@@ -99,10 +115,8 @@ load "test_helper"
   run "$RECURLY_BINARY" accounts list --limit 1 --output json-pretty
   assert_success
   is_valid_json
-  # Verify indentation is present when results exist (two-space indent per output.go)
-  if [ "$output" != "[]" ]; then
-    assert_output_contains "  "
-  fi
+  # Verify indentation is present (two-space indent per output.go)
+  assert_output_contains "  "
 }
 
 # --- JSON Output (Detail / Get) ---

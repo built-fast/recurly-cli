@@ -41,7 +41,7 @@ func TestFormatListJSON(t *testing.T) {
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items)
+	out, err := FormatList("json", testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -51,12 +51,44 @@ func TestFormatListJSON(t *testing.T) {
 		t.Error("json format should be single-line")
 	}
 
-	var decoded []testItem
-	if err := json.Unmarshal([]byte(out), &decoded); err != nil {
+	var envelope struct {
+		Object  string     `json:"object"`
+		HasMore bool       `json:"has_more"`
+		Data    []testItem `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(out), &envelope); err != nil {
 		t.Fatalf("invalid JSON output: %v", err)
 	}
-	if len(decoded) != 2 || decoded[0].Name != "Alice" {
-		t.Errorf("unexpected decoded data: %v", decoded)
+	if envelope.Object != "list" {
+		t.Errorf("expected object=list, got %s", envelope.Object)
+	}
+	if envelope.HasMore {
+		t.Error("expected has_more=false")
+	}
+	if len(envelope.Data) != 2 || envelope.Data[0].Name != "Alice" {
+		t.Errorf("unexpected decoded data: %v", envelope.Data)
+	}
+}
+
+func TestFormatListJSONHasMore(t *testing.T) {
+	items := []any{
+		testItem{Name: "Alice", Email: "alice@example.com"},
+	}
+
+	out, err := FormatList("json", testColumns, items, true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var envelope struct {
+		Object  string `json:"object"`
+		HasMore bool   `json:"has_more"`
+	}
+	if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+		t.Fatalf("invalid JSON output: %v", err)
+	}
+	if !envelope.HasMore {
+		t.Error("expected has_more=true")
 	}
 }
 
@@ -65,7 +97,7 @@ func TestFormatListJSONPretty(t *testing.T) {
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json-pretty", testColumns, items)
+	out, err := FormatList("json-pretty", testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -77,6 +109,19 @@ func TestFormatListJSONPretty(t *testing.T) {
 	if !strings.Contains(out, "\n") {
 		t.Error("json-pretty format should be multi-line")
 	}
+
+	// Should have envelope structure
+	var envelope struct {
+		Object  string     `json:"object"`
+		HasMore bool       `json:"has_more"`
+		Data    []testItem `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(out), &envelope); err != nil {
+		t.Fatalf("invalid JSON output: %v", err)
+	}
+	if envelope.Object != "list" {
+		t.Errorf("expected object=list, got %s", envelope.Object)
+	}
 }
 
 func TestFormatListTable(t *testing.T) {
@@ -85,7 +130,7 @@ func TestFormatListTable(t *testing.T) {
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("table", testColumns, items)
+	out, err := FormatList("table", testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -163,7 +208,7 @@ func TestFormatOneTable(t *testing.T) {
 }
 
 func TestFormatListInvalidFormat(t *testing.T) {
-	_, err := FormatList("xml", testColumns, nil)
+	_, err := FormatList("xml", testColumns, nil, false)
 	if err == nil {
 		t.Fatal("expected error for invalid format")
 	}

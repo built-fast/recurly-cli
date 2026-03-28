@@ -92,7 +92,7 @@ func newAccountsListCmd() *cobra.Command {
 				return err
 			}
 
-			accounts, err := pagination.Collect[recurly.Account](lister, limit, all)
+			result, err := pagination.Collect[recurly.Account](lister, limit, all)
 			if err != nil {
 				return err
 			}
@@ -113,12 +113,12 @@ func newAccountsListCmd() *cobra.Command {
 				}},
 			}
 
-			items := make([]any, len(accounts))
-			for i, a := range accounts {
+			items := make([]any, len(result.Items))
+			for i, a := range result.Items {
 				items[i] = a
 			}
 
-			formatted, err := output.FormatList(format, columns, items)
+			formatted, err := output.FormatList(format, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}

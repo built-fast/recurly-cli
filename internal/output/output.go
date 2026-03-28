@@ -27,18 +27,36 @@ func ValidateFormat(format string) error {
 	return fmt.Errorf("invalid output format %q: valid options are %s", format, strings.Join(validFormats, ", "))
 }
 
+// listEnvelope wraps list data in a Recurly-style JSON envelope.
+type listEnvelope struct {
+	Object  string `json:"object"`
+	HasMore bool   `json:"has_more"`
+	Data    []any  `json:"data"`
+}
+
 // FormatList formats a slice of items as a columnar table (with headers),
-// compact JSON, or indented JSON depending on format.
-func FormatList(format string, columns []Column, items []any) (string, error) {
+// compact JSON, or indented JSON depending on format. JSON output is wrapped
+// in a Recurly-style list envelope with pagination metadata.
+func FormatList(format string, columns []Column, items []any, hasMore bool) (string, error) {
 	if err := ValidateFormat(format); err != nil {
 		return "", err
 	}
 
 	switch format {
-	case "json":
-		return marshalJSON(items)
-	case "json-pretty":
-		return marshalJSONPretty(items)
+	case "json", "json-pretty":
+		data := items
+		if data == nil {
+			data = []any{}
+		}
+		envelope := listEnvelope{
+			Object:  "list",
+			HasMore: hasMore,
+			Data:    data,
+		}
+		if format == "json-pretty" {
+			return marshalJSONPretty(envelope)
+		}
+		return marshalJSON(envelope)
 	default:
 		return renderListTable(columns, items), nil
 	}

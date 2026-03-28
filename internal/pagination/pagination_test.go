@@ -50,18 +50,21 @@ func TestCollect_AllPages(t *testing.T) {
 		{"f"},
 	})
 
-	results, err := Collect[string](lister, 0, true)
+	result, err := Collect[string](lister, 0, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 6 {
-		t.Fatalf("expected 6 results, got %d", len(results))
+	if len(result.Items) != 6 {
+		t.Fatalf("expected 6 results, got %d", len(result.Items))
 	}
 	expected := []string{"a", "b", "c", "d", "e", "f"}
-	for i, v := range results {
+	for i, v := range result.Items {
 		if v != expected[i] {
 			t.Errorf("results[%d] = %q, want %q", i, v, expected[i])
 		}
+	}
+	if result.HasMore {
+		t.Error("expected HasMore=false when all=true")
 	}
 }
 
@@ -71,18 +74,21 @@ func TestCollect_LimitWithinFirstPage(t *testing.T) {
 		{"f", "g"},
 	})
 
-	results, err := Collect[string](lister, 3, false)
+	result, err := Collect[string](lister, 3, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 3 {
-		t.Fatalf("expected 3 results, got %d", len(results))
+	if len(result.Items) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(result.Items))
 	}
 	expected := []string{"a", "b", "c"}
-	for i, v := range results {
+	for i, v := range result.Items {
 		if v != expected[i] {
 			t.Errorf("results[%d] = %q, want %q", i, v, expected[i])
 		}
+	}
+	if !result.HasMore {
+		t.Error("expected HasMore=true when results were truncated")
 	}
 }
 
@@ -93,18 +99,21 @@ func TestCollect_LimitAcrossPages(t *testing.T) {
 		{"e", "f"},
 	})
 
-	results, err := Collect[string](lister, 5, false)
+	result, err := Collect[string](lister, 5, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 5 {
-		t.Fatalf("expected 5 results, got %d", len(results))
+	if len(result.Items) != 5 {
+		t.Fatalf("expected 5 results, got %d", len(result.Items))
 	}
 	expected := []string{"a", "b", "c", "d", "e"}
-	for i, v := range results {
+	for i, v := range result.Items {
 		if v != expected[i] {
 			t.Errorf("results[%d] = %q, want %q", i, v, expected[i])
 		}
+	}
+	if !result.HasMore {
+		t.Error("expected HasMore=true when results were truncated")
 	}
 }
 
@@ -116,12 +125,15 @@ func TestCollect_DefaultLimit(t *testing.T) {
 	}
 	lister := newMockLister([][]string{page})
 
-	results, err := Collect[string](lister, 0, false)
+	result, err := Collect[string](lister, 0, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 20 {
-		t.Fatalf("expected 20 results (default limit), got %d", len(results))
+	if len(result.Items) != 20 {
+		t.Fatalf("expected 20 results (default limit), got %d", len(result.Items))
+	}
+	if !result.HasMore {
+		t.Error("expected HasMore=true when default limit truncates results")
 	}
 }
 
@@ -130,39 +142,45 @@ func TestCollect_LimitExceedsAvailable(t *testing.T) {
 		{"a", "b"},
 	})
 
-	results, err := Collect[string](lister, 10, false)
+	result, err := Collect[string](lister, 10, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 2 {
-		t.Fatalf("expected 2 results, got %d", len(results))
+	if len(result.Items) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(result.Items))
+	}
+	if result.HasMore {
+		t.Error("expected HasMore=false when all items fit within limit")
 	}
 }
 
 func TestCollect_EmptyLister(t *testing.T) {
 	lister := newMockLister([][]string{{}})
 
-	results, err := Collect[string](lister, 0, true)
+	result, err := Collect[string](lister, 0, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 0 {
-		t.Fatalf("expected 0 results, got %d", len(results))
+	if len(result.Items) != 0 {
+		t.Fatalf("expected 0 results, got %d", len(result.Items))
+	}
+	if result.HasMore {
+		t.Error("expected HasMore=false for empty lister")
 	}
 }
 
 func TestCollect_FetchError(t *testing.T) {
 	lister := &errorLister{}
 
-	results, err := Collect[string](lister, 10, false)
+	result, err := Collect[string](lister, 10, false)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
 	if err.Error() != "api error" {
 		t.Errorf("expected 'api error', got %q", err.Error())
 	}
-	if results != nil {
-		t.Errorf("expected nil results on error, got %v", results)
+	if result.Items != nil {
+		t.Errorf("expected nil results on error, got %v", result.Items)
 	}
 }
 
@@ -173,12 +191,15 @@ func TestCollect_AllIgnoresLimit(t *testing.T) {
 	})
 
 	// When all=true, limit should be ignored
-	results, err := Collect[string](lister, 2, true)
+	result, err := Collect[string](lister, 2, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 5 {
-		t.Fatalf("expected 5 results (all=true ignores limit), got %d", len(results))
+	if len(result.Items) != 5 {
+		t.Fatalf("expected 5 results (all=true ignores limit), got %d", len(result.Items))
+	}
+	if result.HasMore {
+		t.Error("expected HasMore=false when all=true")
 	}
 }
 
@@ -187,14 +208,17 @@ func TestCollect_SinglePage(t *testing.T) {
 		{"only"},
 	})
 
-	results, err := Collect[string](lister, 10, false)
+	result, err := Collect[string](lister, 10, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(results) != 1 {
-		t.Fatalf("expected 1 result, got %d", len(results))
+	if len(result.Items) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(result.Items))
 	}
-	if results[0] != "only" {
-		t.Errorf("expected 'only', got %q", results[0])
+	if result.Items[0] != "only" {
+		t.Errorf("expected 'only', got %q", result.Items[0])
+	}
+	if result.HasMore {
+		t.Error("expected HasMore=false for single page within limit")
 	}
 }

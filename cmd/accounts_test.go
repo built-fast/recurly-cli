@@ -314,15 +314,25 @@ func TestAccountsList_JSONOutput(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var result []map[string]interface{}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+	var envelope struct {
+		Object  string                   `json:"object"`
+		HasMore bool                     `json:"has_more"`
+		Data    []map[string]interface{} `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &envelope); err != nil {
 		t.Fatalf("expected valid JSON output, got error: %v\noutput: %s", err, out)
 	}
-	if len(result) != 1 {
-		t.Fatalf("expected 1 account in JSON output, got %d", len(result))
+	if envelope.Object != "list" {
+		t.Errorf("expected object=list, got %s", envelope.Object)
 	}
-	if result[0]["code"] != "acct-123" {
-		t.Errorf("expected code=acct-123 in JSON, got %v", result[0]["code"])
+	if envelope.HasMore {
+		t.Error("expected has_more=false")
+	}
+	if len(envelope.Data) != 1 {
+		t.Fatalf("expected 1 account in JSON output, got %d", len(envelope.Data))
+	}
+	if envelope.Data[0]["code"] != "acct-123" {
+		t.Errorf("expected code=acct-123 in JSON, got %v", envelope.Data[0]["code"])
 	}
 }
 
