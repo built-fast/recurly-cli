@@ -51,7 +51,7 @@ echo "==> Waiting for Prism to be ready..."
 elapsed=0
 timeout=30
 while [ "$elapsed" -lt "$timeout" ]; do
-  if curl -sf "${PRISM_URL}/" >/dev/null 2>&1; then
+  if curl -so /dev/null "${PRISM_URL}/" 2>&1; then
     echo "==> Prism is ready."
     break
   fi

@@ -2,12 +2,25 @@ package client
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
 )
+
+// acceptRewriteTransport wraps an http.RoundTripper and normalizes the Accept
+// header to application/json. This is needed when running against mock servers
+// (e.g. Prism) that don't understand the SDK's vendor Accept header.
+type acceptRewriteTransport struct {
+	base http.RoundTripper
+}
+
+func (t *acceptRewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Accept", "application/json")
+	return t.base.RoundTrip(req)
+}
 
 // ValidRegions lists the accepted region values.
 var ValidRegions = []string{"us", "eu"}
@@ -42,7 +55,8 @@ func NewClient() (*recurly.Client, error) {
 	}
 
 	// Allow overriding the API base URL (e.g., for local Prism mock server in e2e tests).
-	if apiURL := os.Getenv("RECURLY_API_URL"); apiURL != "" {
+	apiURL := os.Getenv("RECURLY_API_URL")
+	if apiURL != "" {
 		recurly.APIHost = apiURL
 	}
 
@@ -51,5 +65,22 @@ func NewClient() (*recurly.Client, error) {
 		opts.Region = recurly.EU
 	}
 
-	return recurly.NewClientWithOptions(apiKey, opts)
+	c, err := recurly.NewClientWithOptions(apiKey, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// When using a mock server, rewrite the vendor Accept header to
+	// application/json so Prism can serve the response.
+	if apiURL != "" {
+		base := c.HTTPClient.Transport
+		if base == nil {
+			base = http.DefaultTransport
+		}
+		c.HTTPClient = &http.Client{
+			Transport: &acceptRewriteTransport{base: base},
+		}
+	}
+
+	return c, nil
 }
