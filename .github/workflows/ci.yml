@@ -39,6 +39,21 @@ jobs:
 
       - run: make test
 
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - run: govulncheck ./...
+
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
