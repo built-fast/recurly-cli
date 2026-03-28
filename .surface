@@ -1,4 +1,5 @@
 ARG recurly accounts billing-info get <account_id>
+ARG recurly accounts billing-info remove <account_id>
 ARG recurly accounts billing-info update <account_id>
 ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
@@ -31,6 +32,7 @@ CMD recurly
 CMD recurly accounts
 CMD recurly accounts billing-info
 CMD recurly accounts billing-info get
+CMD recurly accounts billing-info remove
 CMD recurly accounts billing-info update
 CMD recurly accounts create
 CMD recurly accounts deactivate
@@ -73,6 +75,7 @@ FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
 FLAG recurly --region string
+FLAG recurly accounts billing-info remove --yes bool
 FLAG recurly accounts billing-info update --address-city string
 FLAG recurly accounts billing-info update --address-country string
 FLAG recurly accounts billing-info update --address-postal-code string

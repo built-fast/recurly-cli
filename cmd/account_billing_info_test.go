@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -501,6 +502,134 @@ func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
 	defer cleanup()
 
 	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- billing-info remove ---
+
+func TestAccountBillingInfoRemove_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "billing-info", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "remove") {
+		t.Error("expected billing-info help to show 'remove' subcommand")
+	}
+}
+
+func TestAccountBillingInfoRemove_RequiresAccountID(t *testing.T) {
+	_, _, err := executeCommand("accounts", "billing-info", "remove")
+	if err == nil {
+		t.Fatal("expected error when no account_id provided")
+	}
+}
+
+func TestAccountBillingInfoRemove_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
+	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	_, stderr, err := executeCommandWithStdin(
+		bytes.NewBufferString("y\n"),
+		"accounts", "billing-info", "remove", "acct1",
+	)
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
+func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Remove billing info from account acct-123? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Removal cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestAccountBillingInfoRemove_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Removal cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
+
+func TestAccountBillingInfoRemove_ConfirmYes_Succeeds(t *testing.T) {
+	var capturedAccountID string
+	mock := &mockAccountBillingInfoAPI{
+		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
+			capturedAccountID = accountId
+			return &recurly.Empty{}, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-789")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedAccountID != "acct-789" {
+		t.Errorf("expected accountId=acct-789, got %q", capturedAccountID)
+	}
+	if !strings.Contains(stderr, "Remove billing info from account acct-789?") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "Billing info removed from account acct-789") {
+		t.Errorf("expected success message, got:\n%s", out)
+	}
+}
+
+func TestAccountBillingInfoRemove_YesFlag_SkipsPrompt(t *testing.T) {
+	var capturedAccountID string
+	mock := &mockAccountBillingInfoAPI{
+		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
+			capturedAccountID = accountId
+			return &recurly.Empty{}, nil
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("accounts", "billing-info", "remove", "acct-456", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedAccountID != "acct-456" {
+		t.Errorf("expected accountId=acct-456, got %q", capturedAccountID)
+	}
+	if strings.Contains(stderr, "Remove billing info") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "Billing info removed from account acct-456") {
+		t.Errorf("expected success message, got:\n%s", out)
+	}
+}
+
+func TestAccountBillingInfoRemove_SDKError(t *testing.T) {
+	mock := &mockAccountBillingInfoAPI{
+		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
+			return nil, &recurly.Error{Message: "not found"}
+		},
+	}
+	cleanup := setMockAccountBillingInfoAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("accounts", "billing-info", "remove", "acct1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}

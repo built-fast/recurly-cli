@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -17,6 +19,7 @@ func newAccountBillingInfoCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountBillingInfoGetCmd())
 	cmd.AddCommand(newAccountBillingInfoUpdateCmd())
+	cmd.AddCommand(newAccountBillingInfoRemoveCmd())
 	return cmd
 }
 
@@ -208,6 +211,52 @@ func newAccountBillingInfoUpdateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&addressRegion, "address-region", "", "State or province")
 	cmd.Flags().StringVar(&addressPostalCode, "address-postal-code", "", "Zip or postal code")
 	cmd.Flags().StringVar(&addressCountry, "address-country", "", "Country (2-letter ISO 3166-1 alpha-2 code)")
+
+	return cmd
+}
+
+func newAccountBillingInfoRemoveCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "remove <account_id>",
+		Short: "Remove billing info from an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			accountID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Remove billing info from account %s? [y/N] ", accountID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Removal cancelled.")
+					return err
+				}
+			}
+
+			c, err := newAccountBillingInfoAPI()
+			if err != nil {
+				return err
+			}
+
+			_, err = c.RemoveBillingInfo(accountID)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "Billing info removed from account %s\n", accountID)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }
