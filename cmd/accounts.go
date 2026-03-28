@@ -20,6 +20,7 @@ func newAccountsCmd() *cobra.Command {
 	cmd.AddCommand(newAccountsListCmd())
 	cmd.AddCommand(newAccountsGetCmd())
 	cmd.AddCommand(newAccountsCreateCmd())
+	cmd.AddCommand(newAccountsUpdateCmd())
 	return cmd
 }
 
@@ -244,6 +245,86 @@ func accountDetailColumns() []output.Column {
 			return ""
 		}},
 	}
+}
+
+func newAccountsUpdateCmd() *cobra.Command {
+	var (
+		email           string
+		firstName       string
+		lastName        string
+		company         string
+		vatNumber       string
+		taxExempt       bool
+		preferredLocale string
+		billTo          string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update <account_id>",
+		Short: "Update an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := client.NewClient()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.AccountUpdate{}
+
+			if cmd.Flags().Changed("email") {
+				body.Email = recurly.String(email)
+			}
+			if cmd.Flags().Changed("first-name") {
+				body.FirstName = recurly.String(firstName)
+			}
+			if cmd.Flags().Changed("last-name") {
+				body.LastName = recurly.String(lastName)
+			}
+			if cmd.Flags().Changed("company") {
+				body.Company = recurly.String(company)
+			}
+			if cmd.Flags().Changed("vat-number") {
+				body.VatNumber = recurly.String(vatNumber)
+			}
+			if cmd.Flags().Changed("tax-exempt") {
+				body.TaxExempt = recurly.Bool(taxExempt)
+			}
+			if cmd.Flags().Changed("preferred-locale") {
+				body.PreferredLocale = recurly.String(preferredLocale)
+			}
+			if cmd.Flags().Changed("bill-to") {
+				body.BillTo = recurly.String(billTo)
+			}
+
+			account, err := c.UpdateAccount(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := accountDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, account)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&email, "email", "", "Account email address")
+	cmd.Flags().StringVar(&firstName, "first-name", "", "First name")
+	cmd.Flags().StringVar(&lastName, "last-name", "", "Last name")
+	cmd.Flags().StringVar(&company, "company", "", "Company name")
+	cmd.Flags().StringVar(&vatNumber, "vat-number", "", "VAT number")
+	cmd.Flags().BoolVar(&taxExempt, "tax-exempt", false, "Tax exempt status")
+	cmd.Flags().StringVar(&preferredLocale, "preferred-locale", "", "Preferred locale (e.g. en-US)")
+	cmd.Flags().StringVar(&billTo, "bill-to", "", "Billing target (self or parent)")
+
+	return cmd
 }
 
 func newAccountsGetCmd() *cobra.Command {

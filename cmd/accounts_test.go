@@ -92,6 +92,49 @@ func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
 	}
 }
 
+func TestAccountsUpdate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "update") {
+		t.Error("expected accounts help to show 'update' subcommand")
+	}
+}
+
+func TestAccountsUpdateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("accounts", "update", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, flag := range []string{"--email", "--first-name", "--last-name", "--company", "--vat-number", "--tax-exempt", "--preferred-locale", "--bill-to"} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("expected help output to contain flag %q", flag)
+		}
+	}
+}
+
+func TestAccountsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("accounts", "update")
+	if err == nil {
+		t.Fatal("expected error when no account ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestAccountsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Setenv("RECURLY_API_KEY", "")
+	_, stderr, err := executeCommand("accounts", "update", "abc123", "--email", "new@example.com")
+	if err == nil {
+		t.Fatal("expected error when no API key is configured")
+	}
+	if !strings.Contains(stderr, "API key not configured") {
+		t.Errorf("expected 'API key not configured' error, got %q", stderr)
+	}
+}
+
 func TestAccountsCreate_ShowsInHelp(t *testing.T) {
 	out, _, err := executeCommand("accounts", "--help")
 	if err != nil {
