@@ -24,6 +24,7 @@ func newItemsCmd() *cobra.Command {
 	cmd.AddCommand(newItemsCreateCmd())
 	cmd.AddCommand(newItemsUpdateCmd())
 	cmd.AddCommand(newItemsDeactivateCmd())
+	cmd.AddCommand(newItemsReactivateCmd())
 	return cmd
 }
 
@@ -465,6 +466,61 @@ func newItemsDeactivateCmd() *cobra.Command {
 			format := viper.GetString("output")
 
 			item, err := c.DeactivateItem(itemID)
+			if err != nil {
+				return err
+			}
+
+			columns := itemDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, item)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newItemsReactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "reactivate <item_id>",
+		Short: "Reactivate an item",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			itemID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to reactivate item %s? [y/N] ", itemID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := newItemAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			item, err := c.ReactivateItem(itemID)
 			if err != nil {
 				return err
 			}

@@ -1600,3 +1600,178 @@ func TestItemsDeactivate_SDKError(t *testing.T) {
 		t.Fatal("expected error from SDK")
 	}
 }
+
+// --- Reactivate command tests ---
+
+func TestItemsReactivate_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("items", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "reactivate") {
+		t.Error("expected 'reactivate' in items help output")
+	}
+}
+
+func TestItemsReactivateHelp_ShowsFlags(t *testing.T) {
+	out, _, err := executeCommand("items", "reactivate", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--yes") {
+		t.Error("expected --yes flag in help output")
+	}
+}
+
+func TestItemsReactivate_MissingArg_ReturnsError(t *testing.T) {
+	_, _, err := executeCommand("items", "reactivate")
+	if err == nil {
+		t.Fatal("expected error for missing argument")
+	}
+}
+
+func TestItemsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	viper.Set("api_key", "")
+	defer viper.Set("api_key", "")
+
+	_, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	if err == nil {
+		t.Fatal("expected error when no API key is set")
+	}
+}
+
+func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to reactivate item item-123? [y/N]") {
+		t.Error("expected confirmation prompt with item ID in stderr")
+	}
+	if !strings.Contains(stderr, "Reactivation cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestItemsReactivate_ConfirmDefault_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Reactivation cancelled.") {
+		t.Error("expected cancellation message when pressing Enter without input")
+	}
+}
+
+func TestItemsReactivate_ConfirmYes_Succeeds(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-789")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "item-789" {
+		t.Errorf("expected item ID 'item-789', got %q", capturedID)
+	}
+	if !strings.Contains(stderr, "Are you sure") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "widget-1") {
+		t.Errorf("expected item details in output, got:\n%s", out)
+	}
+}
+
+func TestItemsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	var capturedID string
+	mock := &mockItemAPI{
+		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			capturedID = itemId
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("items", "reactivate", "item-456", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "item-456" {
+		t.Errorf("expected item ID 'item-456', got %q", capturedID)
+	}
+	if strings.Contains(stderr, "Are you sure") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "widget-1") {
+		t.Errorf("expected item details in output, got:\n%s", out)
+	}
+}
+
+func TestItemsReactivate_TableOutput(t *testing.T) {
+	mock := &mockItemAPI{
+		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "active") {
+		t.Errorf("expected 'active' state in output, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Premium Widget") {
+		t.Errorf("expected item name in output, got:\n%s", out)
+	}
+}
+
+func TestItemsReactivate_JSONOutput(t *testing.T) {
+	mock := &mockItemAPI{
+		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return sampleItemDetail(), nil
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("items", "reactivate", "item-123", "--yes", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v\nOutput: %s", err, out)
+	}
+	if result["code"] != "widget-1" {
+		t.Errorf("expected code=widget-1 in JSON, got %v", result["code"])
+	}
+}
+
+func TestItemsReactivate_SDKError(t *testing.T) {
+	mock := &mockItemAPI{
+		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
+			return nil, fmt.Errorf("not found")
+		},
+	}
+	cleanup := setMockItemAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	if err == nil {
+		t.Fatal("expected error from SDK")
+	}
+}

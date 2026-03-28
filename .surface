@@ -4,6 +4,7 @@ ARG recurly accounts reactivate <account_id>
 ARG recurly accounts update <account_id>
 ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
+ARG recurly items reactivate <item_id>
 ARG recurly items update <item_id>
 ARG recurly plans deactivate <plan_id>
 ARG recurly plans get <plan_id>
@@ -22,6 +23,7 @@ CMD recurly items create
 CMD recurly items deactivate
 CMD recurly items get
 CMD recurly items list
+CMD recurly items reactivate
 CMD recurly items update
 CMD recurly plans
 CMD recurly plans create
@@ -82,6 +84,7 @@ FLAG recurly items list --limit int
 FLAG recurly items list --order string
 FLAG recurly items list --sort string
 FLAG recurly items list --state string
+FLAG recurly items reactivate --yes bool
 FLAG recurly items update --accounting-code string
 FLAG recurly items update --avalara-service-type int
 FLAG recurly items update --avalara-transaction-type int
