@@ -20,6 +20,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	cmd.AddCommand(newSubscriptionsListCmd())
 	cmd.AddCommand(newSubscriptionsGetCmd())
 	cmd.AddCommand(newSubscriptionsCreateCmd())
+	cmd.AddCommand(newSubscriptionsUpdateCmd())
 	return cmd
 }
 
@@ -435,6 +436,114 @@ func newSubscriptionsCreateCmd() *cobra.Command {
 
 	// Additional flags
 	cmd.Flags().StringVar(&couponCode, "coupon-code", "", "Coupon code to apply")
+	cmd.Flags().StringVar(&gatewayCode, "gateway-code", "", "Payment gateway code")
+	cmd.Flags().StringVar(&billingInfoID, "billing-info-id", "", "Billing info ID")
+
+	return cmd
+}
+
+func newSubscriptionsUpdateCmd() *cobra.Command {
+	var (
+		collectionMethod     string
+		remainingBillingCycles int
+		renewalBillingCycles int
+		autoRenew            bool
+		nextBillDate         string
+		revenueScheduleType  string
+		termsAndConditions   string
+		customerNotes        string
+		poNumber             string
+		netTerms             int
+		netTermsType         string
+		gatewayCode          string
+		billingInfoID        string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update <subscription_id>",
+		Short: "Update a subscription",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newSubscriptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.SubscriptionUpdate{}
+
+			if cmd.Flags().Changed("collection-method") {
+				body.CollectionMethod = recurly.String(collectionMethod)
+			}
+			if cmd.Flags().Changed("remaining-billing-cycles") {
+				body.RemainingBillingCycles = recurly.Int(remainingBillingCycles)
+			}
+			if cmd.Flags().Changed("renewal-billing-cycles") {
+				body.RenewalBillingCycles = recurly.Int(renewalBillingCycles)
+			}
+			if cmd.Flags().Changed("auto-renew") {
+				body.AutoRenew = recurly.Bool(autoRenew)
+			}
+			if cmd.Flags().Changed("next-bill-date") {
+				t, err := time.Parse(time.RFC3339, nextBillDate)
+				if err != nil {
+					return fmt.Errorf("invalid --next-bill-date: must be RFC3339 format (e.g. 2025-01-01T00:00:00Z): %w", err)
+				}
+				body.NextBillDate = &t
+			}
+			if cmd.Flags().Changed("revenue-schedule-type") {
+				body.RevenueScheduleType = recurly.String(revenueScheduleType)
+			}
+			if cmd.Flags().Changed("terms-and-conditions") {
+				body.TermsAndConditions = recurly.String(termsAndConditions)
+			}
+			if cmd.Flags().Changed("customer-notes") {
+				body.CustomerNotes = recurly.String(customerNotes)
+			}
+			if cmd.Flags().Changed("po-number") {
+				body.PoNumber = recurly.String(poNumber)
+			}
+			if cmd.Flags().Changed("net-terms") {
+				body.NetTerms = recurly.Int(netTerms)
+			}
+			if cmd.Flags().Changed("net-terms-type") {
+				body.NetTermsType = recurly.String(netTermsType)
+			}
+			if cmd.Flags().Changed("gateway-code") {
+				body.GatewayCode = recurly.String(gatewayCode)
+			}
+			if cmd.Flags().Changed("billing-info-id") {
+				body.BillingInfoId = recurly.String(billingInfoID)
+			}
+
+			subscription, err := c.UpdateSubscription(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := subscriptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, subscription)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&collectionMethod, "collection-method", "", "Collection method (automatic or manual)")
+	cmd.Flags().IntVar(&remainingBillingCycles, "remaining-billing-cycles", 0, "Remaining billing cycles in the current term")
+	cmd.Flags().IntVar(&renewalBillingCycles, "renewal-billing-cycles", 0, "Billing cycles for renewal terms")
+	cmd.Flags().BoolVar(&autoRenew, "auto-renew", false, "Whether the subscription renews at the end of its term")
+	cmd.Flags().StringVar(&nextBillDate, "next-bill-date", "", "Next bill date (RFC3339 format)")
+	cmd.Flags().StringVar(&revenueScheduleType, "revenue-schedule-type", "", "Revenue schedule type")
+	cmd.Flags().StringVar(&termsAndConditions, "terms-and-conditions", "", "Custom terms and conditions")
+	cmd.Flags().StringVar(&customerNotes, "customer-notes", "", "Custom customer notes")
+	cmd.Flags().StringVar(&poNumber, "po-number", "", "PO number for manual invoicing")
+	cmd.Flags().IntVar(&netTerms, "net-terms", 0, "Net terms in days")
+	cmd.Flags().StringVar(&netTermsType, "net-terms-type", "", "Net terms type (net or eom)")
 	cmd.Flags().StringVar(&gatewayCode, "gateway-code", "", "Payment gateway code")
 	cmd.Flags().StringVar(&billingInfoID, "billing-info-id", "", "Billing info ID")
 
