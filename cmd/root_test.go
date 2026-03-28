@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/built-fast/recurly-cli/internal/client"
 )
 
 func executeCommand(args ...string) (string, string, error) {
@@ -15,6 +18,9 @@ func executeCommand(args ...string) (string, string, error) {
 	cmd.SetArgs(args)
 
 	err := cmd.Execute()
+	if err != nil {
+		fmt.Fprintln(stderr, client.FormatError(err))
+	}
 	return stdout.String(), stderr.String(), err
 }
 

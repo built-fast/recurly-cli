@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/built-fast/recurly-cli/internal/client"
 	"github.com/built-fast/recurly-cli/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,6 +24,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd.SetVersionTemplate("recurly-cli {{.Version}}\n")
+	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		return config.Init()
@@ -45,7 +48,9 @@ func NewRootCmd() *cobra.Command {
 
 // Execute runs the root command.
 func Execute() {
-	if err := NewRootCmd().Execute(); err != nil {
+	cmd := NewRootCmd()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(cmd.ErrOrStderr(), client.FormatError(err))
 		os.Exit(1)
 	}
 }
