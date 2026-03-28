@@ -50,6 +50,7 @@ func NewRootCmd() *cobra.Command {
 	_ = viper.BindEnv("region", "RECURLY_REGION")
 
 	rootCmd.AddCommand(newConfigureCmd())
+	rootCmd.AddCommand(newAccountsCmd())
 
 	return rootCmd
 }

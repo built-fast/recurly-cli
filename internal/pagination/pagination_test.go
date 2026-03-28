@@ -39,9 +39,9 @@ func (m *mockLister) HasMore() bool {
 // errorLister returns an error on Fetch.
 type errorLister struct{}
 
-func (e *errorLister) Fetch() error    { return fmt.Errorf("api error") }
-func (e *errorLister) Data() []string  { return nil }
-func (e *errorLister) HasMore() bool   { return true }
+func (e *errorLister) Fetch() error   { return fmt.Errorf("api error") }
+func (e *errorLister) Data() []string { return nil }
+func (e *errorLister) HasMore() bool  { return true }
 
 func TestCollect_AllPages(t *testing.T) {
 	lister := newMockLister([][]string{
