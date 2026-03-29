@@ -129,21 +129,24 @@ load "test_helper"
 @test "coupons create-percent missing --code fails" {
   run "$RECURLY_BINARY" coupons create-percent \
     --name "Missing Code" \
-    --discount-percent 10
+    --discount-percent 10 \
+    --no-input
   assert_failure
 }
 
 @test "coupons create-percent missing --name fails" {
   run "$RECURLY_BINARY" coupons create-percent \
     --code "missing_name" \
-    --discount-percent 10
+    --discount-percent 10 \
+    --no-input
   assert_failure
 }
 
 @test "coupons create-percent missing --discount-percent fails" {
   run "$RECURLY_BINARY" coupons create-percent \
     --code "missing_pct" \
-    --name "Missing Percent"
+    --name "Missing Percent" \
+    --no-input
   assert_failure
 }
 
@@ -178,7 +181,8 @@ load "test_helper"
   run "$RECURLY_BINARY" coupons create-fixed \
     --code "missing_currency" \
     --name "Missing Currency" \
-    --discount-amount 5.00
+    --discount-amount 5.00 \
+    --no-input
   assert_failure
 }
 
@@ -186,7 +190,8 @@ load "test_helper"
   run "$RECURLY_BINARY" coupons create-fixed \
     --code "missing_amount" \
     --name "Missing Amount" \
-    --currency USD
+    --currency USD \
+    --no-input
   assert_failure
 }
 
@@ -221,7 +226,8 @@ load "test_helper"
   run "$RECURLY_BINARY" coupons create-free-trial \
     --code "missing_trial" \
     --name "Missing Trial Amount" \
-    --free-trial-unit "day"
+    --free-trial-unit "day" \
+    --no-input
   assert_failure
 }
 
@@ -229,7 +235,8 @@ load "test_helper"
   run "$RECURLY_BINARY" coupons create-free-trial \
     --code "missing_unit" \
     --name "Missing Trial Unit" \
-    --free-trial-amount 14
+    --free-trial-amount 14 \
+    --no-input
   assert_failure
 }
 
@@ -326,7 +333,7 @@ load "test_helper"
 }
 
 @test "coupons generate-codes missing --number-of-codes fails" {
-  run "$RECURLY_BINARY" coupons generate-codes "code-coupon123"
+  run "$RECURLY_BINARY" coupons generate-codes "code-coupon123" --no-input
   assert_failure
 }
 

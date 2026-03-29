@@ -56,23 +56,10 @@ load "test_helper"
 
 # =============================================================================
 # List Active Redemptions
-# Prism confuses /coupon_redemptions/active with /coupon_redemptions/{id},
-# so API-dependent tests are skipped. Argument validation still tested.
+# Prism cannot distinguish /coupon_redemptions/active from
+# /coupon_redemptions/{coupon_redemption_id}, so only argument validation
+# is testable here.
 # =============================================================================
-
-@test "accounts redemptions list-active returns success" {
-  skip "Prism routing conflict: /active matched as /{coupon_redemption_id}"
-  run "$RECURLY_BINARY" accounts redemptions list-active "code-test123"
-  assert_success
-}
-
-@test "accounts redemptions list-active --output json returns valid JSON with envelope" {
-  skip "Prism routing conflict: /active matched as /{coupon_redemption_id}"
-  run "$RECURLY_BINARY" accounts redemptions list-active "code-test123" --output json
-  assert_success
-  is_valid_json
-  assert_json_value ".object" "list"
-}
 
 @test "accounts redemptions list-active without account_id fails" {
   run "$RECURLY_BINARY" accounts redemptions list-active
@@ -118,7 +105,7 @@ load "test_helper"
 }
 
 @test "accounts redemptions create missing --coupon-id fails" {
-  run "$RECURLY_BINARY" accounts redemptions create "code-test123"
+  run "$RECURLY_BINARY" accounts redemptions create "code-test123" --no-input
   assert_failure
 }
 
