@@ -18,6 +18,7 @@ func newAccountRedemptionsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountRedemptionsListCmd())
 	cmd.AddCommand(newAccountRedemptionsListActiveCmd())
+	cmd.AddCommand(newAccountRedemptionsCreateCmd())
 	return cmd
 }
 
@@ -38,6 +39,89 @@ func redemptionListColumns() []output.Column {
 			return ""
 		}},
 	}
+}
+
+func redemptionDetailColumns() []output.Column {
+	return []output.Column{
+		{Header: "ID", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Id }},
+		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Account.Code }},
+		{Header: "Coupon Code", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Coupon.Code }},
+		{Header: "State", Extract: func(v any) string { return v.(*recurly.CouponRedemption).State }},
+		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Currency }},
+		{Header: "Discounted", Extract: func(v any) string {
+			return fmt.Sprintf("%.2f", v.(*recurly.CouponRedemption).Discounted)
+		}},
+		{Header: "Subscription ID", Extract: func(v any) string { return v.(*recurly.CouponRedemption).SubscriptionId }},
+		{Header: "Created At", Extract: func(v any) string {
+			r := v.(*recurly.CouponRedemption)
+			if r.CreatedAt != nil {
+				return r.CreatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Updated At", Extract: func(v any) string {
+			r := v.(*recurly.CouponRedemption)
+			if r.UpdatedAt != nil {
+				return r.UpdatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+	}
+}
+
+func newAccountRedemptionsCreateCmd() *cobra.Command {
+	var (
+		couponID       string
+		currency       string
+		subscriptionID string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create <account_id>",
+		Short: "Redeem a coupon on an account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newAccountRedemptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.CouponRedemptionCreate{
+				CouponId: recurly.String(couponID),
+			}
+
+			if cmd.Flags().Changed("currency") {
+				body.Currency = recurly.String(currency)
+			}
+			if cmd.Flags().Changed("subscription-id") {
+				body.SubscriptionId = recurly.String(subscriptionID)
+			}
+
+			redemption, err := c.CreateCouponRedemption(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := redemptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, redemption)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&couponID, "coupon-id", "", "Coupon ID to redeem (required)")
+	cmd.Flags().StringVar(&currency, "currency", "", "3-letter ISO 4217 currency code")
+	cmd.Flags().StringVar(&subscriptionID, "subscription-id", "", "Subscription ID to apply the coupon to")
+	_ = cmd.MarkFlagRequired("coupon-id")
+
+	return cmd
 }
 
 func newAccountRedemptionsListCmd() *cobra.Command {

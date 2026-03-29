@@ -5,6 +5,7 @@ ARG recurly accounts deactivate <account_id>
 ARG recurly accounts get <account_id>
 ARG recurly accounts invoices list <account_id>
 ARG recurly accounts reactivate <account_id>
+ARG recurly accounts redemptions create <account_id>
 ARG recurly accounts redemptions list <account_id>
 ARG recurly accounts redemptions list-active <account_id>
 ARG recurly accounts subscriptions list <account_id>
@@ -59,6 +60,7 @@ CMD recurly accounts invoices list
 CMD recurly accounts list
 CMD recurly accounts reactivate
 CMD recurly accounts redemptions
+CMD recurly accounts redemptions create
 CMD recurly accounts redemptions list
 CMD recurly accounts redemptions list-active
 CMD recurly accounts subscriptions
@@ -163,6 +165,9 @@ FLAG recurly accounts list --past-due bool
 FLAG recurly accounts list --sort string
 FLAG recurly accounts list --subscriber string
 FLAG recurly accounts reactivate --yes bool
+FLAG recurly accounts redemptions create --coupon-id string
+FLAG recurly accounts redemptions create --currency string
+FLAG recurly accounts redemptions create --subscription-id string
 FLAG recurly accounts redemptions list --all bool
 FLAG recurly accounts redemptions list --limit int
 FLAG recurly accounts redemptions list --order string
