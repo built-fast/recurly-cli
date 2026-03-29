@@ -416,6 +416,56 @@ func TestTransactionsGet_APIError(t *testing.T) {
 	}
 }
 
+func TestTransactionsList_Filters(t *testing.T) {
+	var capturedParams *recurly.ListTransactionsParams
+	mock := &mockTransactionAPI{
+		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
+			capturedParams = params
+			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("transactions", "list",
+		"--type", "purchase",
+		"--success", "true",
+		"--limit", "5",
+		"--order", "asc",
+		"--sort", "created_at",
+		"--begin-time", "2025-01-01T00:00:00Z",
+		"--end-time", "2025-12-31T23:59:59Z",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedParams == nil {
+		t.Fatal("expected params to be captured")
+	}
+	if capturedParams.Type == nil || *capturedParams.Type != "purchase" {
+		t.Error("expected type=purchase")
+	}
+	if capturedParams.Success == nil || *capturedParams.Success != "true" {
+		t.Error("expected success=true")
+	}
+	if capturedParams.Limit == nil || *capturedParams.Limit != 5 {
+		t.Error("expected limit=5")
+	}
+	if capturedParams.Order == nil || *capturedParams.Order != "asc" {
+		t.Error("expected order=asc")
+	}
+	if capturedParams.Sort == nil || *capturedParams.Sort != "created_at" {
+		t.Error("expected sort=created_at")
+	}
+	if capturedParams.BeginTime == nil {
+		t.Error("expected begin-time to be set")
+	}
+	if capturedParams.EndTime == nil {
+		t.Error("expected end-time to be set")
+	}
+}
+
 func TestTransactionsList_APIError(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {

@@ -186,6 +186,221 @@ func sampleLineItems() []recurly.LineItem {
 	}
 }
 
+func sampleInvoices() []recurly.Invoice {
+	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
+	return []recurly.Invoice{
+		{
+			Id:        "inv-001",
+			Number:    "1001",
+			Type:      "charge",
+			Account:   recurly.AccountMini{Code: "acct-code-1"},
+			State:     "paid",
+			Currency:  "USD",
+			Total:     100.00,
+			Balance:   0.00,
+			CreatedAt: &now,
+		},
+		{
+			Id:        "inv-002",
+			Number:    "1002",
+			Type:      "credit",
+			Account:   recurly.AccountMini{Code: "acct-code-2"},
+			State:     "pending",
+			Currency:  "EUR",
+			Total:     50.00,
+			Balance:   50.00,
+			CreatedAt: &now,
+		},
+	}
+}
+
+// --- invoices list ---
+
+func TestInvoicesList_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("invoices", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "list") {
+		t.Error("expected invoices help to show 'list' subcommand")
+	}
+}
+
+func TestInvoicesList_TableOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "list")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"inv-001", "inv-002",
+		"1001", "1002",
+		"charge", "credit",
+		"acct-code-1", "acct-code-2",
+		"paid", "pending",
+		"USD", "EUR",
+		"100.00", "50.00",
+		"0.00",
+		"2025-01-15T10:30:00Z",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q", expected)
+		}
+	}
+}
+
+func TestInvoicesList_JSONOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "list", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	data, ok := result["data"].([]interface{})
+	if !ok {
+		t.Fatal("expected 'data' array in JSON envelope")
+	}
+	if len(data) != 2 {
+		t.Errorf("expected 2 invoices, got %d", len(data))
+	}
+}
+
+func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "list", "--output", "json-pretty")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if !strings.Contains(out, "\n") {
+		t.Error("expected indented JSON output")
+	}
+}
+
+func TestInvoicesList_JQFilter(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("invoices", "list", "--jq", ".data[0].id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "inv-001" {
+		t.Errorf("expected jq to extract first invoice id, got %q", trimmed)
+	}
+}
+
+func TestInvoicesList_Filters(t *testing.T) {
+	var capturedParams *recurly.ListInvoicesParams
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			capturedParams = params
+			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("invoices", "list",
+		"--state", "paid",
+		"--type", "charge",
+		"--limit", "10",
+		"--order", "desc",
+		"--sort", "created_at",
+		"--begin-time", "2025-01-01T00:00:00Z",
+		"--end-time", "2025-12-31T23:59:59Z",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedParams == nil {
+		t.Fatal("expected params to be captured")
+	}
+	if capturedParams.State == nil || *capturedParams.State != "paid" {
+		t.Error("expected state=paid")
+	}
+	if capturedParams.Type == nil || *capturedParams.Type != "charge" {
+		t.Error("expected type=charge")
+	}
+	if capturedParams.Limit == nil || *capturedParams.Limit != 10 {
+		t.Error("expected limit=10")
+	}
+	if capturedParams.Order == nil || *capturedParams.Order != "desc" {
+		t.Error("expected order=desc")
+	}
+	if capturedParams.Sort == nil || *capturedParams.Sort != "created_at" {
+		t.Error("expected sort=created_at")
+	}
+	if capturedParams.BeginTime == nil {
+		t.Error("expected begin-time to be set")
+	}
+	if capturedParams.EndTime == nil {
+		t.Error("expected end-time to be set")
+	}
+}
+
+func TestInvoicesList_APIError(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeServiceNotAvailable,
+				Message: "service temporarily unavailable",
+			}
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("invoices", "list")
+	if err == nil {
+		t.Fatal("expected error for API failure")
+	}
+	if !strings.Contains(stderr, "temporarily unavailable") {
+		t.Errorf("expected service unavailable error, got %q", stderr)
+	}
+}
+
 // --- invoices get ---
 
 func TestInvoicesGet_ShowsInHelp(t *testing.T) {
