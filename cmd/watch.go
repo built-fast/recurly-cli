@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/built-fast/recurly-cli/internal/output"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // stdoutIsPiped reports whether stdout is a pipe (not a terminal).
@@ -41,11 +41,11 @@ func withWatch(cmd *cobra.Command) *cobra.Command {
 			return err
 		}
 
-		format := viper.GetString("output")
+		cfg := output.FromContext(cmd.Context())
 		piped := stdoutIsPiped()
 
-		if isJSONFormat(format) && !piped {
-			return fmt.Errorf("--watch is incompatible with --output %s in interactive mode; pipe output to use JSON with watch", format)
+		if isJSONFormat(cfg.Format) && !piped {
+			return fmt.Errorf("--watch is incompatible with --output %s in interactive mode; pipe output to use JSON with watch", cfg.Format)
 		}
 
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

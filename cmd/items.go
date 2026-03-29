@@ -6,7 +6,6 @@ import (
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/built-fast/recurly-cli/internal/output"
 	"github.com/built-fast/recurly-cli/internal/pagination"
@@ -74,7 +73,7 @@ func newItemsGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			item, err := c.GetItem(args[0])
 			if err != nil {
@@ -83,7 +82,7 @@ func newItemsGetCmd() *cobra.Command {
 
 			columns := itemDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, item)
+			formatted, err := output.FormatOne(cfg, columns, item)
 			if err != nil {
 				return err
 			}
@@ -129,7 +128,7 @@ func newItemsCreateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.ItemCreate{}
 
 			if cmd.Flags().Changed("code") {
@@ -185,7 +184,7 @@ func newItemsCreateCmd() *cobra.Command {
 
 			columns := itemDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, item)
+			formatted, err := output.FormatOne(cfg, columns, item)
 			if err != nil {
 				return err
 			}
@@ -246,7 +245,7 @@ func newItemsUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.ItemUpdate{}
 
 			if cmd.Flags().Changed("code") {
@@ -302,7 +301,7 @@ func newItemsUpdateCmd() *cobra.Command {
 
 			columns := itemDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, item)
+			formatted, err := output.FormatOne(cfg, columns, item)
 			if err != nil {
 				return err
 			}
@@ -349,7 +348,7 @@ func newItemsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListItemsParams{}
 
@@ -409,7 +408,7 @@ func newItemsListCmd() *cobra.Command {
 				items[i] = item
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -456,7 +455,7 @@ func newItemsDeactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			item, err := c.DeactivateItem(itemID)
 			if err != nil {
@@ -465,7 +464,7 @@ func newItemsDeactivateCmd() *cobra.Command {
 
 			columns := itemDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, item)
+			formatted, err := output.FormatOne(cfg, columns, item)
 			if err != nil {
 				return err
 			}
@@ -506,7 +505,7 @@ func newItemsReactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			item, err := c.ReactivateItem(itemID)
 			if err != nil {
@@ -515,7 +514,7 @@ func newItemsReactivateCmd() *cobra.Command {
 
 			columns := itemDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, item)
+			formatted, err := output.FormatOne(cfg, columns, item)
 			if err != nil {
 				return err
 			}

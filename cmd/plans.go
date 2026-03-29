@@ -9,7 +9,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newPlansCmd() *cobra.Command {
@@ -160,7 +159,7 @@ func newPlansCreateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.PlanCreate{}
 
 			// Core flags
@@ -313,7 +312,7 @@ func newPlansCreateCmd() *cobra.Command {
 
 			columns := planDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, plan)
+			formatted, err := output.FormatOne(cfg, columns, plan)
 			if err != nil {
 				return err
 			}
@@ -452,7 +451,7 @@ func newPlansUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.PlanUpdate{}
 
 			// Core flags
@@ -596,7 +595,7 @@ func newPlansUpdateCmd() *cobra.Command {
 
 			columns := planDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, plan)
+			formatted, err := output.FormatOne(cfg, columns, plan)
 			if err != nil {
 				return err
 			}
@@ -669,7 +668,7 @@ func newPlansGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			plan, err := c.GetPlan(args[0])
 			if err != nil {
@@ -678,7 +677,7 @@ func newPlansGetCmd() *cobra.Command {
 
 			columns := planDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, plan)
+			formatted, err := output.FormatOne(cfg, columns, plan)
 			if err != nil {
 				return err
 			}
@@ -709,7 +708,7 @@ func newPlansListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListPlansParams{}
 
@@ -769,7 +768,7 @@ func newPlansListCmd() *cobra.Command {
 				items[i] = p
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -814,7 +813,7 @@ func newPlansDeactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			plan, err := c.RemovePlan(planID)
 			if err != nil {
@@ -823,7 +822,7 @@ func newPlansDeactivateCmd() *cobra.Command {
 
 			columns := planDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, plan)
+			formatted, err := output.FormatOne(cfg, columns, plan)
 			if err != nil {
 				return err
 			}

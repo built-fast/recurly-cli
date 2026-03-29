@@ -8,7 +8,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newAccountRedemptionsCmd() *cobra.Command {
@@ -87,7 +86,7 @@ func newAccountRedemptionsCreateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.CouponRedemptionCreate{
 				CouponId: recurly.String(couponID),
@@ -107,7 +106,7 @@ func newAccountRedemptionsCreateCmd() *cobra.Command {
 
 			columns := redemptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, redemption)
+			formatted, err := output.FormatOne(cfg, columns, redemption)
 			if err != nil {
 				return err
 			}
@@ -150,7 +149,7 @@ func newAccountRedemptionsRemoveCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			var redemption *recurly.CouponRedemption
 			if len(args) == 2 {
@@ -164,7 +163,7 @@ func newAccountRedemptionsRemoveCmd() *cobra.Command {
 
 			columns := redemptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, redemption)
+			formatted, err := output.FormatOne(cfg, columns, redemption)
 			if err != nil {
 				return err
 			}
@@ -197,7 +196,7 @@ func newAccountRedemptionsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListAccountCouponRedemptionsParams{}
 
@@ -224,7 +223,7 @@ func newAccountRedemptionsListCmd() *cobra.Command {
 				items[i] = r
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -260,7 +259,7 @@ func newAccountRedemptionsListActiveCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			_ = order // order not supported by this API endpoint
 			_ = sort  // sort not supported by this API endpoint
@@ -282,7 +281,7 @@ func newAccountRedemptionsListActiveCmd() *cobra.Command {
 				items[i] = r
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}

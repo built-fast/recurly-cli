@@ -7,7 +7,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/output"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newAccountBillingInfoCmd() *cobra.Command {
@@ -65,7 +64,7 @@ func newAccountBillingInfoGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			billingInfo, err := c.GetBillingInfo(args[0])
 			if err != nil {
@@ -74,7 +73,7 @@ func newAccountBillingInfoGetCmd() *cobra.Command {
 
 			columns := billingInfoDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, billingInfo)
+			formatted, err := output.FormatOne(cfg, columns, billingInfo)
 			if err != nil {
 				return err
 			}
@@ -117,7 +116,7 @@ func newAccountBillingInfoUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.BillingInfoCreate{}
 
 			if cmd.Flags().Changed("first-name") {
@@ -183,7 +182,7 @@ func newAccountBillingInfoUpdateCmd() *cobra.Command {
 
 			columns := billingInfoDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, billingInfo)
+			formatted, err := output.FormatOne(cfg, columns, billingInfo)
 			if err != nil {
 				return err
 			}

@@ -8,7 +8,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newAccountSubscriptionsCmd() *cobra.Command {
@@ -39,7 +38,7 @@ func newAccountSubscriptionsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListAccountSubscriptionsParams{}
 
@@ -89,7 +88,7 @@ func newAccountSubscriptionsListCmd() *cobra.Command {
 				items[i] = s
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -137,7 +136,7 @@ func newAccountInvoicesListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListAccountInvoicesParams{}
 
@@ -189,7 +188,7 @@ func newAccountInvoicesListCmd() *cobra.Command {
 				items[i] = inv
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -238,7 +237,7 @@ func newAccountTransactionsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListAccountTransactionsParams{}
 
@@ -293,7 +292,7 @@ func newAccountTransactionsListCmd() *cobra.Command {
 				items[i] = txn
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}

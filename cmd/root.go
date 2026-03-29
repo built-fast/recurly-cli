@@ -30,17 +30,19 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		output.SetFields(nil)
+		cfg := &output.Config{}
+
+		// Parse --field flag
 		fieldStr, _ := cmd.Flags().GetString("field")
 		if fieldStr != "" {
 			fields := strings.Split(fieldStr, ",")
 			for i, f := range fields {
 				fields[i] = strings.TrimSpace(f)
 			}
-			output.SetFields(fields)
+			cfg.Fields = fields
 		}
 
-		output.SetJQ(nil)
+		// Parse --jq flag
 		jqExpr, _ := cmd.Flags().GetString("jq")
 		if jqExpr != "" {
 			outputChanged := cmd.Flags().Changed("output")
@@ -64,8 +66,14 @@ func NewRootCmd() *cobra.Command {
 				return fmt.Errorf("compiling jq expression: %w", err)
 			}
 
-			output.SetJQ(code)
+			cfg.JQ = code
 		}
+
+		// Set format from viper (flag or config file)
+		cfg.Format = viper.GetString("output")
+
+		// Store config on command context
+		cmd.SetContext(output.NewContext(cmd.Context(), cfg))
 
 		if err := config.Init(); err != nil {
 			return err

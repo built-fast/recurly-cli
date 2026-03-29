@@ -6,7 +6,6 @@ import (
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/built-fast/recurly-cli/internal/output"
 	"github.com/built-fast/recurly-cli/internal/pagination"
@@ -152,7 +151,7 @@ func newSubscriptionsGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			subscription, err := c.GetSubscription(args[0])
 			if err != nil {
@@ -161,7 +160,7 @@ func newSubscriptionsGetCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -195,7 +194,7 @@ func newSubscriptionsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListSubscriptionsParams{}
 
@@ -270,7 +269,7 @@ func newSubscriptionsListCmd() *cobra.Command {
 				items[i] = s
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -323,7 +322,7 @@ func newSubscriptionsCreateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.SubscriptionCreate{}
 
 			if cmd.Flags().Changed("plan-code") {
@@ -409,7 +408,7 @@ func newSubscriptionsCreateCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -475,7 +474,7 @@ func newSubscriptionsUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.SubscriptionUpdate{}
 
 			if cmd.Flags().Changed("collection-method") {
@@ -529,7 +528,7 @@ func newSubscriptionsUpdateCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -585,7 +584,7 @@ func newSubscriptionsCancelCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.CancelSubscriptionParams{}
 			if cmd.Flags().Changed("timeframe") {
@@ -601,7 +600,7 @@ func newSubscriptionsCancelCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -643,7 +642,7 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			subscription, err := c.ReactivateSubscription(subscriptionID)
 			if err != nil {
@@ -652,7 +651,7 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -696,7 +695,7 @@ func newSubscriptionsPauseCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.SubscriptionPause{
 				RemainingPauseCycles: recurly.Int(remainingPauseCycles),
@@ -709,7 +708,7 @@ func newSubscriptionsPauseCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -752,7 +751,7 @@ func newSubscriptionsResumeCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			subscription, err := c.ResumeSubscription(subscriptionID)
 			if err != nil {
@@ -761,7 +760,7 @@ func newSubscriptionsResumeCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -806,7 +805,7 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.TerminateSubscriptionParams{}
 			if cmd.Flags().Changed("refund") {
@@ -823,7 +822,7 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}
@@ -866,7 +865,7 @@ func newSubscriptionsConvertTrialCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			subscription, err := c.ConvertTrial(subscriptionID)
 			if err != nil {
@@ -875,7 +874,7 @@ func newSubscriptionsConvertTrialCmd() *cobra.Command {
 
 			columns := subscriptionDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, subscription)
+			formatted, err := output.FormatOne(cfg, columns, subscription)
 			if err != nil {
 				return err
 			}

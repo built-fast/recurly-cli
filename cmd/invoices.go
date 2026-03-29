@@ -8,7 +8,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newInvoicesCmd() *cobra.Command {
@@ -46,7 +45,7 @@ func newInvoicesListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListInvoicesParams{}
 
@@ -117,7 +116,7 @@ func newInvoicesListCmd() *cobra.Command {
 				items[i] = inv
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -152,7 +151,7 @@ func newInvoicesGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			invoice, err := c.GetInvoice(args[0])
 			if err != nil {
@@ -182,8 +181,8 @@ func newInvoicesGetCmd() *cobra.Command {
 			}
 
 			// For JSON/jq output, format the whole invoice object
-			if format == "json" || format == "json-pretty" || output.HasJQ() {
-				formatted, err := output.FormatOne(format, nil, invoice)
+			if cfg.Format == "json" || cfg.Format == "json-pretty" || cfg.HasJQ() {
+				formatted, err := output.FormatOne(cfg, nil, invoice)
 				if err != nil {
 					return err
 				}
@@ -193,7 +192,7 @@ func newInvoicesGetCmd() *cobra.Command {
 
 			// Table output: detail view
 			columns := invoiceDetailColumns()
-			formatted, err := output.FormatOne(format, columns, invoice)
+			formatted, err := output.FormatOne(cfg, columns, invoice)
 			if err != nil {
 				return err
 			}
@@ -213,7 +212,7 @@ func newInvoicesGetCmd() *cobra.Command {
 					items[i] = li
 				}
 
-				tableOut, err := output.FormatList("table", lineItemCols, items, false)
+				tableOut, err := output.FormatList(&output.Config{Format: "table"}, lineItemCols, items, false)
 				if err != nil {
 					return err
 				}
@@ -262,7 +261,7 @@ func newInvoicesVoidCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			invoice, err := c.VoidInvoice(invoiceID)
 			if err != nil {
@@ -270,8 +269,8 @@ func newInvoicesVoidCmd() *cobra.Command {
 			}
 
 			// For JSON/jq output, format the whole invoice object
-			if format == "json" || format == "json-pretty" || output.HasJQ() {
-				formatted, err := output.FormatOne(format, nil, invoice)
+			if cfg.Format == "json" || cfg.Format == "json-pretty" || cfg.HasJQ() {
+				formatted, err := output.FormatOne(cfg, nil, invoice)
 				if err != nil {
 					return err
 				}
@@ -281,7 +280,7 @@ func newInvoicesVoidCmd() *cobra.Command {
 
 			// Table output: detail view
 			columns := invoiceDetailColumns()
-			formatted, err := output.FormatOne(format, columns, invoice)
+			formatted, err := output.FormatOne(cfg, columns, invoice)
 			if err != nil {
 				return err
 			}
@@ -322,7 +321,7 @@ func newInvoicesCollectCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			invoice, err := c.CollectInvoice(invoiceID, &recurly.CollectInvoiceParams{})
 			if err != nil {
@@ -330,8 +329,8 @@ func newInvoicesCollectCmd() *cobra.Command {
 			}
 
 			// For JSON/jq output, format the whole invoice object
-			if format == "json" || format == "json-pretty" || output.HasJQ() {
-				formatted, err := output.FormatOne(format, nil, invoice)
+			if cfg.Format == "json" || cfg.Format == "json-pretty" || cfg.HasJQ() {
+				formatted, err := output.FormatOne(cfg, nil, invoice)
 				if err != nil {
 					return err
 				}
@@ -341,7 +340,7 @@ func newInvoicesCollectCmd() *cobra.Command {
 
 			// Table output: detail view
 			columns := invoiceDetailColumns()
-			formatted, err := output.FormatOne(format, columns, invoice)
+			formatted, err := output.FormatOne(cfg, columns, invoice)
 			if err != nil {
 				return err
 			}
@@ -382,7 +381,7 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			invoice, err := c.MarkInvoiceFailed(invoiceID)
 			if err != nil {
@@ -390,8 +389,8 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 			}
 
 			// For JSON/jq output, format the whole invoice object
-			if format == "json" || format == "json-pretty" || output.HasJQ() {
-				formatted, err := output.FormatOne(format, nil, invoice)
+			if cfg.Format == "json" || cfg.Format == "json-pretty" || cfg.HasJQ() {
+				formatted, err := output.FormatOne(cfg, nil, invoice)
 				if err != nil {
 					return err
 				}
@@ -401,7 +400,7 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 
 			// Table output: detail view
 			columns := invoiceDetailColumns()
-			formatted, err := output.FormatOne(format, columns, invoice)
+			formatted, err := output.FormatOne(cfg, columns, invoice)
 			if err != nil {
 				return err
 			}
@@ -436,7 +435,7 @@ func newInvoicesLineItemsCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListInvoiceLineItemsParams{}
 
@@ -481,7 +480,7 @@ func newInvoicesLineItemsCmd() *cobra.Command {
 				items[i] = li
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}

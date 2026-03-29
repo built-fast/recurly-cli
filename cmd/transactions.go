@@ -8,7 +8,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newTransactionsCmd() *cobra.Command {
@@ -42,7 +41,7 @@ func newTransactionsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListTransactionsParams{}
 
@@ -113,7 +112,7 @@ func newTransactionsListCmd() *cobra.Command {
 				items[i] = txn
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -146,7 +145,7 @@ func newTransactionsGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			txn, err := c.GetTransaction(args[0])
 			if err != nil {
@@ -154,8 +153,8 @@ func newTransactionsGetCmd() *cobra.Command {
 			}
 
 			// For JSON/jq output, format the whole transaction object
-			if format == "json" || format == "json-pretty" || output.HasJQ() {
-				formatted, err := output.FormatOne(format, nil, txn)
+			if cfg.Format == "json" || cfg.Format == "json-pretty" || cfg.HasJQ() {
+				formatted, err := output.FormatOne(cfg, nil, txn)
 				if err != nil {
 					return err
 				}
@@ -165,7 +164,7 @@ func newTransactionsGetCmd() *cobra.Command {
 
 			// Table output: detail view
 			columns := transactionDetailColumns()
-			formatted, err := output.FormatOne(format, columns, txn)
+			formatted, err := output.FormatOne(cfg, columns, txn)
 			if err != nil {
 				return err
 			}

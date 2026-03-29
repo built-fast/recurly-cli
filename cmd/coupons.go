@@ -9,7 +9,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newCouponsCmd() *cobra.Command {
@@ -49,7 +48,7 @@ func newCouponsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListCouponsParams{}
 
@@ -106,7 +105,7 @@ func newCouponsListCmd() *cobra.Command {
 				items[i] = coupon
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -137,7 +136,7 @@ func newCouponsGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			coupon, err := c.GetCoupon(args[0])
 			if err != nil {
@@ -146,7 +145,7 @@ func newCouponsGetCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -191,7 +190,7 @@ func newCouponsCreatePercentCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.CouponCreate{
 				Code:            recurly.String(code),
@@ -256,7 +255,7 @@ func newCouponsCreatePercentCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -330,7 +329,7 @@ func newCouponsCreateFixedCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			couponPricings := make([]recurly.CouponPricing, len(currencies))
 			for i := range currencies {
@@ -403,7 +402,7 @@ func newCouponsCreateFixedCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -469,7 +468,7 @@ func newCouponsCreateFreeTrialCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.CouponCreate{
 				Code:            recurly.String(code),
@@ -517,7 +516,7 @@ func newCouponsCreateFreeTrialCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -572,7 +571,7 @@ func newCouponsUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.CouponUpdate{}
 
 			if cmd.Flags().Changed("name") {
@@ -601,7 +600,7 @@ func newCouponsUpdateCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -709,7 +708,7 @@ func newCouponsDeactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			coupon, err := c.DeactivateCoupon(couponID)
 			if err != nil {
@@ -718,7 +717,7 @@ func newCouponsDeactivateCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -753,7 +752,7 @@ func newCouponsRestoreCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 			body := &recurly.CouponUpdate{}
 
 			if cmd.Flags().Changed("name") {
@@ -782,7 +781,7 @@ func newCouponsRestoreCmd() *cobra.Command {
 
 			columns := couponDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, coupon)
+			formatted, err := output.FormatOne(cfg, columns, coupon)
 			if err != nil {
 				return err
 			}
@@ -819,7 +818,7 @@ func newCouponsGenerateCodesCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.CouponBulkCreate{
 				NumberOfUniqueCodes: recurly.Int(numberOfCodes),
@@ -849,7 +848,7 @@ func newCouponsGenerateCodesCmd() *cobra.Command {
 				}},
 			}
 
-			formatted, err := output.FormatOne(format, columns, result)
+			formatted, err := output.FormatOne(cfg, columns, result)
 			if err != nil {
 				return err
 			}
@@ -884,7 +883,7 @@ func newCouponsListCodesCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListUniqueCouponCodesParams{}
 
@@ -936,7 +935,7 @@ func newCouponsListCodesCmd() *cobra.Command {
 				items[i] = code
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}

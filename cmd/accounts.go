@@ -8,7 +8,6 @@ import (
 	"github.com/built-fast/recurly-cli/internal/pagination"
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func newAccountsCmd() *cobra.Command {
@@ -52,7 +51,7 @@ func newAccountsListCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			params := &recurly.ListAccountsParams{}
 
@@ -121,7 +120,7 @@ func newAccountsListCmd() *cobra.Command {
 				items[i] = a
 			}
 
-			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			formatted, err := output.FormatList(cfg, columns, items, result.HasMore)
 			if err != nil {
 				return err
 			}
@@ -166,7 +165,7 @@ func newAccountsCreateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.AccountCreate{}
 
@@ -205,7 +204,7 @@ func newAccountsCreateCmd() *cobra.Command {
 
 			columns := accountDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, account)
+			formatted, err := output.FormatOne(cfg, columns, account)
 			if err != nil {
 				return err
 			}
@@ -275,7 +274,7 @@ func newAccountsUpdateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			body := &recurly.AccountUpdate{}
 
@@ -311,7 +310,7 @@ func newAccountsUpdateCmd() *cobra.Command {
 
 			columns := accountDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, account)
+			formatted, err := output.FormatOne(cfg, columns, account)
 			if err != nil {
 				return err
 			}
@@ -359,7 +358,7 @@ func newAccountsDeactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			account, err := c.DeactivateAccount(accountID)
 			if err != nil {
@@ -368,7 +367,7 @@ func newAccountsDeactivateCmd() *cobra.Command {
 
 			columns := accountDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, account)
+			formatted, err := output.FormatOne(cfg, columns, account)
 			if err != nil {
 				return err
 			}
@@ -409,7 +408,7 @@ func newAccountsReactivateCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			account, err := c.ReactivateAccount(accountID)
 			if err != nil {
@@ -418,7 +417,7 @@ func newAccountsReactivateCmd() *cobra.Command {
 
 			columns := accountDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, account)
+			formatted, err := output.FormatOne(cfg, columns, account)
 			if err != nil {
 				return err
 			}
@@ -444,7 +443,7 @@ func newAccountsGetCmd() *cobra.Command {
 				return err
 			}
 
-			format := viper.GetString("output")
+			cfg := output.FromContext(cmd.Context())
 
 			account, err := c.GetAccount(args[0])
 			if err != nil {
@@ -453,7 +452,7 @@ func newAccountsGetCmd() *cobra.Command {
 
 			columns := accountDetailColumns()
 
-			formatted, err := output.FormatOne(format, columns, account)
+			formatted, err := output.FormatOne(cfg, columns, account)
 			if err != nil {
 				return err
 			}
