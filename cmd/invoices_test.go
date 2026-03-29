@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"strings"
@@ -589,4 +590,188 @@ func (m *mockLineItemListerWithMore) HasMore() bool {
 
 func (m *mockLineItemListerWithMore) Next() string {
 	return ""
+}
+
+// --- invoices void ---
+
+func TestInvoicesVoid_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("invoices", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "void") {
+		t.Error("expected invoices help to show 'void' subcommand")
+	}
+}
+
+func TestInvoicesVoid_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("invoices", "void")
+	if err == nil {
+		t.Fatal("expected error when no invoice ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestInvoicesVoid_ConfirmNo_Cancels(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "invoices", "void", "inv-abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Are you sure you want to void invoice inv-abc123? [y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Void cancelled.") {
+		t.Error("expected cancellation message")
+	}
+}
+
+func TestInvoicesVoid_ConfirmYes_Succeeds(t *testing.T) {
+	var capturedID string
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			capturedID = invoiceId
+			inv := sampleInvoice()
+			inv.State = "voided"
+			return inv, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "invoices", "void", "inv-abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "inv-abc123" {
+		t.Errorf("expected invoice ID 'inv-abc123', got %q", capturedID)
+	}
+	if !strings.Contains(stderr, "Are you sure") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "voided") {
+		t.Errorf("expected updated invoice detail with 'voided' state, got:\n%s", out)
+	}
+}
+
+func TestInvoicesVoid_YesFlag_SkipsConfirmation(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			inv := sampleInvoice()
+			inv.State = "voided"
+			return inv, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("invoices", "void", "inv-abc123", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(stderr, "Are you sure") {
+		t.Error("expected --yes to skip confirmation prompt")
+	}
+	if !strings.Contains(out, "voided") {
+		t.Errorf("expected updated invoice detail, got:\n%s", out)
+	}
+}
+
+func TestInvoicesVoid_JSONOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			inv := sampleInvoice()
+			inv.State = "voided"
+			return inv, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["state"] != "voided" {
+		t.Errorf("expected state=voided in JSON, got %v", result["state"])
+	}
+}
+
+func TestInvoicesVoid_JSONPrettyOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			inv := sampleInvoice()
+			inv.State = "voided"
+			return inv, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--output", "json-pretty")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if !strings.Contains(out, "\n") {
+		t.Error("expected indented JSON output")
+	}
+}
+
+func TestInvoicesVoid_JQFilter(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			inv := sampleInvoice()
+			inv.State = "voided"
+			return inv, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--jq", ".state")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "voided" {
+		t.Errorf("expected jq to extract state, got %q", trimmed)
+	}
+}
+
+func TestInvoicesVoid_APIError(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "Couldn't find Invoice with id = nonexistent",
+			}
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("invoices", "void", "nonexistent", "--yes")
+	if err == nil {
+		t.Fatal("expected error for not found invoice")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected 'not found' error, got %q", stderr)
+	}
 }
