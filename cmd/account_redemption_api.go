@@ -12,6 +12,7 @@ type AccountRedemptionAPI interface {
 	ListActiveCouponRedemptions(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error)
 	CreateCouponRedemption(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 	RemoveCouponRedemption(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
+	RemoveCouponRedemptionById(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 	GetCouponRedemption(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 }
 

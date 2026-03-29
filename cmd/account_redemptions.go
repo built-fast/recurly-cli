@@ -19,6 +19,7 @@ func newAccountRedemptionsCmd() *cobra.Command {
 	cmd.AddCommand(newAccountRedemptionsListCmd())
 	cmd.AddCommand(newAccountRedemptionsListActiveCmd())
 	cmd.AddCommand(newAccountRedemptionsCreateCmd())
+	cmd.AddCommand(newAccountRedemptionsRemoveCmd())
 	return cmd
 }
 
@@ -120,6 +121,45 @@ func newAccountRedemptionsCreateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&currency, "currency", "", "3-letter ISO 4217 currency code")
 	cmd.Flags().StringVar(&subscriptionID, "subscription-id", "", "Subscription ID to apply the coupon to")
 	_ = cmd.MarkFlagRequired("coupon-id")
+
+	return cmd
+}
+
+func newAccountRedemptionsRemoveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove <account_id> [redemption_id]",
+		Short: "Remove a coupon redemption from an account",
+		Long:  "Remove the most recent coupon redemption from an account, or remove a specific redemption by ID.",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newAccountRedemptionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			var redemption *recurly.CouponRedemption
+			if len(args) == 2 {
+				redemption, err = c.RemoveCouponRedemptionById(args[0], args[1])
+			} else {
+				redemption, err = c.RemoveCouponRedemption(args[0])
+			}
+			if err != nil {
+				return err
+			}
+
+			columns := redemptionDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, redemption)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
 
 	return cmd
 }

@@ -8,6 +8,8 @@ ARG recurly accounts reactivate <account_id>
 ARG recurly accounts redemptions create <account_id>
 ARG recurly accounts redemptions list <account_id>
 ARG recurly accounts redemptions list-active <account_id>
+ARG recurly accounts redemptions remove <account_id>
+ARG recurly accounts redemptions remove [redemption_id]
 ARG recurly accounts subscriptions list <account_id>
 ARG recurly accounts transactions list <account_id>
 ARG recurly accounts update <account_id>
@@ -63,6 +65,7 @@ CMD recurly accounts redemptions
 CMD recurly accounts redemptions create
 CMD recurly accounts redemptions list
 CMD recurly accounts redemptions list-active
+CMD recurly accounts redemptions remove
 CMD recurly accounts subscriptions
 CMD recurly accounts subscriptions list
 CMD recurly accounts transactions

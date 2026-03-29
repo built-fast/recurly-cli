@@ -10,6 +10,7 @@ type mockAccountRedemptionAPI struct {
 	listActiveCouponRedemptionsFn  func(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error)
 	createCouponRedemptionFn       func(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 	removeCouponRedemptionFn       func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
+	removeCouponRedemptionByIdFn   func(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 	getCouponRedemptionFn          func(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error)
 }
 
@@ -37,6 +38,13 @@ func (m *mockAccountRedemptionAPI) CreateCouponRedemption(accountId string, body
 func (m *mockAccountRedemptionAPI) RemoveCouponRedemption(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 	if m.removeCouponRedemptionFn != nil {
 		return m.removeCouponRedemptionFn(accountId, opts...)
+	}
+	return nil, nil
+}
+
+func (m *mockAccountRedemptionAPI) RemoveCouponRedemptionById(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
+	if m.removeCouponRedemptionByIdFn != nil {
+		return m.removeCouponRedemptionByIdFn(accountId, couponRedemptionId, opts...)
 	}
 	return nil, nil
 }
