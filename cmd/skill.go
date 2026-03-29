@@ -25,6 +25,7 @@ func newSkillCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(newSkillInstallCmd())
+	cmd.AddCommand(newSkillUninstallCmd())
 
 	return cmd
 }
@@ -62,6 +63,37 @@ func newSkillInstallCmd() *cobra.Command {
 			return runSkillInstall(cmd.OutOrStdout(), cfg)
 		},
 	}
+}
+
+func newSkillUninstallCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "uninstall",
+		Short: "Remove installed skill files",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := defaultInstallConfig()
+			if err != nil {
+				return err
+			}
+			return runSkillUninstall(cmd.OutOrStdout(), cfg)
+		},
+	}
+}
+
+func runSkillUninstall(w io.Writer, cfg *installConfig) error {
+	// Remove ~/.agents/skills/recurly/
+	agentsRecurly := filepath.Join(cfg.agentsDir, "recurly")
+	if err := os.RemoveAll(agentsRecurly); err != nil {
+		return fmt.Errorf("removing %s: %w", agentsRecurly, err)
+	}
+
+	// Remove ~/.claude/skills/recurly/
+	claudeRecurly := filepath.Join(cfg.claudeDir, "recurly")
+	if err := os.RemoveAll(claudeRecurly); err != nil {
+		return fmt.Errorf("removing %s: %w", claudeRecurly, err)
+	}
+
+	_, _ = fmt.Fprintln(w, "Uninstalled recurly skill files.")
+	return nil
 }
 
 func runSkillInstall(w io.Writer, cfg *installConfig) error {

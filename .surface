@@ -114,6 +114,7 @@ CMD recurly plans list
 CMD recurly plans update
 CMD recurly skill
 CMD recurly skill install
+CMD recurly skill uninstall
 CMD recurly subscriptions
 CMD recurly subscriptions cancel
 CMD recurly subscriptions convert-trial

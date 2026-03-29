@@ -244,6 +244,64 @@ func TestRunSkillInstall_Idempotency(t *testing.T) {
 	}
 }
 
+func TestRunSkillUninstall_RemovesFiles(t *testing.T) {
+	t.Parallel()
+
+	cfg := testInstallConfig(t)
+	buf := new(bytes.Buffer)
+
+	// Install first
+	if err := runSkillInstall(buf, cfg); err != nil {
+		t.Fatalf("install failed: %v", err)
+	}
+
+	// Verify files exist before uninstall
+	agentsDir := filepath.Join(cfg.agentsDir, "recurly")
+	claudeDir := filepath.Join(cfg.claudeDir, "recurly")
+	if _, err := os.Stat(filepath.Join(agentsDir, "SKILL.md")); err != nil {
+		t.Fatalf("SKILL.md not found before uninstall: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(claudeDir, "SKILL.md")); err != nil {
+		t.Fatalf("claude SKILL.md not found before uninstall: %v", err)
+	}
+
+	// Uninstall
+	buf.Reset()
+	if err := runSkillUninstall(buf, cfg); err != nil {
+		t.Fatalf("uninstall failed: %v", err)
+	}
+
+	// Verify directories removed
+	if _, err := os.Stat(agentsDir); !os.IsNotExist(err) {
+		t.Errorf("agents recurly dir still exists after uninstall")
+	}
+	if _, err := os.Stat(claudeDir); !os.IsNotExist(err) {
+		t.Errorf("claude recurly dir still exists after uninstall")
+	}
+
+	// Verify success message
+	if !strings.Contains(buf.String(), "Uninstalled") {
+		t.Error("missing uninstall confirmation message")
+	}
+}
+
+func TestRunSkillUninstall_NoOp(t *testing.T) {
+	t.Parallel()
+
+	cfg := testInstallConfig(t)
+	buf := new(bytes.Buffer)
+
+	// Uninstall without installing first — should be a no-op
+	if err := runSkillUninstall(buf, cfg); err != nil {
+		t.Fatalf("uninstall on non-existent dirs failed: %v", err)
+	}
+
+	// Verify success message still printed
+	if !strings.Contains(buf.String(), "Uninstalled") {
+		t.Error("missing uninstall confirmation message for no-op case")
+	}
+}
+
 func TestRunSkillInstall_VersionStamp(t *testing.T) {
 	t.Parallel()
 
