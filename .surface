@@ -28,6 +28,8 @@ ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
 ARG recurly items reactivate <item_id>
 ARG recurly items update <item_id>
+ARG recurly open [identifier]
+ARG recurly open [resource]
 ARG recurly plans add-ons create <plan_id>
 ARG recurly plans add-ons delete <add_on_id>
 ARG recurly plans add-ons delete <plan_id>
@@ -97,6 +99,7 @@ CMD recurly items get
 CMD recurly items list
 CMD recurly items reactivate
 CMD recurly items update
+CMD recurly open
 CMD recurly plans
 CMD recurly plans add-ons
 CMD recurly plans add-ons create
@@ -351,6 +354,8 @@ FLAG recurly items update --revenue-schedule-type string
 FLAG recurly items update --tax-code string
 FLAG recurly items update --tax-exempt bool
 FLAG recurly items update --unit-amount float64Slice
+FLAG recurly open --site string
+FLAG recurly open --url bool
 FLAG recurly plans add-ons create --accounting-code string
 FLAG recurly plans add-ons create --add-on-type string
 FLAG recurly plans add-ons create --code string

@@ -18,7 +18,7 @@ func TestConfigure_NewConfig(t *testing.T) {
 
 	out := new(bytes.Buffer)
 	p := &configPrompter{
-		reader: bufio.NewReader(strings.NewReader("us\n")),
+		reader: bufio.NewReader(strings.NewReader("us\nmysite\n")),
 		writer: out,
 		readPassword: func() (string, error) {
 			return "test-api-key-12345", nil
@@ -36,6 +36,9 @@ func TestConfigure_NewConfig(t *testing.T) {
 	if !strings.Contains(output, "Region (us/eu) [us]:") {
 		t.Errorf("expected Region prompt with us default, got: %s", output)
 	}
+	if !strings.Contains(output, "Site subdomain") {
+		t.Errorf("expected Site subdomain prompt, got: %s", output)
+	}
 	if !strings.Contains(output, "Configuration saved to") {
 		t.Errorf("expected confirmation message, got: %s", output)
 	}
@@ -52,6 +55,9 @@ func TestConfigure_NewConfig(t *testing.T) {
 	}
 	if got := v.GetString("region"); got != "us" {
 		t.Errorf("region = %q, want %q", got, "us")
+	}
+	if got := v.GetString("site"); got != "mysite" {
+		t.Errorf("site = %q, want %q", got, "mysite")
 	}
 }
 
@@ -72,7 +78,7 @@ func TestConfigure_ExistingConfigShowsDefaults(t *testing.T) {
 
 	out := new(bytes.Buffer)
 	p := &configPrompter{
-		reader: bufio.NewReader(strings.NewReader("\n")), // Enter to keep existing region
+		reader: bufio.NewReader(strings.NewReader("\n\n")), // Enter to keep existing region, Enter for site
 		writer: out,
 		readPassword: func() (string, error) {
 			return "", nil // Enter to keep existing API key
@@ -115,7 +121,7 @@ func TestConfigure_InvalidRegionRePrompts(t *testing.T) {
 
 	out := new(bytes.Buffer)
 	p := &configPrompter{
-		reader: bufio.NewReader(strings.NewReader("invalid\neu\n")),
+		reader: bufio.NewReader(strings.NewReader("invalid\neu\n\n")),
 		writer: out,
 		readPassword: func() (string, error) {
 			return "test-key", nil
@@ -177,7 +183,7 @@ func TestConfigure_RegionDefaultEnter(t *testing.T) {
 
 	out := new(bytes.Buffer)
 	p := &configPrompter{
-		reader: bufio.NewReader(strings.NewReader("\n")), // just Enter
+		reader: bufio.NewReader(strings.NewReader("\n\n")), // Enter for region, Enter for site
 		writer: out,
 		readPassword: func() (string, error) {
 			return "my-key", nil
@@ -207,7 +213,7 @@ func TestConfigure_ConfirmationMessage(t *testing.T) {
 
 	out := new(bytes.Buffer)
 	p := &configPrompter{
-		reader: bufio.NewReader(strings.NewReader("eu\n")),
+		reader: bufio.NewReader(strings.NewReader("eu\n\n")),
 		writer: out,
 		readPassword: func() (string, error) {
 			return "my-key", nil
