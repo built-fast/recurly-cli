@@ -10,8 +10,7 @@ import (
 )
 
 // ClientConfig holds the configuration needed to create a Recurly API client.
-// It replaces direct reads from global state (e.g. viper) so that callers can
-// inject values explicitly.
+// Callers inject values explicitly rather than reading from global state.
 type ClientConfig struct {
 	// APIKey is the Recurly API key used for authentication.
 	APIKey string
