@@ -84,7 +84,6 @@ func (m *mockItemLister) Next() string {
 	return ""
 }
 
-
 // sampleItem returns a test item with predictable fields.
 func sampleItem() recurly.Item {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)

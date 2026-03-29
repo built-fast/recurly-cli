@@ -55,4 +55,3 @@ func (m *mockAccountRedemptionAPI) GetCouponRedemption(accountId string, couponR
 	}
 	return nil, nil
 }
-

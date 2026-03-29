@@ -104,7 +104,6 @@ func (m *mockSubscriptionLister) Next() string {
 	return ""
 }
 
-
 // sampleSubscription returns a test subscription with predictable fields for list output.
 func sampleSubscription() recurly.Subscription {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)

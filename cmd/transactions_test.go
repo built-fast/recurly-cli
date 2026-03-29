@@ -26,7 +26,6 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 	return m.getTransactionFn(transactionId, opts...)
 }
 
-
 // mockTransactionLister implements recurly.TransactionLister for testing.
 type mockTransactionLister struct {
 	transactions []recurly.Transaction

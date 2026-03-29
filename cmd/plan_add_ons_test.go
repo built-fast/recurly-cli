@@ -90,7 +90,6 @@ func (m *mockAddOnLister) Next() string {
 	return ""
 }
 
-
 func sampleAddOn() recurly.AddOn {
 	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
 	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)

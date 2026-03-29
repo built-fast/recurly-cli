@@ -79,7 +79,6 @@ func (m *mockPlanLister) Next() string {
 	return ""
 }
 
-
 // samplePlan returns a test plan with predictable fields.
 func samplePlan() recurly.Plan {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)

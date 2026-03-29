@@ -40,7 +40,6 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 	return nil, nil
 }
 
-
 func sampleBillingInfo() *recurly.BillingInfo {
 	created := time.Date(2025, 2, 10, 12, 0, 0, 0, time.UTC)
 	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)

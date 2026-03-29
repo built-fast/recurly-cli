@@ -84,7 +84,6 @@ func (m *mockAccountLister) Next() string {
 	return ""
 }
 
-
 // sampleAccount returns a test account with predictable fields.
 func sampleAccount() *recurly.Account {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)

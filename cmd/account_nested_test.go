@@ -40,7 +40,6 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 	return nil, nil
 }
 
-
 // --- Mock listers ---
 
 // mockAccountSubscriptionLister implements recurly.SubscriptionLister for testing.

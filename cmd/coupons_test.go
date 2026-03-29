@@ -129,7 +129,6 @@ func (m *mockUniqueCouponCodeLister) Next() string {
 	return ""
 }
 
-
 // sampleCoupon returns a test coupon with predictable fields for list tests.
 func sampleCoupon() recurly.Coupon {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)

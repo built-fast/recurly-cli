@@ -47,7 +47,6 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 	return m.listInvoiceLineItemsFn(invoiceId, params, opts...)
 }
 
-
 // mockLineItemLister implements recurly.LineItemLister for testing.
 type mockLineItemLister struct {
 	lineItems []recurly.LineItem
