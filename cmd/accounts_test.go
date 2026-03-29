@@ -160,6 +160,7 @@ func TestAccountsList_InvalidEndTime_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountsParams
 
 	mock := &mockAccountAPI{
@@ -190,6 +191,7 @@ func TestAccountsList_PaginationParams(t *testing.T) {
 }
 
 func TestAccountsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountsParams
 
 	mock := &mockAccountAPI{
@@ -229,6 +231,7 @@ func TestAccountsList_FilterParams(t *testing.T) {
 }
 
 func TestAccountsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountsParams
 
 	mock := &mockAccountAPI{

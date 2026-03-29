@@ -4,10 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/built-fast/recurly-cli/internal/client"
 )
+
+// executeCommandMu serializes executeCommand calls to avoid data races on
+// the global viper singleton (viper.BindPFlag is not concurrent-safe).
+// The context-based App/mock injection is parallel-safe; this mutex
+// only protects the viper bindings in NewRootCmd and PersistentPreRunE.
+var executeCommandMu sync.Mutex
 
 // executeCommand runs a command with an optional *App injected into context.
 // Pass nil to use the default App from NewRootCmd.
@@ -18,6 +25,9 @@ func executeCommand(app *App, args ...string) (string, string, error) {
 // executeCommandWithStdin runs a command with optional *App and stdin.
 // Pass nil for app to use the default App from NewRootCmd.
 func executeCommandWithStdin(app *App, stdin *bytes.Buffer, args ...string) (string, string, error) {
+	executeCommandMu.Lock()
+	defer executeCommandMu.Unlock()
+
 	cmd := NewRootCmd()
 	if app != nil {
 		cmd.SetContext(NewAppContext(cmd.Context(), app))

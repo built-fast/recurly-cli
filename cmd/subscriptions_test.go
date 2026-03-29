@@ -214,6 +214,7 @@ func TestSubscriptionsList_InvalidEndTime_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListSubscriptionsParams
 
 	mock := &mockSubscriptionAPI{
@@ -244,6 +245,7 @@ func TestSubscriptionsList_PaginationParams(t *testing.T) {
 }
 
 func TestSubscriptionsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListSubscriptionsParams
 
 	mock := &mockSubscriptionAPI{
