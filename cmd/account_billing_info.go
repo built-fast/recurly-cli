@@ -16,7 +16,7 @@ func newAccountBillingInfoCmd() *cobra.Command {
 		Short: "Manage account billing info",
 	}
 	cmd.AddCommand(newAccountBillingInfoGetCmd())
-	cmd.AddCommand(newAccountBillingInfoUpdateCmd())
+	cmd.AddCommand(withFromFile(newAccountBillingInfoUpdateCmd()))
 	cmd.AddCommand(newAccountBillingInfoRemoveCmd())
 	return cmd
 }

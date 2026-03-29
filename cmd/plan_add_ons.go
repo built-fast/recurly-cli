@@ -19,8 +19,8 @@ func newPlanAddOnsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newPlanAddOnsListCmd())
 	cmd.AddCommand(newPlanAddOnsGetCmd())
-	cmd.AddCommand(newPlanAddOnsCreateCmd())
-	cmd.AddCommand(newPlanAddOnsUpdateCmd())
+	cmd.AddCommand(withFromFile(newPlanAddOnsCreateCmd()))
+	cmd.AddCommand(withFromFile(newPlanAddOnsUpdateCmd()))
 	cmd.AddCommand(newPlanAddOnsDeleteCmd())
 	return cmd
 }

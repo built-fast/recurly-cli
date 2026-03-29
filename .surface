@@ -138,6 +138,7 @@ FLAG recurly accounts billing-info update --backup-payment-method bool
 FLAG recurly accounts billing-info update --company string
 FLAG recurly accounts billing-info update --currency string
 FLAG recurly accounts billing-info update --first-name string
+FLAG recurly accounts billing-info update --from-file string
 FLAG recurly accounts billing-info update --last-name string
 FLAG recurly accounts billing-info update --primary-payment-method bool
 FLAG recurly accounts billing-info update --token-id string
@@ -147,6 +148,7 @@ FLAG recurly accounts create --code string
 FLAG recurly accounts create --company string
 FLAG recurly accounts create --email string
 FLAG recurly accounts create --first-name string
+FLAG recurly accounts create --from-file string
 FLAG recurly accounts create --last-name string
 FLAG recurly accounts create --preferred-locale string
 FLAG recurly accounts create --tax-exempt bool
@@ -170,6 +172,7 @@ FLAG recurly accounts list --subscriber string
 FLAG recurly accounts reactivate --yes bool
 FLAG recurly accounts redemptions create --coupon-id string
 FLAG recurly accounts redemptions create --currency string
+FLAG recurly accounts redemptions create --from-file string
 FLAG recurly accounts redemptions create --subscription-id string
 FLAG recurly accounts redemptions list --all bool
 FLAG recurly accounts redemptions list --limit int
@@ -195,6 +198,7 @@ FLAG recurly accounts update --bill-to string
 FLAG recurly accounts update --company string
 FLAG recurly accounts update --email string
 FLAG recurly accounts update --first-name string
+FLAG recurly accounts update --from-file string
 FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
@@ -207,6 +211,7 @@ FLAG recurly coupons create-fixed --coupon-type string
 FLAG recurly coupons create-fixed --currency stringSlice
 FLAG recurly coupons create-fixed --discount-amount float64Slice
 FLAG recurly coupons create-fixed --duration string
+FLAG recurly coupons create-fixed --from-file string
 FLAG recurly coupons create-fixed --hosted-page-description string
 FLAG recurly coupons create-fixed --invoice-description string
 FLAG recurly coupons create-fixed --item-codes stringSlice
@@ -224,6 +229,7 @@ FLAG recurly coupons create-free-trial --code string
 FLAG recurly coupons create-free-trial --coupon-type string
 FLAG recurly coupons create-free-trial --free-trial-amount int
 FLAG recurly coupons create-free-trial --free-trial-unit string
+FLAG recurly coupons create-free-trial --from-file string
 FLAG recurly coupons create-free-trial --hosted-page-description string
 FLAG recurly coupons create-free-trial --invoice-description string
 FLAG recurly coupons create-free-trial --max-redemptions int
@@ -240,6 +246,7 @@ FLAG recurly coupons create-percent --code string
 FLAG recurly coupons create-percent --coupon-type string
 FLAG recurly coupons create-percent --discount-percent int
 FLAG recurly coupons create-percent --duration string
+FLAG recurly coupons create-percent --from-file string
 FLAG recurly coupons create-percent --hosted-page-description string
 FLAG recurly coupons create-percent --invoice-description string
 FLAG recurly coupons create-percent --item-codes stringSlice
@@ -271,6 +278,7 @@ FLAG recurly coupons restore --max-redemptions int
 FLAG recurly coupons restore --max-redemptions-per-account int
 FLAG recurly coupons restore --name string
 FLAG recurly coupons restore --redeem-by-date string
+FLAG recurly coupons update --from-file string
 FLAG recurly coupons update --hosted-description string
 FLAG recurly coupons update --invoice-description string
 FLAG recurly coupons update --max-redemptions int
@@ -302,6 +310,7 @@ FLAG recurly items create --code string
 FLAG recurly items create --currency stringSlice
 FLAG recurly items create --description string
 FLAG recurly items create --external-sku string
+FLAG recurly items create --from-file string
 FLAG recurly items create --harmonized-system-code string
 FLAG recurly items create --name string
 FLAG recurly items create --revenue-schedule-type string
@@ -324,6 +333,7 @@ FLAG recurly items update --code string
 FLAG recurly items update --currency stringSlice
 FLAG recurly items update --description string
 FLAG recurly items update --external-sku string
+FLAG recurly items update --from-file string
 FLAG recurly items update --harmonized-system-code string
 FLAG recurly items update --name string
 FLAG recurly items update --revenue-schedule-type string
@@ -336,6 +346,7 @@ FLAG recurly plans add-ons create --code string
 FLAG recurly plans add-ons create --currency stringSlice
 FLAG recurly plans add-ons create --default-quantity int
 FLAG recurly plans add-ons create --display-quantity bool
+FLAG recurly plans add-ons create --from-file string
 FLAG recurly plans add-ons create --measured-unit-id string
 FLAG recurly plans add-ons create --name string
 FLAG recurly plans add-ons create --optional bool
@@ -355,6 +366,7 @@ FLAG recurly plans add-ons update --code string
 FLAG recurly plans add-ons update --currency stringSlice
 FLAG recurly plans add-ons update --default-quantity int
 FLAG recurly plans add-ons update --display-quantity bool
+FLAG recurly plans add-ons update --from-file string
 FLAG recurly plans add-ons update --measured-unit-id string
 FLAG recurly plans add-ons update --measured-unit-name string
 FLAG recurly plans add-ons update --name string
@@ -375,6 +387,7 @@ FLAG recurly plans create --currency stringSlice
 FLAG recurly plans create --description string
 FLAG recurly plans create --display-quantity bool
 FLAG recurly plans create --dunning-campaign-id string
+FLAG recurly plans create --from-file string
 FLAG recurly plans create --harmonized-system-code string
 FLAG recurly plans create --interval-length int
 FLAG recurly plans create --interval-unit string
@@ -417,6 +430,7 @@ FLAG recurly plans update --currency stringSlice
 FLAG recurly plans update --description string
 FLAG recurly plans update --display-quantity bool
 FLAG recurly plans update --dunning-campaign-id string
+FLAG recurly plans update --from-file string
 FLAG recurly plans update --harmonized-system-code string
 FLAG recurly plans update --liability-gl-account-id string
 FLAG recurly plans update --name string
@@ -447,6 +461,7 @@ FLAG recurly subscriptions create --billing-info-id string
 FLAG recurly subscriptions create --collection-method string
 FLAG recurly subscriptions create --coupon-code string
 FLAG recurly subscriptions create --currency string
+FLAG recurly subscriptions create --from-file string
 FLAG recurly subscriptions create --gateway-code string
 FLAG recurly subscriptions create --net-terms int
 FLAG recurly subscriptions create --net-terms-type string
@@ -478,6 +493,7 @@ FLAG recurly subscriptions update --auto-renew bool
 FLAG recurly subscriptions update --billing-info-id string
 FLAG recurly subscriptions update --collection-method string
 FLAG recurly subscriptions update --customer-notes string
+FLAG recurly subscriptions update --from-file string
 FLAG recurly subscriptions update --gateway-code string
 FLAG recurly subscriptions update --net-terms int
 FLAG recurly subscriptions update --net-terms-type string

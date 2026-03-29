@@ -19,8 +19,8 @@ func newItemsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newItemsListCmd())
 	cmd.AddCommand(newItemsGetCmd())
-	cmd.AddCommand(newItemsCreateCmd())
-	cmd.AddCommand(newItemsUpdateCmd())
+	cmd.AddCommand(withFromFile(newItemsCreateCmd()))
+	cmd.AddCommand(withFromFile(newItemsUpdateCmd()))
 	cmd.AddCommand(newItemsDeactivateCmd())
 	cmd.AddCommand(newItemsReactivateCmd())
 	return cmd
