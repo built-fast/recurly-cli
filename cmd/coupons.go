@@ -621,21 +621,22 @@ func newCouponsUpdateCmd() *cobra.Command {
 }
 
 func couponDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.Coupon).Id }},
-		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Coupon).Code }},
-		{Header: "Name", Extract: func(v any) string { return v.(*recurly.Coupon).Name }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Coupon).State }},
-		{Header: "Discount Type", Extract: func(v any) string { return v.(*recurly.Coupon).Discount.Type }},
-		{Header: "Discount Value", Extract: func(v any) string {
-			d := v.(*recurly.Coupon).Discount
+	type C = *recurly.Coupon
+	return output.ToColumns([]output.TypedColumn[C]{
+		output.StringColumn[C]("ID", func(c C) string { return c.Id }),
+		output.StringColumn[C]("Code", func(c C) string { return c.Code }),
+		output.StringColumn[C]("Name", func(c C) string { return c.Name }),
+		output.StringColumn[C]("State", func(c C) string { return c.State }),
+		output.StringColumn[C]("Discount Type", func(c C) string { return c.Discount.Type }),
+		{Header: "Discount Value", Extract: func(c C) string {
+			d := c.Discount
 			switch d.Type {
 			case "percent":
 				return fmt.Sprintf("%d%%", d.Percent)
 			case "fixed":
 				var parts []string
-				for _, c := range d.Currencies {
-					parts = append(parts, fmt.Sprintf("%.2f %s", c.Amount, c.Currency))
+				for _, cur := range d.Currencies {
+					parts = append(parts, fmt.Sprintf("%.2f %s", cur.Amount, cur.Currency))
 				}
 				return fmt.Sprintf("%v", parts)
 			case "free_trial":
@@ -644,42 +645,16 @@ func couponDetailColumns() []output.Column {
 				return ""
 			}
 		}},
-		{Header: "Duration", Extract: func(v any) string { return v.(*recurly.Coupon).Duration }},
-		{Header: "Coupon Type", Extract: func(v any) string { return v.(*recurly.Coupon).CouponType }},
-		{Header: "Max Redemptions", Extract: func(v any) string {
-			return strconv.Itoa(v.(*recurly.Coupon).MaxRedemptions)
-		}},
-		{Header: "Max Redemptions Per Account", Extract: func(v any) string {
-			return strconv.Itoa(v.(*recurly.Coupon).MaxRedemptionsPerAccount)
-		}},
-		{Header: "Redeem By", Extract: func(v any) string {
-			c := v.(*recurly.Coupon)
-			if c.RedeemBy != nil {
-				return c.RedeemBy.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Applies To All Plans", Extract: func(v any) string {
-			return strconv.FormatBool(v.(*recurly.Coupon).AppliesToAllPlans)
-		}},
-		{Header: "Applies To All Items", Extract: func(v any) string {
-			return strconv.FormatBool(v.(*recurly.Coupon).AppliesToAllItems)
-		}},
-		{Header: "Created At", Extract: func(v any) string {
-			c := v.(*recurly.Coupon)
-			if c.CreatedAt != nil {
-				return c.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			c := v.(*recurly.Coupon)
-			if c.UpdatedAt != nil {
-				return c.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+		output.StringColumn[C]("Duration", func(c C) string { return c.Duration }),
+		output.StringColumn[C]("Coupon Type", func(c C) string { return c.CouponType }),
+		output.IntColumn[C]("Max Redemptions", func(c C) int { return c.MaxRedemptions }),
+		output.IntColumn[C]("Max Redemptions Per Account", func(c C) int { return c.MaxRedemptionsPerAccount }),
+		output.TimeColumn[C]("Redeem By", func(c C) *time.Time { return c.RedeemBy }),
+		output.BoolColumn[C]("Applies To All Plans", func(c C) bool { return c.AppliesToAllPlans }),
+		output.BoolColumn[C]("Applies To All Items", func(c C) bool { return c.AppliesToAllItems }),
+		output.TimeColumn[C]("Created At", func(c C) *time.Time { return c.CreatedAt }),
+		output.TimeColumn[C]("Updated At", func(c C) *time.Time { return c.UpdatedAt }),
+	})
 }
 
 func newCouponsDeactivateCmd() *cobra.Command {

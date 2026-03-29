@@ -178,53 +178,30 @@ func newTransactionsGetCmd() *cobra.Command {
 }
 
 func transactionDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.Transaction).Id }},
-		{Header: "UUID", Extract: func(v any) string { return v.(*recurly.Transaction).Uuid }},
-		{Header: "Type", Extract: func(v any) string { return v.(*recurly.Transaction).Type }},
-		{Header: "Origin", Extract: func(v any) string { return v.(*recurly.Transaction).Origin }},
-		{Header: "Status", Extract: func(v any) string { return v.(*recurly.Transaction).Status }},
-		{Header: "Success", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Transaction).Success)
-		}},
-		{Header: "Amount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Transaction).Amount)
-		}},
-		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.Transaction).Currency }},
-		{Header: "Account ID", Extract: func(v any) string { return v.(*recurly.Transaction).Account.Id }},
-		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.Transaction).Account.Code }},
-		{Header: "Invoice ID", Extract: func(v any) string { return v.(*recurly.Transaction).Invoice.Id }},
-		{Header: "Invoice Number", Extract: func(v any) string { return v.(*recurly.Transaction).Invoice.Number }},
-		{Header: "Collection Method", Extract: func(v any) string { return v.(*recurly.Transaction).CollectionMethod }},
-		{Header: "Payment Method Type", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.Object }},
-		{Header: "Payment Method Card Type", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.CardType }},
-		{Header: "Payment Method Last Four", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.LastFour }},
-		{Header: "IP Address", Extract: func(v any) string { return v.(*recurly.Transaction).IpAddressV4 }},
-		{Header: "Status Code", Extract: func(v any) string { return v.(*recurly.Transaction).StatusCode }},
-		{Header: "Status Message", Extract: func(v any) string { return v.(*recurly.Transaction).StatusMessage }},
-		{Header: "Refunded", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Transaction).Refunded)
-		}},
-		{Header: "Created At", Extract: func(v any) string {
-			txn := v.(*recurly.Transaction)
-			if txn.CreatedAt != nil {
-				return txn.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			txn := v.(*recurly.Transaction)
-			if txn.UpdatedAt != nil {
-				return txn.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Voided At", Extract: func(v any) string {
-			txn := v.(*recurly.Transaction)
-			if txn.VoidedAt != nil {
-				return txn.VoidedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type T = *recurly.Transaction
+	return output.ToColumns([]output.TypedColumn[T]{
+		output.StringColumn[T]("ID", func(t T) string { return t.Id }),
+		output.StringColumn[T]("UUID", func(t T) string { return t.Uuid }),
+		output.StringColumn[T]("Type", func(t T) string { return t.Type }),
+		output.StringColumn[T]("Origin", func(t T) string { return t.Origin }),
+		output.StringColumn[T]("Status", func(t T) string { return t.Status }),
+		output.BoolColumn[T]("Success", func(t T) bool { return t.Success }),
+		output.FloatColumn[T]("Amount", func(t T) float64 { return t.Amount }),
+		output.StringColumn[T]("Currency", func(t T) string { return t.Currency }),
+		output.StringColumn[T]("Account ID", func(t T) string { return t.Account.Id }),
+		output.StringColumn[T]("Account Code", func(t T) string { return t.Account.Code }),
+		output.StringColumn[T]("Invoice ID", func(t T) string { return t.Invoice.Id }),
+		output.StringColumn[T]("Invoice Number", func(t T) string { return t.Invoice.Number }),
+		output.StringColumn[T]("Collection Method", func(t T) string { return t.CollectionMethod }),
+		output.StringColumn[T]("Payment Method Type", func(t T) string { return t.PaymentMethod.Object }),
+		output.StringColumn[T]("Payment Method Card Type", func(t T) string { return t.PaymentMethod.CardType }),
+		output.StringColumn[T]("Payment Method Last Four", func(t T) string { return t.PaymentMethod.LastFour }),
+		output.StringColumn[T]("IP Address", func(t T) string { return t.IpAddressV4 }),
+		output.StringColumn[T]("Status Code", func(t T) string { return t.StatusCode }),
+		output.StringColumn[T]("Status Message", func(t T) string { return t.StatusMessage }),
+		output.BoolColumn[T]("Refunded", func(t T) bool { return t.Refunded }),
+		output.TimeColumn[T]("Created At", func(t T) *time.Time { return t.CreatedAt }),
+		output.TimeColumn[T]("Updated At", func(t T) *time.Time { return t.UpdatedAt }),
+		output.TimeColumn[T]("Voided At", func(t T) *time.Time { return t.VoidedAt }),
+	})
 }

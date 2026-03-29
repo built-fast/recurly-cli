@@ -30,114 +30,39 @@ func newSubscriptionsCmd() *cobra.Command {
 }
 
 func subscriptionDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.Subscription).Id }},
-		{Header: "UUID", Extract: func(v any) string { return v.(*recurly.Subscription).Uuid }},
-		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.Subscription).Account.Code }},
-		{Header: "Plan Code", Extract: func(v any) string { return v.(*recurly.Subscription).Plan.Code }},
-		{Header: "Plan Name", Extract: func(v any) string { return v.(*recurly.Subscription).Plan.Name }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Subscription).State }},
-		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.Subscription).Currency }},
-		{Header: "Unit Amount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Subscription).UnitAmount)
-		}},
-		{Header: "Quantity", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Subscription).Quantity)
-		}},
-		{Header: "Subtotal", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Subscription).Subtotal)
-		}},
-		{Header: "Tax", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Subscription).Tax)
-		}},
-		{Header: "Total", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Subscription).Total)
-		}},
-		{Header: "Collection Method", Extract: func(v any) string { return v.(*recurly.Subscription).CollectionMethod }},
-		{Header: "Auto Renew", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Subscription).AutoRenew)
-		}},
-		{Header: "Current Period Started At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.CurrentPeriodStartedAt != nil {
-				return s.CurrentPeriodStartedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Current Period Ends At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.CurrentPeriodEndsAt != nil {
-				return s.CurrentPeriodEndsAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Trial Started At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.TrialStartedAt != nil {
-				return s.TrialStartedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Trial Ends At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.TrialEndsAt != nil {
-				return s.TrialEndsAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Paused At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.PausedAt != nil {
-				return s.PausedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Remaining Pause Cycles", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Subscription).RemainingPauseCycles)
-		}},
-		{Header: "Net Terms", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Subscription).NetTerms)
-		}},
-		{Header: "Net Terms Type", Extract: func(v any) string { return v.(*recurly.Subscription).NetTermsType }},
-		{Header: "PO Number", Extract: func(v any) string { return v.(*recurly.Subscription).PoNumber }},
-		{Header: "Gateway Code", Extract: func(v any) string { return v.(*recurly.Subscription).GatewayCode }},
-		{Header: "Billing Info ID", Extract: func(v any) string { return v.(*recurly.Subscription).BillingInfoId }},
-		{Header: "Created At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.CreatedAt != nil {
-				return s.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.UpdatedAt != nil {
-				return s.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Activated At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.ActivatedAt != nil {
-				return s.ActivatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Canceled At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.CanceledAt != nil {
-				return s.CanceledAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Expires At", Extract: func(v any) string {
-			s := v.(*recurly.Subscription)
-			if s.ExpiresAt != nil {
-				return s.ExpiresAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type S = *recurly.Subscription
+	return output.ToColumns([]output.TypedColumn[S]{
+		output.StringColumn[S]("ID", func(s S) string { return s.Id }),
+		output.StringColumn[S]("UUID", func(s S) string { return s.Uuid }),
+		output.StringColumn[S]("Account Code", func(s S) string { return s.Account.Code }),
+		output.StringColumn[S]("Plan Code", func(s S) string { return s.Plan.Code }),
+		output.StringColumn[S]("Plan Name", func(s S) string { return s.Plan.Name }),
+		output.StringColumn[S]("State", func(s S) string { return s.State }),
+		output.StringColumn[S]("Currency", func(s S) string { return s.Currency }),
+		output.FloatColumn[S]("Unit Amount", func(s S) float64 { return s.UnitAmount }),
+		output.IntColumn[S]("Quantity", func(s S) int { return s.Quantity }),
+		output.FloatColumn[S]("Subtotal", func(s S) float64 { return s.Subtotal }),
+		output.FloatColumn[S]("Tax", func(s S) float64 { return s.Tax }),
+		output.FloatColumn[S]("Total", func(s S) float64 { return s.Total }),
+		output.StringColumn[S]("Collection Method", func(s S) string { return s.CollectionMethod }),
+		output.BoolColumn[S]("Auto Renew", func(s S) bool { return s.AutoRenew }),
+		output.TimeColumn[S]("Current Period Started At", func(s S) *time.Time { return s.CurrentPeriodStartedAt }),
+		output.TimeColumn[S]("Current Period Ends At", func(s S) *time.Time { return s.CurrentPeriodEndsAt }),
+		output.TimeColumn[S]("Trial Started At", func(s S) *time.Time { return s.TrialStartedAt }),
+		output.TimeColumn[S]("Trial Ends At", func(s S) *time.Time { return s.TrialEndsAt }),
+		output.TimeColumn[S]("Paused At", func(s S) *time.Time { return s.PausedAt }),
+		output.IntColumn[S]("Remaining Pause Cycles", func(s S) int { return s.RemainingPauseCycles }),
+		output.IntColumn[S]("Net Terms", func(s S) int { return s.NetTerms }),
+		output.StringColumn[S]("Net Terms Type", func(s S) string { return s.NetTermsType }),
+		output.StringColumn[S]("PO Number", func(s S) string { return s.PoNumber }),
+		output.StringColumn[S]("Gateway Code", func(s S) string { return s.GatewayCode }),
+		output.StringColumn[S]("Billing Info ID", func(s S) string { return s.BillingInfoId }),
+		output.TimeColumn[S]("Created At", func(s S) *time.Time { return s.CreatedAt }),
+		output.TimeColumn[S]("Updated At", func(s S) *time.Time { return s.UpdatedAt }),
+		output.TimeColumn[S]("Activated At", func(s S) *time.Time { return s.ActivatedAt }),
+		output.TimeColumn[S]("Canceled At", func(s S) *time.Time { return s.CanceledAt }),
+		output.TimeColumn[S]("Expires At", func(s S) *time.Time { return s.ExpiresAt }),
+	})
 }
 
 func newSubscriptionsGetCmd() *cobra.Command {

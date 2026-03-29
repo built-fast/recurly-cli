@@ -21,36 +21,19 @@ func newAccountBillingInfoCmd() *cobra.Command {
 }
 
 func billingInfoDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.BillingInfo).Id }},
-		{Header: "Account ID", Extract: func(v any) string { return v.(*recurly.BillingInfo).AccountId }},
-		{Header: "First Name", Extract: func(v any) string { return v.(*recurly.BillingInfo).FirstName }},
-		{Header: "Last Name", Extract: func(v any) string { return v.(*recurly.BillingInfo).LastName }},
-		{Header: "Company", Extract: func(v any) string { return v.(*recurly.BillingInfo).Company }},
-		{Header: "Valid", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.BillingInfo).Valid)
-		}},
-		{Header: "Payment Method", Extract: func(v any) string {
-			return v.(*recurly.BillingInfo).PaymentMethod.CardType
-		}},
-		{Header: "Primary Payment Method", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.BillingInfo).PrimaryPaymentMethod)
-		}},
-		{Header: "Created At", Extract: func(v any) string {
-			b := v.(*recurly.BillingInfo)
-			if b.CreatedAt != nil {
-				return b.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			b := v.(*recurly.BillingInfo)
-			if b.UpdatedAt != nil {
-				return b.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type B = *recurly.BillingInfo
+	return output.ToColumns([]output.TypedColumn[B]{
+		output.StringColumn[B]("ID", func(b B) string { return b.Id }),
+		output.StringColumn[B]("Account ID", func(b B) string { return b.AccountId }),
+		output.StringColumn[B]("First Name", func(b B) string { return b.FirstName }),
+		output.StringColumn[B]("Last Name", func(b B) string { return b.LastName }),
+		output.StringColumn[B]("Company", func(b B) string { return b.Company }),
+		output.BoolColumn[B]("Valid", func(b B) bool { return b.Valid }),
+		output.StringColumn[B]("Payment Method", func(b B) string { return b.PaymentMethod.CardType }),
+		output.BoolColumn[B]("Primary Payment Method", func(b B) bool { return b.PrimaryPaymentMethod }),
+		output.TimeColumn[B]("Created At", func(b B) *time.Time { return b.CreatedAt }),
+		output.TimeColumn[B]("Updated At", func(b B) *time.Time { return b.UpdatedAt }),
+	})
 }
 
 func newAccountBillingInfoGetCmd() *cobra.Command {

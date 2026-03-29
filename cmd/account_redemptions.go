@@ -23,50 +23,30 @@ func newAccountRedemptionsCmd() *cobra.Command {
 }
 
 func redemptionListColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(recurly.CouponRedemption).Id }},
-		{Header: "Coupon Code", Extract: func(v any) string { return v.(recurly.CouponRedemption).Coupon.Code }},
-		{Header: "State", Extract: func(v any) string { return v.(recurly.CouponRedemption).State }},
-		{Header: "Currency", Extract: func(v any) string { return v.(recurly.CouponRedemption).Currency }},
-		{Header: "Discounted", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(recurly.CouponRedemption).Discounted)
-		}},
-		{Header: "Created At", Extract: func(v any) string {
-			r := v.(recurly.CouponRedemption)
-			if r.CreatedAt != nil {
-				return r.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type R = recurly.CouponRedemption
+	return output.ToColumns([]output.TypedColumn[R]{
+		output.StringColumn[R]("ID", func(r R) string { return r.Id }),
+		output.StringColumn[R]("Coupon Code", func(r R) string { return r.Coupon.Code }),
+		output.StringColumn[R]("State", func(r R) string { return r.State }),
+		output.StringColumn[R]("Currency", func(r R) string { return r.Currency }),
+		output.FloatColumn[R]("Discounted", func(r R) float64 { return r.Discounted }),
+		output.TimeColumn[R]("Created At", func(r R) *time.Time { return r.CreatedAt }),
+	})
 }
 
 func redemptionDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Id }},
-		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Account.Code }},
-		{Header: "Coupon Code", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Coupon.Code }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.CouponRedemption).State }},
-		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.CouponRedemption).Currency }},
-		{Header: "Discounted", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.CouponRedemption).Discounted)
-		}},
-		{Header: "Subscription ID", Extract: func(v any) string { return v.(*recurly.CouponRedemption).SubscriptionId }},
-		{Header: "Created At", Extract: func(v any) string {
-			r := v.(*recurly.CouponRedemption)
-			if r.CreatedAt != nil {
-				return r.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			r := v.(*recurly.CouponRedemption)
-			if r.UpdatedAt != nil {
-				return r.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type R = *recurly.CouponRedemption
+	return output.ToColumns([]output.TypedColumn[R]{
+		output.StringColumn[R]("ID", func(r R) string { return r.Id }),
+		output.StringColumn[R]("Account Code", func(r R) string { return r.Account.Code }),
+		output.StringColumn[R]("Coupon Code", func(r R) string { return r.Coupon.Code }),
+		output.StringColumn[R]("State", func(r R) string { return r.State }),
+		output.StringColumn[R]("Currency", func(r R) string { return r.Currency }),
+		output.FloatColumn[R]("Discounted", func(r R) float64 { return r.Discounted }),
+		output.StringColumn[R]("Subscription ID", func(r R) string { return r.SubscriptionId }),
+		output.TimeColumn[R]("Created At", func(r R) *time.Time { return r.CreatedAt }),
+		output.TimeColumn[R]("Updated At", func(r R) *time.Time { return r.UpdatedAt }),
+	})
 }
 
 func newAccountRedemptionsCreateCmd() *cobra.Command {

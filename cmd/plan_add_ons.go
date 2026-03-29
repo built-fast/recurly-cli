@@ -110,46 +110,30 @@ func newPlanAddOnsListCmd() *cobra.Command {
 }
 
 func planAddOnDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.AddOn).Id }},
-		{Header: "Code", Extract: func(v any) string { return v.(*recurly.AddOn).Code }},
-		{Header: "Name", Extract: func(v any) string { return v.(*recurly.AddOn).Name }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.AddOn).State }},
-		{Header: "Add-On Type", Extract: func(v any) string { return v.(*recurly.AddOn).AddOnType }},
-		{Header: "Default Quantity", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.AddOn).DefaultQuantity)
-		}},
-		{Header: "Optional", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.AddOn).Optional)
-		}},
-		{Header: "Accounting Code", Extract: func(v any) string { return v.(*recurly.AddOn).AccountingCode }},
-		{Header: "Tax Code", Extract: func(v any) string { return v.(*recurly.AddOn).TaxCode }},
-		{Header: "Currencies", Extract: func(v any) string {
-			currencies := v.(*recurly.AddOn).Currencies
-			if len(currencies) == 0 {
+	type A = *recurly.AddOn
+	return output.ToColumns([]output.TypedColumn[A]{
+		output.StringColumn[A]("ID", func(a A) string { return a.Id }),
+		output.StringColumn[A]("Code", func(a A) string { return a.Code }),
+		output.StringColumn[A]("Name", func(a A) string { return a.Name }),
+		output.StringColumn[A]("State", func(a A) string { return a.State }),
+		output.StringColumn[A]("Add-On Type", func(a A) string { return a.AddOnType }),
+		output.IntColumn[A]("Default Quantity", func(a A) int { return a.DefaultQuantity }),
+		output.BoolColumn[A]("Optional", func(a A) bool { return a.Optional }),
+		output.StringColumn[A]("Accounting Code", func(a A) string { return a.AccountingCode }),
+		output.StringColumn[A]("Tax Code", func(a A) string { return a.TaxCode }),
+		{Header: "Currencies", Extract: func(a A) string {
+			if len(a.Currencies) == 0 {
 				return ""
 			}
-			parts := make([]string, len(currencies))
-			for i, c := range currencies {
+			parts := make([]string, len(a.Currencies))
+			for i, c := range a.Currencies {
 				parts[i] = fmt.Sprintf("%s: %.2f", c.Currency, c.UnitAmount)
 			}
 			return strings.Join(parts, ", ")
 		}},
-		{Header: "Created At", Extract: func(v any) string {
-			a := v.(*recurly.AddOn)
-			if a.CreatedAt != nil {
-				return a.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			a := v.(*recurly.AddOn)
-			if a.UpdatedAt != nil {
-				return a.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+		output.TimeColumn[A]("Created At", func(a A) *time.Time { return a.CreatedAt }),
+		output.TimeColumn[A]("Updated At", func(a A) *time.Time { return a.UpdatedAt }),
+	})
 }
 
 func newPlanAddOnsGetCmd() *cobra.Command {

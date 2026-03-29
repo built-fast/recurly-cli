@@ -501,94 +501,46 @@ func newInvoicesLineItemsCmd() *cobra.Command {
 }
 
 func invoiceDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(*recurly.Invoice).Id }},
-		{Header: "UUID", Extract: func(v any) string { return v.(*recurly.Invoice).Uuid }},
-		{Header: "Number", Extract: func(v any) string { return v.(*recurly.Invoice).Number }},
-		{Header: "Type", Extract: func(v any) string { return v.(*recurly.Invoice).Type }},
-		{Header: "Origin", Extract: func(v any) string { return v.(*recurly.Invoice).Origin }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Invoice).State }},
-		{Header: "Account ID", Extract: func(v any) string { return v.(*recurly.Invoice).Account.Id }},
-		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.Invoice).Account.Code }},
-		{Header: "Collection Method", Extract: func(v any) string { return v.(*recurly.Invoice).CollectionMethod }},
-		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.Invoice).Currency }},
-		{Header: "Subtotal", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Subtotal)
-		}},
-		{Header: "Discount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Discount)
-		}},
-		{Header: "Tax", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Tax)
-		}},
-		{Header: "Total", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Total)
-		}},
-		{Header: "Paid", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Paid)
-		}},
-		{Header: "Balance", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).Balance)
-		}},
-		{Header: "Refundable Amount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(*recurly.Invoice).RefundableAmount)
-		}},
-		{Header: "PO Number", Extract: func(v any) string { return v.(*recurly.Invoice).PoNumber }},
-		{Header: "Net Terms", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Invoice).NetTerms)
-		}},
-		{Header: "Net Terms Type", Extract: func(v any) string { return v.(*recurly.Invoice).NetTermsType }},
-		{Header: "Created At", Extract: func(v any) string {
-			inv := v.(*recurly.Invoice)
-			if inv.CreatedAt != nil {
-				return inv.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			inv := v.(*recurly.Invoice)
-			if inv.UpdatedAt != nil {
-				return inv.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Due At", Extract: func(v any) string {
-			inv := v.(*recurly.Invoice)
-			if inv.DueAt != nil {
-				return inv.DueAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Closed At", Extract: func(v any) string {
-			inv := v.(*recurly.Invoice)
-			if inv.ClosedAt != nil {
-				return inv.ClosedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type I = *recurly.Invoice
+	return output.ToColumns([]output.TypedColumn[I]{
+		output.StringColumn[I]("ID", func(i I) string { return i.Id }),
+		output.StringColumn[I]("UUID", func(i I) string { return i.Uuid }),
+		output.StringColumn[I]("Number", func(i I) string { return i.Number }),
+		output.StringColumn[I]("Type", func(i I) string { return i.Type }),
+		output.StringColumn[I]("Origin", func(i I) string { return i.Origin }),
+		output.StringColumn[I]("State", func(i I) string { return i.State }),
+		output.StringColumn[I]("Account ID", func(i I) string { return i.Account.Id }),
+		output.StringColumn[I]("Account Code", func(i I) string { return i.Account.Code }),
+		output.StringColumn[I]("Collection Method", func(i I) string { return i.CollectionMethod }),
+		output.StringColumn[I]("Currency", func(i I) string { return i.Currency }),
+		output.FloatColumn[I]("Subtotal", func(i I) float64 { return i.Subtotal }),
+		output.FloatColumn[I]("Discount", func(i I) float64 { return i.Discount }),
+		output.FloatColumn[I]("Tax", func(i I) float64 { return i.Tax }),
+		output.FloatColumn[I]("Total", func(i I) float64 { return i.Total }),
+		output.FloatColumn[I]("Paid", func(i I) float64 { return i.Paid }),
+		output.FloatColumn[I]("Balance", func(i I) float64 { return i.Balance }),
+		output.FloatColumn[I]("Refundable Amount", func(i I) float64 { return i.RefundableAmount }),
+		output.StringColumn[I]("PO Number", func(i I) string { return i.PoNumber }),
+		output.IntColumn[I]("Net Terms", func(i I) int { return i.NetTerms }),
+		output.StringColumn[I]("Net Terms Type", func(i I) string { return i.NetTermsType }),
+		output.TimeColumn[I]("Created At", func(i I) *time.Time { return i.CreatedAt }),
+		output.TimeColumn[I]("Updated At", func(i I) *time.Time { return i.UpdatedAt }),
+		output.TimeColumn[I]("Due At", func(i I) *time.Time { return i.DueAt }),
+		output.TimeColumn[I]("Closed At", func(i I) *time.Time { return i.ClosedAt }),
+	})
 }
 
 func lineItemColumns() []output.Column {
-	return []output.Column{
-		{Header: "ID", Extract: func(v any) string { return v.(recurly.LineItem).Id }},
-		{Header: "Type", Extract: func(v any) string { return v.(recurly.LineItem).Type }},
-		{Header: "Description", Extract: func(v any) string { return v.(recurly.LineItem).Description }},
-		{Header: "Currency", Extract: func(v any) string { return v.(recurly.LineItem).Currency }},
-		{Header: "Unit Amount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(recurly.LineItem).UnitAmount)
-		}},
-		{Header: "Quantity", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(recurly.LineItem).Quantity)
-		}},
-		{Header: "Subtotal", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(recurly.LineItem).Subtotal)
-		}},
-		{Header: "Tax", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(recurly.LineItem).Tax)
-		}},
-		{Header: "Amount", Extract: func(v any) string {
-			return fmt.Sprintf("%.2f", v.(recurly.LineItem).Amount)
-		}},
-	}
+	type L = recurly.LineItem
+	return output.ToColumns([]output.TypedColumn[L]{
+		output.StringColumn[L]("ID", func(l L) string { return l.Id }),
+		output.StringColumn[L]("Type", func(l L) string { return l.Type }),
+		output.StringColumn[L]("Description", func(l L) string { return l.Description }),
+		output.StringColumn[L]("Currency", func(l L) string { return l.Currency }),
+		output.FloatColumn[L]("Unit Amount", func(l L) float64 { return l.UnitAmount }),
+		output.IntColumn[L]("Quantity", func(l L) int { return l.Quantity }),
+		output.FloatColumn[L]("Subtotal", func(l L) float64 { return l.Subtotal }),
+		output.FloatColumn[L]("Tax", func(l L) float64 { return l.Tax }),
+		output.FloatColumn[L]("Amount", func(l L) float64 { return l.Amount }),
+	})
 }

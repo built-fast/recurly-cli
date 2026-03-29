@@ -26,40 +26,23 @@ func newItemsCmd() *cobra.Command {
 }
 
 func itemDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Item).Code }},
-		{Header: "Name", Extract: func(v any) string { return v.(*recurly.Item).Name }},
-		{Header: "Description", Extract: func(v any) string { return v.(*recurly.Item).Description }},
-		{Header: "External SKU", Extract: func(v any) string { return v.(*recurly.Item).ExternalSku }},
-		{Header: "Accounting Code", Extract: func(v any) string { return v.(*recurly.Item).AccountingCode }},
-		{Header: "Revenue Schedule Type", Extract: func(v any) string { return v.(*recurly.Item).RevenueScheduleType }},
-		{Header: "Tax Code", Extract: func(v any) string { return v.(*recurly.Item).TaxCode }},
-		{Header: "Tax Exempt", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Item).TaxExempt)
-		}},
-		{Header: "Avalara Transaction Type", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Item).AvalaraTransactionType)
-		}},
-		{Header: "Avalara Service Type", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Item).AvalaraServiceType)
-		}},
-		{Header: "Harmonized System Code", Extract: func(v any) string { return v.(*recurly.Item).HarmonizedSystemCode }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Item).State }},
-		{Header: "Created At", Extract: func(v any) string {
-			item := v.(*recurly.Item)
-			if item.CreatedAt != nil {
-				return item.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			item := v.(*recurly.Item)
-			if item.UpdatedAt != nil {
-				return item.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	type I = *recurly.Item
+	return output.ToColumns([]output.TypedColumn[I]{
+		output.StringColumn[I]("Code", func(i I) string { return i.Code }),
+		output.StringColumn[I]("Name", func(i I) string { return i.Name }),
+		output.StringColumn[I]("Description", func(i I) string { return i.Description }),
+		output.StringColumn[I]("External SKU", func(i I) string { return i.ExternalSku }),
+		output.StringColumn[I]("Accounting Code", func(i I) string { return i.AccountingCode }),
+		output.StringColumn[I]("Revenue Schedule Type", func(i I) string { return i.RevenueScheduleType }),
+		output.StringColumn[I]("Tax Code", func(i I) string { return i.TaxCode }),
+		output.BoolColumn[I]("Tax Exempt", func(i I) bool { return i.TaxExempt }),
+		output.IntColumn[I]("Avalara Transaction Type", func(i I) int { return i.AvalaraTransactionType }),
+		output.IntColumn[I]("Avalara Service Type", func(i I) int { return i.AvalaraServiceType }),
+		output.StringColumn[I]("Harmonized System Code", func(i I) string { return i.HarmonizedSystemCode }),
+		output.StringColumn[I]("State", func(i I) string { return i.State }),
+		output.TimeColumn[I]("Created At", func(i I) *time.Time { return i.CreatedAt }),
+		output.TimeColumn[I]("Updated At", func(i I) *time.Time { return i.UpdatedAt }),
+	})
 }
 
 func newItemsGetCmd() *cobra.Command {

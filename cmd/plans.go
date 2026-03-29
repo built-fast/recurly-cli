@@ -26,19 +26,17 @@ func newPlansCmd() *cobra.Command {
 }
 
 func planDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "Id", Extract: func(v any) string { return v.(*recurly.Plan).Id }},
-		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Plan).Code }},
-		{Header: "Name", Extract: func(v any) string { return v.(*recurly.Plan).Name }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Plan).State }},
-		{Header: "Pricing Model", Extract: func(v any) string { return v.(*recurly.Plan).PricingModel }},
-		{Header: "Interval Unit", Extract: func(v any) string { return v.(*recurly.Plan).IntervalUnit }},
-		{Header: "Interval Length", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Plan).IntervalLength)
-		}},
-		{Header: "Description", Extract: func(v any) string { return v.(*recurly.Plan).Description }},
-		{Header: "Currencies", Extract: func(v any) string {
-			p := v.(*recurly.Plan)
+	type P = *recurly.Plan
+	return output.ToColumns([]output.TypedColumn[P]{
+		output.StringColumn[P]("Id", func(p P) string { return p.Id }),
+		output.StringColumn[P]("Code", func(p P) string { return p.Code }),
+		output.StringColumn[P]("Name", func(p P) string { return p.Name }),
+		output.StringColumn[P]("State", func(p P) string { return p.State }),
+		output.StringColumn[P]("Pricing Model", func(p P) string { return p.PricingModel }),
+		output.StringColumn[P]("Interval Unit", func(p P) string { return p.IntervalUnit }),
+		output.IntColumn[P]("Interval Length", func(p P) int { return p.IntervalLength }),
+		output.StringColumn[P]("Description", func(p P) string { return p.Description }),
+		{Header: "Currencies", Extract: func(p P) string {
 			if len(p.Currencies) == 0 {
 				return ""
 			}
@@ -48,35 +46,15 @@ func planDetailColumns() []output.Column {
 			}
 			return strings.Join(parts, ", ")
 		}},
-		{Header: "Trial Unit", Extract: func(v any) string { return v.(*recurly.Plan).TrialUnit }},
-		{Header: "Trial Length", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Plan).TrialLength)
-		}},
-		{Header: "Auto Renew", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Plan).AutoRenew)
-		}},
-		{Header: "Total Billing Cycles", Extract: func(v any) string {
-			return fmt.Sprintf("%d", v.(*recurly.Plan).TotalBillingCycles)
-		}},
-		{Header: "Tax Code", Extract: func(v any) string { return v.(*recurly.Plan).TaxCode }},
-		{Header: "Tax Exempt", Extract: func(v any) string {
-			return fmt.Sprintf("%t", v.(*recurly.Plan).TaxExempt)
-		}},
-		{Header: "Created At", Extract: func(v any) string {
-			p := v.(*recurly.Plan)
-			if p.CreatedAt != nil {
-				return p.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			p := v.(*recurly.Plan)
-			if p.UpdatedAt != nil {
-				return p.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+		output.StringColumn[P]("Trial Unit", func(p P) string { return p.TrialUnit }),
+		output.IntColumn[P]("Trial Length", func(p P) int { return p.TrialLength }),
+		output.BoolColumn[P]("Auto Renew", func(p P) bool { return p.AutoRenew }),
+		output.IntColumn[P]("Total Billing Cycles", func(p P) int { return p.TotalBillingCycles }),
+		output.StringColumn[P]("Tax Code", func(p P) string { return p.TaxCode }),
+		output.BoolColumn[P]("Tax Exempt", func(p P) bool { return p.TaxExempt }),
+		output.TimeColumn[P]("Created At", func(p P) *time.Time { return p.CreatedAt }),
+		output.TimeColumn[P]("Updated At", func(p P) *time.Time { return p.UpdatedAt }),
+	})
 }
 
 func float64Ptr(v float64) *float64 {
