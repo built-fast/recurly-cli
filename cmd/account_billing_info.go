@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -226,16 +224,11 @@ func newAccountBillingInfoRemoveCmd() *cobra.Command {
 			accountID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Remove billing info from account %s? [y/N] ", accountID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Remove billing info from account %s? [y/N] ", accountID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Removal cancelled.")
 					return err
 				}

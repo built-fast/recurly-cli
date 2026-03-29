@@ -126,12 +126,25 @@ func newAccountRedemptionsCreateCmd() *cobra.Command {
 }
 
 func newAccountRedemptionsRemoveCmd() *cobra.Command {
+	var yes bool
+
 	cmd := &cobra.Command{
 		Use:   "remove <account_id> [redemption_id]",
 		Short: "Remove a coupon redemption from an account",
 		Long:  "Remove the most recent coupon redemption from an account, or remove a specific redemption by ID.",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !yes {
+				confirmed, err := confirm(cmd, "Are you sure you want to remove this coupon redemption? [y/N] ")
+				if err != nil {
+					return err
+				}
+				if !confirmed {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Removal cancelled.")
+					return err
+				}
+			}
+
 			c, err := newAccountRedemptionAPI()
 			if err != nil {
 				return err
@@ -160,6 +173,8 @@ func newAccountRedemptionsRemoveCmd() *cobra.Command {
 			return err
 		},
 	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }

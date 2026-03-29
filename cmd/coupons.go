@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -694,16 +692,11 @@ func newCouponsDeactivateCmd() *cobra.Command {
 			couponID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate coupon %s? [y/N] ", couponID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to deactivate coupon %s? [y/N] ", couponID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
 					return err
 				}

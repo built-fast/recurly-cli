@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -443,16 +441,11 @@ func newItemsDeactivateCmd() *cobra.Command {
 			itemID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate item %s? [y/N] ", itemID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to deactivate item %s? [y/N] ", itemID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
 					return err
 				}
@@ -498,16 +491,11 @@ func newItemsReactivateCmd() *cobra.Command {
 			itemID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to reactivate item %s? [y/N] ", itemID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to reactivate item %s? [y/N] ", itemID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
 					return err
 				}

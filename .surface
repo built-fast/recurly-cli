@@ -179,6 +179,7 @@ FLAG recurly accounts redemptions list-active --all bool
 FLAG recurly accounts redemptions list-active --limit int
 FLAG recurly accounts redemptions list-active --order string
 FLAG recurly accounts redemptions list-active --sort string
+FLAG recurly accounts redemptions remove --yes bool
 FLAG recurly accounts subscriptions list --all bool
 FLAG recurly accounts subscriptions list --limit int
 FLAG recurly accounts subscriptions list --order string

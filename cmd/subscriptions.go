@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
@@ -572,16 +570,11 @@ func newSubscriptionsCancelCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to cancel this subscription? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to cancel this subscription? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Cancellation cancelled.")
 					return err
 				}
@@ -635,16 +628,11 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to reactivate this subscription? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to reactivate this subscription? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
 					return err
 				}
@@ -693,16 +681,11 @@ func newSubscriptionsPauseCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to pause this subscription? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to pause this subscription? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Pause cancelled.")
 					return err
 				}
@@ -754,16 +737,11 @@ func newSubscriptionsResumeCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to resume this subscription? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to resume this subscription? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Resume cancelled.")
 					return err
 				}
@@ -813,16 +791,11 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to terminate this subscription? This cannot be undone. [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to terminate this subscription? This cannot be undone. [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Termination cancelled.")
 					return err
 				}
@@ -878,16 +851,11 @@ func newSubscriptionsConvertTrialCmd() *cobra.Command {
 			subscriptionID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to convert this trial subscription? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to convert this trial subscription? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Conversion cancelled.")
 					return err
 				}

@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -249,16 +247,11 @@ func newInvoicesVoidCmd() *cobra.Command {
 			invoiceID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to void invoice %s? [y/N] ", invoiceID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to void invoice %s? [y/N] ", invoiceID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Void cancelled.")
 					return err
 				}
@@ -314,16 +307,11 @@ func newInvoicesCollectCmd() *cobra.Command {
 			invoiceID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to collect invoice %s? [y/N] ", invoiceID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to collect invoice %s? [y/N] ", invoiceID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Collection cancelled.")
 					return err
 				}
@@ -379,16 +367,11 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 			invoiceID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to mark invoice %s as failed? [y/N] ", invoiceID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Are you sure you want to mark invoice %s as failed? [y/N] ", invoiceID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Mark failed cancelled.")
 					return err
 				}

@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -346,16 +344,11 @@ func newAccountsDeactivateCmd() *cobra.Command {
 			accountID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate this account? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to deactivate this account? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
 					return err
 				}
@@ -401,16 +394,11 @@ func newAccountsReactivateCmd() *cobra.Command {
 			accountID := args[0]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to reactivate this account? [y/N] "); err != nil {
+				confirmed, err := confirm(cmd, "Are you sure you want to reactivate this account? [y/N] ")
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
 					return err
 				}

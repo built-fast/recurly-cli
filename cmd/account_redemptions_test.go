@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -402,7 +403,7 @@ func TestAccountRedemptionsRemove_AccountOnly(t *testing.T) {
 	cleanup := setMockAccountRedemptionAPI(mock)
 	defer cleanup()
 
-	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1")
+	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -430,7 +431,7 @@ func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
 	cleanup := setMockAccountRedemptionAPI(mock)
 	defer cleanup()
 
-	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "redemption-abc123")
+	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "redemption-abc123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -466,7 +467,7 @@ func TestAccountRedemptionsRemove_SDKError(t *testing.T) {
 	cleanup := setMockAccountRedemptionAPI(mock)
 	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1")
+	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -481,9 +482,79 @@ func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
 	cleanup := setMockAccountRedemptionAPI(mock)
 	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "bad-id")
+	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "bad-id", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
+	}
+}
+
+// --- accounts redemptions remove confirmation tests ---
+
+func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
+	stdin := bytes.NewBufferString("n\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "[y/N]") {
+		t.Error("expected confirmation prompt in stderr")
+	}
+	if !strings.Contains(stderr, "Removal cancelled.") {
+		t.Error("expected cancellation message in stderr")
+	}
+}
+
+func TestAccountRedemptionsRemove_ConfirmationEmpty(t *testing.T) {
+	stdin := bytes.NewBufferString("\n")
+	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "Removal cancelled.") {
+		t.Error("expected cancellation message for empty input")
+	}
+}
+
+func TestAccountRedemptionsRemove_ConfirmationYes(t *testing.T) {
+	mock := &mockAccountRedemptionAPI{
+		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
+			return sampleRedemptionDetail(), nil
+		},
+	}
+	cleanup := setMockAccountRedemptionAPI(mock)
+	defer cleanup()
+
+	stdin := bytes.NewBufferString("y\n")
+	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(stderr, "[y/N]") {
+		t.Error("expected confirmation prompt")
+	}
+	if !strings.Contains(out, "redemption-abc123") {
+		t.Errorf("expected redemption data in output, got:\n%s", out)
+	}
+}
+
+func TestAccountRedemptionsRemove_YesFlagSkipsConfirmation(t *testing.T) {
+	mock := &mockAccountRedemptionAPI{
+		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
+			return sampleRedemptionDetail(), nil
+		},
+	}
+	cleanup := setMockAccountRedemptionAPI(mock)
+	defer cleanup()
+
+	out, stderr, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Contains(stderr, "[y/N]") {
+		t.Error("expected no confirmation prompt with --yes flag")
+	}
+	if !strings.Contains(out, "redemption-abc123") {
+		t.Errorf("expected redemption data in output, got:\n%s", out)
 	}
 }
 

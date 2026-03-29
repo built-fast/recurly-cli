@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
 	"time"
@@ -446,16 +445,11 @@ func newPlanAddOnsDeleteCmd() *cobra.Command {
 			addOnID := args[1]
 
 			if !yes {
-				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Delete add-on %s from plan %s? [y/N] ", addOnID, planID); err != nil {
+				confirmed, err := confirm(cmd, fmt.Sprintf("Delete add-on %s from plan %s? [y/N] ", addOnID, planID))
+				if err != nil {
 					return err
 				}
-				reader := bufio.NewReader(cmd.InOrStdin())
-				line, err := reader.ReadString('\n')
-				if err != nil && line == "" {
-					return fmt.Errorf("reading confirmation: %w", err)
-				}
-				input := strings.TrimSpace(strings.ToLower(line))
-				if input != "y" && input != "yes" {
+				if !confirmed {
 					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deletion cancelled.")
 					return err
 				}
