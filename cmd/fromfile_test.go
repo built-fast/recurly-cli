@@ -21,12 +21,13 @@ func TestFromFile_JSONInput(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {
@@ -53,12 +54,13 @@ func TestFromFile_YAMLInput(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", yamlFile)
 	if err != nil {
@@ -85,12 +87,13 @@ func TestFromFile_YMLExtension(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", ymlFile)
 	if err != nil {
@@ -108,12 +111,13 @@ func TestFromFile_YMLExtension(t *testing.T) {
 
 func TestFromFile_StdinJSON(t *testing.T) {
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString(`{"code": "acct-stdin", "email": "stdin@test.com"}`)
 	_, _, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
@@ -132,12 +136,13 @@ func TestFromFile_StdinJSON(t *testing.T) {
 
 func TestFromFile_StdinYAML(t *testing.T) {
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("code: acct-stdin-yaml\nemail: yaml-stdin@test.com\n")
 	_, _, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
@@ -162,12 +167,13 @@ func TestFromFile_FlagOverride(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	// CLI --code should override file code; email should come from file
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile, "--code", "cli-code")
@@ -195,12 +201,13 @@ func TestFromFile_UnderscoreKeys(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {
@@ -272,7 +279,7 @@ func TestFromFile_NestedObjects(t *testing.T) {
 // --- Error: invalid file path ---
 
 func TestFromFile_InvalidPath(t *testing.T) {
-	app := setMockAPI(&mockAccountAPI{})
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return &mockAccountAPI{}, nil }}
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", "/nonexistent/file.json")
 	if err == nil {
@@ -292,7 +299,7 @@ func TestFromFile_UnparseableJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	app := setMockAPI(&mockAccountAPI{})
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return &mockAccountAPI{}, nil }}
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err == nil {
@@ -312,7 +319,7 @@ func TestFromFile_UnknownKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	app := setMockAPI(&mockAccountAPI{})
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return &mockAccountAPI{}, nil }}
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err == nil {
@@ -332,7 +339,7 @@ func TestFromFile_UnsupportedExtension(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	app := setMockAPI(&mockAccountAPI{})
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return &mockAccountAPI{}, nil }}
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", txtFile)
 	if err == nil {
@@ -346,7 +353,7 @@ func TestFromFile_UnsupportedExtension(t *testing.T) {
 // --- Error: empty stdin ---
 
 func TestFromFile_EmptyStdin(t *testing.T) {
-	app := setMockAPI(&mockAccountAPI{})
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return &mockAccountAPI{}, nil }}
 
 	stdin := bytes.NewBufferString("")
 	_, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
@@ -368,12 +375,13 @@ func TestFromFile_ShortFlag(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "-F", jsonFile)
 	if err != nil {
@@ -397,12 +405,13 @@ func TestFromFile_BooleanValue(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	app := setMockAPI(&mockAccountAPI{
+	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
-	})
+	}
+	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {

@@ -40,13 +40,6 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 	return nil, nil
 }
 
-func setMockAccountBillingInfoAPI(mock *mockAccountBillingInfoAPI) *App {
-	return &App{
-		NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 func sampleBillingInfo() *recurly.BillingInfo {
 	created := time.Date(2025, 2, 10, 12, 0, 0, 0, time.UTC)
@@ -109,7 +102,7 @@ func TestAccountBillingInfoGet_PositionalArg(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
@@ -127,7 +120,7 @@ func TestAccountBillingInfoGet_TableOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
@@ -159,7 +152,7 @@ func TestAccountBillingInfoGet_JSONOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -188,7 +181,7 @@ func TestAccountBillingInfoGet_JSONPrettyOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -215,7 +208,7 @@ func TestAccountBillingInfoGet_JQFilter(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".first_name")
@@ -237,7 +230,7 @@ func TestAccountBillingInfoGet_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err == nil {
@@ -287,7 +280,7 @@ func TestAccountBillingInfoUpdate_PositionalArg(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
@@ -308,7 +301,7 @@ func TestAccountBillingInfoUpdate_OnlyChangedFields(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane", "--company", "NewCo")
 	if err != nil {
@@ -343,7 +336,7 @@ func TestAccountBillingInfoUpdate_BoolFlags(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--primary-payment-method", "--backup-payment-method")
 	if err != nil {
@@ -368,7 +361,7 @@ func TestAccountBillingInfoUpdate_AddressFlags(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1",
 		"--address-street1", "123 Main St",
@@ -415,7 +408,7 @@ func TestAccountBillingInfoUpdate_NoAddressWhenNotSet(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
@@ -434,7 +427,7 @@ func TestAccountBillingInfoUpdate_TableOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
@@ -461,7 +454,7 @@ func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -486,7 +479,7 @@ func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err == nil {
@@ -562,7 +555,7 @@ func TestAccountBillingInfoRemove_ConfirmYes_Succeeds(t *testing.T) {
 			return &recurly.Empty{}, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "billing-info", "remove", "acct-789")
@@ -588,7 +581,7 @@ func TestAccountBillingInfoRemove_YesFlag_SkipsPrompt(t *testing.T) {
 			return &recurly.Empty{}, nil
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "accounts", "billing-info", "remove", "acct-456", "--yes")
 	if err != nil {
@@ -611,7 +604,7 @@ func TestAccountBillingInfoRemove_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockAccountBillingInfoAPI(mock)
+	app := &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "billing-info", "remove", "acct1", "--yes")
 	if err == nil {

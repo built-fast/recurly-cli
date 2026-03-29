@@ -26,13 +26,6 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 	return m.getTransactionFn(transactionId, opts...)
 }
 
-func setMockTransactionAPI(mock *mockTransactionAPI) *App {
-	return &App{
-		NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // mockTransactionLister implements recurly.TransactionLister for testing.
 type mockTransactionLister struct {
@@ -144,7 +137,7 @@ func TestTransactionsList_TableOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "list")
 	if err != nil {
@@ -174,7 +167,7 @@ func TestTransactionsList_JSONOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "list", "--output", "json")
 	if err != nil {
@@ -200,7 +193,7 @@ func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "list", "--output", "json-pretty")
 	if err != nil {
@@ -222,7 +215,7 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -268,7 +261,7 @@ func TestTransactionsGet_PositionalArg(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "transactions", "get", "txn-abc123")
 	if err != nil {
@@ -285,7 +278,7 @@ func TestTransactionsGet_TableOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "get", "txn-001")
 	if err != nil {
@@ -327,7 +320,7 @@ func TestTransactionsGet_JSONOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--output", "json")
 	if err != nil {
@@ -349,7 +342,7 @@ func TestTransactionsGet_JSONPrettyOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--output", "json-pretty")
 	if err != nil {
@@ -371,7 +364,7 @@ func TestTransactionsGet_JQFilter(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -396,7 +389,7 @@ func TestTransactionsGet_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "transactions", "get", "txn-nonexistent")
 	if err == nil {
@@ -415,7 +408,7 @@ func TestTransactionsList_Filters(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "transactions", "list",
 		"--type", "purchase",
@@ -465,7 +458,7 @@ func TestTransactionsList_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockTransactionAPI(mock)
+	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "transactions", "list")
 	if err == nil {

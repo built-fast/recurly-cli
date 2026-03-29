@@ -9,6 +9,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 )
 
 // mockCouponRedemptionLister implements recurly.CouponRedemptionLister for testing.
@@ -100,7 +101,7 @@ func TestAccountRedemptionsList_Success(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
@@ -125,7 +126,7 @@ func TestAccountRedemptionsList_EmptyResults(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
@@ -143,7 +144,7 @@ func TestAccountRedemptionsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err == nil {
@@ -160,7 +161,7 @@ func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1", "--sort", "created_at")
 	if err != nil {
@@ -197,7 +198,7 @@ func TestAccountRedemptionsListActive_Success(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err != nil {
@@ -217,7 +218,7 @@ func TestAccountRedemptionsListActive_EmptyResults(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err != nil {
@@ -235,7 +236,7 @@ func TestAccountRedemptionsListActive_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("service unavailable")
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err == nil {
@@ -265,7 +266,7 @@ func TestAccountRedemptionsCreate_Success(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {
@@ -297,7 +298,7 @@ func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1",
 		"--coupon-id", "SAVE10",
@@ -348,7 +349,7 @@ func TestAccountRedemptionsCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("invalid coupon")
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "BAD")
 	if err == nil {
@@ -364,7 +365,7 @@ func TestAccountRedemptionsCreate_UnsetOptionalFlagsNil(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {
@@ -389,7 +390,7 @@ func TestAccountRedemptionsRemove_AccountOnly(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err != nil {
@@ -416,7 +417,7 @@ func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "redemption-abc123", "--yes")
 	if err != nil {
@@ -451,7 +452,7 @@ func TestAccountRedemptionsRemove_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err == nil {
@@ -465,7 +466,7 @@ func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "bad-id", "--yes")
 	if err == nil {
@@ -506,7 +507,7 @@ func TestAccountRedemptionsRemove_ConfirmationYes(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "redemptions", "remove", "acct-1")
@@ -527,7 +528,7 @@ func TestAccountRedemptionsRemove_YesFlagSkipsConfirmation(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err != nil {
@@ -550,7 +551,7 @@ func TestAccountRedemptionsList_JSONOutput(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "--output", "json", "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
@@ -571,7 +572,7 @@ func TestAccountRedemptionsCreate_JSONOutput(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	app := setMockAccountRedemptionAPI(mock)
+	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "--output", "json", "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {

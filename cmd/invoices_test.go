@@ -47,13 +47,6 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 	return m.listInvoiceLineItemsFn(invoiceId, params, opts...)
 }
 
-func setMockInvoiceAPI(mock *mockInvoiceAPI) *App {
-	return &App{
-		NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // mockLineItemLister implements recurly.LineItemLister for testing.
 type mockLineItemLister struct {
@@ -233,7 +226,7 @@ func TestInvoicesList_TableOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "list")
 	if err != nil {
@@ -263,7 +256,7 @@ func TestInvoicesList_JSONOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "list", "--output", "json")
 	if err != nil {
@@ -289,7 +282,7 @@ func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "list", "--output", "json-pretty")
 	if err != nil {
@@ -311,7 +304,7 @@ func TestInvoicesList_JQFilter(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -335,7 +328,7 @@ func TestInvoicesList_Filters(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "list",
 		"--state", "paid",
@@ -385,7 +378,7 @@ func TestInvoicesList_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "list")
 	if err == nil {
@@ -439,7 +432,7 @@ func TestInvoicesGet_PositionalArg(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "get", "my-invoice-id")
 	if err != nil {
@@ -456,7 +449,7 @@ func TestInvoicesGet_TableOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
@@ -500,7 +493,7 @@ func TestInvoicesGet_TableOutput_NoLineItemsByDefault(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
@@ -518,7 +511,7 @@ func TestInvoicesGet_JSONOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--output", "json")
 	if err != nil {
@@ -540,7 +533,7 @@ func TestInvoicesGet_JSONPrettyOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--output", "json-pretty")
 	if err != nil {
@@ -565,7 +558,7 @@ func TestInvoicesGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "get", "nonexistent")
 	if err == nil {
@@ -585,7 +578,7 @@ func TestInvoicesGet_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err == nil {
@@ -604,7 +597,7 @@ func TestInvoicesGet_LineItems_Shown(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items")
 	if err != nil {
@@ -637,7 +630,7 @@ func TestInvoicesGet_LineItems_WithCount(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items=50")
 	if err != nil {
@@ -662,7 +655,7 @@ func TestInvoicesGet_LineItems_HasMoreMessage(t *testing.T) {
 			return lister, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items=2")
 	if err != nil {
@@ -686,7 +679,7 @@ func TestInvoicesGet_LineItems_JSONOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items", "--output", "json")
 	if err != nil {
@@ -718,7 +711,7 @@ func TestInvoicesGet_LineItems_NotShownWithoutFlag(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
@@ -736,7 +729,7 @@ func TestInvoicesGet_JQFilter(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -837,7 +830,7 @@ func TestInvoicesVoid_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "void", "inv-abc123")
@@ -863,7 +856,7 @@ func TestInvoicesVoid_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes")
 	if err != nil {
@@ -885,7 +878,7 @@ func TestInvoicesVoid_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
@@ -909,7 +902,7 @@ func TestInvoicesVoid_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
@@ -933,7 +926,7 @@ func TestInvoicesVoid_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -958,7 +951,7 @@ func TestInvoicesVoid_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "void", "nonexistent", "--yes")
 	if err == nil {
@@ -1015,7 +1008,7 @@ func TestInvoicesCollect_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "collect", "inv-abc123")
@@ -1041,7 +1034,7 @@ func TestInvoicesCollect_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes")
 	if err != nil {
@@ -1063,7 +1056,7 @@ func TestInvoicesCollect_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
@@ -1087,7 +1080,7 @@ func TestInvoicesCollect_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
@@ -1111,7 +1104,7 @@ func TestInvoicesCollect_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -1136,7 +1129,7 @@ func TestInvoicesCollect_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "collect", "nonexistent", "--yes")
 	if err == nil {
@@ -1193,7 +1186,7 @@ func TestInvoicesMarkFailed_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "mark-failed", "inv-abc123")
@@ -1219,7 +1212,7 @@ func TestInvoicesMarkFailed_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes")
 	if err != nil {
@@ -1241,7 +1234,7 @@ func TestInvoicesMarkFailed_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
@@ -1265,7 +1258,7 @@ func TestInvoicesMarkFailed_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
@@ -1289,7 +1282,7 @@ func TestInvoicesMarkFailed_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -1314,7 +1307,7 @@ func TestInvoicesMarkFailed_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "mark-failed", "nonexistent", "--yes")
 	if err == nil {
@@ -1353,7 +1346,7 @@ func TestInvoicesLineItems_TableOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123")
 	if err != nil {
@@ -1382,7 +1375,7 @@ func TestInvoicesLineItems_PositionalArg(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "invoices", "line-items", "my-invoice-id")
 	if err != nil {
@@ -1399,7 +1392,7 @@ func TestInvoicesLineItems_JSONOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--output", "json")
 	if err != nil {
@@ -1425,7 +1418,7 @@ func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--output", "json-pretty")
 	if err != nil {
@@ -1447,7 +1440,7 @@ func TestInvoicesLineItems_JQFilter(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -1472,7 +1465,7 @@ func TestInvoicesLineItems_APIError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockInvoiceAPI(mock)
+	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "invoices", "line-items", "nonexistent")
 	if err == nil {

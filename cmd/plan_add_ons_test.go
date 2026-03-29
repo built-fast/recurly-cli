@@ -90,13 +90,6 @@ func (m *mockAddOnLister) Next() string {
 	return ""
 }
 
-func setMockPlanAddOnAPI(mock *mockPlanAddOnAPI) *App {
-	return &App{
-		NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 func sampleAddOn() recurly.AddOn {
 	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
@@ -148,7 +141,7 @@ func TestPlanAddOnsList_RequiresPlanID(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "list")
 	if err == nil {
@@ -180,7 +173,7 @@ func TestPlanAddOnsList_PaginationParams(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -213,7 +206,7 @@ func TestPlanAddOnsList_FilterParams(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--state", "active")
 	if err != nil {
@@ -234,7 +227,7 @@ func TestPlanAddOnsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
@@ -262,7 +255,7 @@ func TestPlanAddOnsList_TableOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
@@ -288,7 +281,7 @@ func TestPlanAddOnsList_JSONOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -317,7 +310,7 @@ func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -347,7 +340,7 @@ func TestPlanAddOnsList_JQFilter(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].code")
@@ -369,7 +362,7 @@ func TestPlanAddOnsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err == nil {
@@ -383,7 +376,7 @@ func TestPlanAddOnsList_EmptyResults(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
@@ -402,7 +395,7 @@ func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -472,7 +465,7 @@ func TestPlanAddOnsGet_PositionalArgs(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "get", "code-plan1", "extra-users")
 	if err != nil {
@@ -493,7 +486,7 @@ func TestPlanAddOnsGet_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err != nil {
@@ -528,7 +521,7 @@ func TestPlanAddOnsGet_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -557,7 +550,7 @@ func TestPlanAddOnsGet_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -584,7 +577,7 @@ func TestPlanAddOnsGet_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
@@ -606,7 +599,7 @@ func TestPlanAddOnsGet_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err == nil {
@@ -675,7 +668,7 @@ func TestPlanAddOnsCreate_CoreFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "code-plan1",
 		"--code", "extra-users",
@@ -706,7 +699,7 @@ func TestPlanAddOnsCreate_AllOptionalFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
@@ -768,7 +761,7 @@ func TestPlanAddOnsCreate_MultiCurrencyFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
@@ -805,7 +798,7 @@ func TestPlanAddOnsCreate_SingleCurrency(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
@@ -836,7 +829,7 @@ func TestPlanAddOnsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
@@ -862,7 +855,7 @@ func TestPlanAddOnsCreate_UnsetFlagsNotSent(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
@@ -914,7 +907,7 @@ func TestPlanAddOnsCreate_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
@@ -946,7 +939,7 @@ func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -975,7 +968,7 @@ func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -1005,7 +998,7 @@ func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
@@ -1030,7 +1023,7 @@ func TestPlanAddOnsCreate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
@@ -1106,7 +1099,7 @@ func TestPlanAddOnsUpdate_PositionalArgs(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "code-plan1", "extra-users", "--name", "Updated")
 	if err != nil {
@@ -1130,7 +1123,7 @@ func TestPlanAddOnsUpdate_AllOptionalFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--code", "new-code",
@@ -1194,7 +1187,7 @@ func TestPlanAddOnsUpdate_MultiCurrencyFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--currency", "USD", "--currency", "EUR",
@@ -1226,7 +1219,7 @@ func TestPlanAddOnsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--currency", "USD", "--currency", "EUR",
@@ -1250,7 +1243,7 @@ func TestPlanAddOnsUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Updated Name",
@@ -1304,7 +1297,7 @@ func TestPlanAddOnsUpdate_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
@@ -1335,7 +1328,7 @@ func TestPlanAddOnsUpdate_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -1363,7 +1356,7 @@ func TestPlanAddOnsUpdate_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -1392,7 +1385,7 @@ func TestPlanAddOnsUpdate_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
@@ -1416,7 +1409,7 @@ func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Test",
@@ -1496,7 +1489,7 @@ func TestPlanAddOnsDelete_ConfirmYes_Succeeds(t *testing.T) {
 			return &a, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "plans", "add-ons", "delete", "plan-789", "addon-123")
@@ -1528,7 +1521,7 @@ func TestPlanAddOnsDelete_YesFlag_SkipsPrompt(t *testing.T) {
 			return &a, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "plans", "add-ons", "delete", "plan-456", "addon-789", "--yes")
 	if err != nil {
@@ -1555,7 +1548,7 @@ func TestPlanAddOnsDelete_DetailView(t *testing.T) {
 			return &a, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes")
 	if err != nil {
@@ -1575,7 +1568,7 @@ func TestPlanAddOnsDelete_JSONOutput(t *testing.T) {
 			return &a, nil
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes", "--output", "json")
 	if err != nil {
@@ -1596,7 +1589,7 @@ func TestPlanAddOnsDelete_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockPlanAddOnAPI(mock)
+	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes")
 	if err == nil {

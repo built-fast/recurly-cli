@@ -40,13 +40,6 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 	return nil, nil
 }
 
-func setMockAccountNestedAPI(mock *mockAccountNestedAPI) *App {
-	return &App{
-		NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // --- Mock listers ---
 
@@ -247,7 +240,7 @@ func TestAccountSubscriptionsList_RequiresAccountID(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list")
 	if err == nil {
@@ -277,7 +270,7 @@ func TestAccountSubscriptionsList_PassesAccountID(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
@@ -298,7 +291,7 @@ func TestAccountSubscriptionsList_PaginationParams(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -328,7 +321,7 @@ func TestAccountSubscriptionsList_FilterParams(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--state", "active")
 	if err != nil {
@@ -349,7 +342,7 @@ func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
@@ -377,7 +370,7 @@ func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
@@ -403,7 +396,7 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -432,7 +425,7 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -457,7 +450,7 @@ func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].id")
@@ -479,7 +472,7 @@ func TestAccountSubscriptionsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err == nil {
@@ -493,7 +486,7 @@ func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
@@ -511,7 +504,7 @@ func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -573,7 +566,7 @@ func TestAccountInvoicesList_RequiresAccountID(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list")
 	if err == nil {
@@ -603,7 +596,7 @@ func TestAccountInvoicesList_PassesAccountID(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
@@ -624,7 +617,7 @@ func TestAccountInvoicesList_PaginationParams(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -654,7 +647,7 @@ func TestAccountInvoicesList_FilterParams(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--state", "paid", "--type", "charge")
 	if err != nil {
@@ -678,7 +671,7 @@ func TestAccountInvoicesList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
@@ -709,7 +702,7 @@ func TestAccountInvoicesList_TableOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
@@ -735,7 +728,7 @@ func TestAccountInvoicesList_JSONOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -764,7 +757,7 @@ func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -789,7 +782,7 @@ func TestAccountInvoicesList_JQFilter(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].number")
@@ -811,7 +804,7 @@ func TestAccountInvoicesList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err == nil {
@@ -825,7 +818,7 @@ func TestAccountInvoicesList_EmptyResults(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
@@ -843,7 +836,7 @@ func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -905,7 +898,7 @@ func TestAccountTransactionsList_RequiresAccountID(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list")
 	if err == nil {
@@ -935,7 +928,7 @@ func TestAccountTransactionsList_PassesAccountID(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
@@ -956,7 +949,7 @@ func TestAccountTransactionsList_PaginationParams(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -986,7 +979,7 @@ func TestAccountTransactionsList_FilterParams(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--type", "payment", "--success", "true")
 	if err != nil {
@@ -1010,7 +1003,7 @@ func TestAccountTransactionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
@@ -1041,7 +1034,7 @@ func TestAccountTransactionsList_TableOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
@@ -1067,7 +1060,7 @@ func TestAccountTransactionsList_JSONOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()
@@ -1096,7 +1089,7 @@ func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
@@ -1121,7 +1114,7 @@ func TestAccountTransactionsList_JQFilter(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].id")
@@ -1143,7 +1136,7 @@ func TestAccountTransactionsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err == nil {
@@ -1157,7 +1150,7 @@ func TestAccountTransactionsList_EmptyResults(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
@@ -1175,7 +1168,7 @@ func TestAccountTransactionsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	app := setMockAccountNestedAPI(mock)
+	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
 
 	viper.Set("output", "json")
 	defer viper.Reset()

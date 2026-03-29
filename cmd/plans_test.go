@@ -79,14 +79,6 @@ func (m *mockPlanLister) Next() string {
 	return ""
 }
 
-// setMockPlanAPI installs a mock and returns an *App for context injection.
-func setMockPlanAPI(mock *mockPlanAPI) *App {
-	return &App{
-		NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // samplePlan returns a test plan with predictable fields.
 func samplePlan() recurly.Plan {
@@ -178,7 +170,7 @@ func TestPlansList_PaginationParams(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -208,7 +200,7 @@ func TestPlansList_FilterParams(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "list", "--state", "active")
 	if err != nil {
@@ -229,7 +221,7 @@ func TestPlansList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
@@ -257,7 +249,7 @@ func TestPlansList_TableOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
@@ -284,7 +276,7 @@ func TestPlansList_JSONOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list", "--output", "json")
 	if err != nil {
@@ -320,7 +312,7 @@ func TestPlansList_JSONPrettyOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list", "--output", "json-pretty")
 	if err != nil {
@@ -352,7 +344,7 @@ func TestPlansList_JQFilter(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list", "--jq", ".data[].code")
 	if err != nil {
@@ -371,7 +363,7 @@ func TestPlansList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "list")
 	if err == nil {
@@ -385,7 +377,7 @@ func TestPlansList_EmptyResults(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
@@ -404,7 +396,7 @@ func TestPlansList_EmptyResults_JSON(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "list", "--output", "json")
 	if err != nil {
@@ -470,7 +462,7 @@ func TestPlansGet_PositionalArg(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "get", "my-plan-id")
 	if err != nil {
@@ -488,7 +480,7 @@ func TestPlansGet_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "table")
 	if err != nil {
@@ -528,7 +520,7 @@ func TestPlansGet_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "json")
 	if err != nil {
@@ -558,7 +550,7 @@ func TestPlansGet_JQFilter(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "get", "p1234", "--jq", ".code")
 	if err != nil {
@@ -577,7 +569,7 @@ func TestPlansGet_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "get", "p1234")
 	if err == nil {
@@ -594,7 +586,7 @@ func TestPlansGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "plans", "get", "nonexistent")
 	if err == nil {
@@ -612,7 +604,7 @@ func TestPlansGet_CurrenciesFormatting(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "table")
 	if err != nil {
@@ -685,7 +677,7 @@ func TestPlansCreate_CoreFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "gold",
@@ -730,7 +722,7 @@ func TestPlansCreate_MultiCurrencyFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "multi",
@@ -765,7 +757,7 @@ func TestPlansCreate_SingleCurrency(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "single",
@@ -797,7 +789,7 @@ func TestPlansCreate_AllFlagsPopulated(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		// Core
@@ -918,7 +910,7 @@ func TestPlansCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "plans", "create",
 		"--code", "bad",
@@ -942,7 +934,7 @@ func TestPlansCreate_SetupFeeFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "fees",
@@ -976,7 +968,7 @@ func TestPlansCreate_SetupFeeCurrencyMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "plans", "create",
 		"--code", "bad",
@@ -1001,7 +993,7 @@ func TestPlansCreate_TrialFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "trial",
@@ -1033,7 +1025,7 @@ func TestPlansCreate_BillingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "billing",
@@ -1061,7 +1053,7 @@ func TestPlansCreate_TaxFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "tax",
@@ -1105,7 +1097,7 @@ func TestPlansCreate_AccountingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "acct",
@@ -1165,7 +1157,7 @@ func TestPlansCreate_HostedPagesFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "hosted",
@@ -1205,7 +1197,7 @@ func TestPlansCreate_OtherFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "other",
@@ -1233,7 +1225,7 @@ func TestPlansCreate_UnsetFlagsNotSent(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create", "--code", "minimal", "--name", "Minimal")
 	if err != nil {
@@ -1279,7 +1271,7 @@ func TestPlansCreate_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "create", "--code", "gold", "--name", "Gold Plan")
 	if err != nil {
@@ -1301,7 +1293,7 @@ func TestPlansCreate_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "create", "--code", "gold", "--name", "Gold", "--output", "json")
 	if err != nil {
@@ -1323,7 +1315,7 @@ func TestPlansCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation error")
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "create", "--code", "bad", "--name", "Bad")
 	if err == nil {
@@ -1344,7 +1336,7 @@ func TestPlansGet_EmptyCurrencies(t *testing.T) {
 			}, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "get", "p999", "--output", "table")
 	if err != nil {
@@ -1432,7 +1424,7 @@ func TestPlansUpdate_PlanIdArg(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Updated")
 	if err != nil {
@@ -1451,7 +1443,7 @@ func TestPlansUpdate_CoreFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--code", "gold-v2",
@@ -1484,7 +1476,7 @@ func TestPlansUpdate_MultiCurrencyFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
@@ -1515,7 +1507,7 @@ func TestPlansUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
@@ -1537,7 +1529,7 @@ func TestPlansUpdate_SetupFeeFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
@@ -1569,7 +1561,7 @@ func TestPlansUpdate_SetupFeeCurrencyMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD",
@@ -1592,7 +1584,7 @@ func TestPlansUpdate_TrialFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--trial-unit", "day",
@@ -1622,7 +1614,7 @@ func TestPlansUpdate_BillingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--auto-renew",
@@ -1648,7 +1640,7 @@ func TestPlansUpdate_TaxFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--tax-code", "digital",
@@ -1690,7 +1682,7 @@ func TestPlansUpdate_AccountingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--accounting-code", "PLAN-001",
@@ -1748,7 +1740,7 @@ func TestPlansUpdate_HostedPagesFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--success-url", "https://example.com/success",
@@ -1786,7 +1778,7 @@ func TestPlansUpdate_OtherFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--allow-any-item-on-subscriptions",
@@ -1812,7 +1804,7 @@ func TestPlansUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Updated")
 	if err != nil {
@@ -1855,7 +1847,7 @@ func TestPlansUpdate_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Gold Plan")
 	if err != nil {
@@ -1876,7 +1868,7 @@ func TestPlansUpdate_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Gold", "--output", "json")
 	if err != nil {
@@ -1898,7 +1890,7 @@ func TestPlansUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Bad")
 	if err == nil {
@@ -1974,7 +1966,7 @@ func TestPlansDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return p, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "plans", "deactivate", "plan-789")
@@ -2001,7 +1993,7 @@ func TestPlansDeactivate_ConfirmYES_CaseInsensitive(t *testing.T) {
 			return p, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("YES\n")
 	out, _, err := executeCommandWithStdin(app, stdin, "plans", "deactivate", "plan-789")
@@ -2024,7 +2016,7 @@ func TestPlansDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return p, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes")
 	if err != nil {
@@ -2050,7 +2042,7 @@ func TestPlansDeactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "plans", "deactivate", "nonexistent", "--yes")
 	if err == nil {
@@ -2070,7 +2062,7 @@ func TestPlansDeactivate_JSON_Output(t *testing.T) {
 			return p, nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes", "--output", "json")
 	if err != nil {
@@ -2093,7 +2085,7 @@ func TestPlansDeactivate_UsesDetailColumns(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	app := setMockPlanAPI(mock)
+	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes")
 	if err != nil {

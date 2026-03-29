@@ -104,14 +104,6 @@ func (m *mockSubscriptionLister) Next() string {
 	return ""
 }
 
-// setMockSubscriptionAPI installs a mock and returns an *App for context injection.
-func setMockSubscriptionAPI(mock *mockSubscriptionAPI) *App {
-	return &App{
-		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // sampleSubscription returns a test subscription with predictable fields for list output.
 func sampleSubscription() recurly.Subscription {
@@ -230,7 +222,7 @@ func TestSubscriptionsList_PaginationParams(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -260,7 +252,7 @@ func TestSubscriptionsList_FilterParams(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "list",
 		"--state", "active",
@@ -291,7 +283,7 @@ func TestSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
@@ -319,7 +311,7 @@ func TestSubscriptionsList_TableOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
@@ -345,7 +337,7 @@ func TestSubscriptionsList_JSONOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "list", "--output", "json")
 	if err != nil {
@@ -381,7 +373,7 @@ func TestSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "list", "--output", "json-pretty")
 	if err != nil {
@@ -411,7 +403,7 @@ func TestSubscriptionsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "list")
 	if err == nil {
@@ -425,7 +417,7 @@ func TestSubscriptionsList_EmptyResults(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
@@ -479,7 +471,7 @@ func TestSubscriptionsGet_PositionalArg(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "get", "my-sub-id")
 	if err != nil {
@@ -497,7 +489,7 @@ func TestSubscriptionsGet_TableOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "get", "sub-123", "--output", "table")
 	if err != nil {
@@ -525,7 +517,7 @@ func TestSubscriptionsGet_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "get", "sub-123", "--output", "json")
 	if err != nil {
@@ -550,7 +542,7 @@ func TestSubscriptionsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "get", "nonexistent")
 	if err == nil {
@@ -607,7 +599,7 @@ func TestSubscriptionsCreate_FlagToStructMapping(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "create",
 		"--plan-code", "gold",
@@ -685,7 +677,7 @@ func TestSubscriptionsCreate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "create", "--plan-code", "gold")
 	if err != nil {
@@ -718,7 +710,7 @@ func TestSubscriptionsCreate_TimestampFlags(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "create",
 		"--plan-code", "gold",
@@ -758,7 +750,7 @@ func TestSubscriptionsCreate_SuccessOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "create", "--plan-code", "gold")
 	if err != nil {
@@ -784,7 +776,7 @@ func TestSubscriptionsCreate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "create")
 	if err == nil {
@@ -853,7 +845,7 @@ func TestSubscriptionsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456",
 		"--collection-method", "manual",
@@ -926,7 +918,7 @@ func TestSubscriptionsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456", "--collection-method", "manual")
 	if err != nil {
@@ -956,7 +948,7 @@ func TestSubscriptionsUpdate_NextBillDate(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456", "--next-bill-date", "2025-06-01T00:00:00Z")
 	if err != nil {
@@ -985,7 +977,7 @@ func TestSubscriptionsUpdate_SuccessOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "update", "sub-123", "--collection-method", "manual")
 	if err != nil {
@@ -1066,7 +1058,7 @@ func TestSubscriptionsCancel_ConfirmYes_Succeeds(t *testing.T) {
 			return sub, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "cancel", "sub-789")
@@ -1094,7 +1086,7 @@ func TestSubscriptionsCancel_YesFlag_SkipsPrompt(t *testing.T) {
 			return sub, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "cancel", "sub-789", "--yes")
 	if err != nil {
@@ -1120,7 +1112,7 @@ func TestSubscriptionsCancel_TimeframeFlag(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "cancel", "sub-123", "--yes", "--timeframe", "term_end")
 	if err != nil {
@@ -1144,7 +1136,7 @@ func TestSubscriptionsCancel_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "cancel", "nonexistent", "--yes")
 	if err == nil {
@@ -1161,7 +1153,7 @@ func TestSubscriptionsCancel_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "cancel", "sub-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1242,7 +1234,7 @@ func TestSubscriptionsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("yes\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "reactivate", "sub-closed")
@@ -1268,7 +1260,7 @@ func TestSubscriptionsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "reactivate", "sub-closed", "--yes")
 	if err != nil {
@@ -1294,7 +1286,7 @@ func TestSubscriptionsReactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "reactivate", "nonexistent", "--yes")
 	if err == nil {
@@ -1311,7 +1303,7 @@ func TestSubscriptionsReactivate_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "reactivate", "sub-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1407,7 +1399,7 @@ func TestSubscriptionsPause_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "pause", "sub-active", "--remaining-pause-cycles", "3")
@@ -1436,7 +1428,7 @@ func TestSubscriptionsPause_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "pause", "sub-active", "--yes", "--remaining-pause-cycles", "2")
 	if err != nil {
@@ -1462,7 +1454,7 @@ func TestSubscriptionsPause_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "pause", "nonexistent", "--yes", "--remaining-pause-cycles", "1")
 	if err == nil {
@@ -1538,7 +1530,7 @@ func TestSubscriptionsResume_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("yes\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "resume", "sub-paused")
@@ -1564,7 +1556,7 @@ func TestSubscriptionsResume_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "resume", "sub-paused", "--yes")
 	if err != nil {
@@ -1590,7 +1582,7 @@ func TestSubscriptionsResume_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "resume", "nonexistent", "--yes")
 	if err == nil {
@@ -1607,7 +1599,7 @@ func TestSubscriptionsResume_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "resume", "sub-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1692,7 +1684,7 @@ func TestSubscriptionsTerminate_ConfirmYes_Succeeds(t *testing.T) {
 			return sub, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "terminate", "sub-active")
@@ -1720,7 +1712,7 @@ func TestSubscriptionsTerminate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sub, nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "terminate", "sub-active", "--yes")
 	if err != nil {
@@ -1746,7 +1738,7 @@ func TestSubscriptionsTerminate_RefundAndChargeFlags(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "subscriptions", "terminate", "sub-123", "--yes", "--refund", "full", "--charge")
 	if err != nil {
@@ -1773,7 +1765,7 @@ func TestSubscriptionsTerminate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "terminate", "nonexistent", "--yes")
 	if err == nil {
@@ -1790,7 +1782,7 @@ func TestSubscriptionsTerminate_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "terminate", "sub-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1871,7 +1863,7 @@ func TestSubscriptionsConvertTrial_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "convert-trial", "sub-trial")
@@ -1897,7 +1889,7 @@ func TestSubscriptionsConvertTrial_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "subscriptions", "convert-trial", "sub-trial", "--yes")
 	if err != nil {
@@ -1923,7 +1915,7 @@ func TestSubscriptionsConvertTrial_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "subscriptions", "convert-trial", "nonexistent", "--yes")
 	if err == nil {
@@ -1940,7 +1932,7 @@ func TestSubscriptionsConvertTrial_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	app := setMockSubscriptionAPI(mock)
+	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "subscriptions", "convert-trial", "sub-123", "--yes", "--output", "json")
 	if err != nil {

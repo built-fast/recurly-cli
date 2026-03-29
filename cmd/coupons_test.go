@@ -129,14 +129,6 @@ func (m *mockUniqueCouponCodeLister) Next() string {
 	return ""
 }
 
-// setMockCouponAPI installs a mock and returns an *App for context injection.
-func setMockCouponAPI(mock *mockCouponAPI) *App {
-	return &App{
-		NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) {
-			return mock, nil
-		},
-	}
-}
 
 // sampleCoupon returns a test coupon with predictable fields for list tests.
 func sampleCoupon() recurly.Coupon {
@@ -183,7 +175,7 @@ func TestCouponsList_Success(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
@@ -208,7 +200,7 @@ func TestCouponsList_EmptyResults(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
@@ -226,7 +218,7 @@ func TestCouponsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "list")
 	if err == nil {
@@ -243,7 +235,7 @@ func TestCouponsList_FlagPassthrough(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -273,7 +265,7 @@ func TestCouponsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
@@ -305,7 +297,7 @@ func TestCouponsGet_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "get", "SAVE25")
 	if err != nil {
@@ -331,7 +323,7 @@ func TestCouponsGet_PositionalArg(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "get", "my-coupon-id")
 	if err != nil {
@@ -351,7 +343,7 @@ func TestCouponsGet_NotFoundError(t *testing.T) {
 			}
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "coupons", "get", "nonexistent")
 	if err == nil {
@@ -382,7 +374,7 @@ func TestCouponsCreatePercent_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "SAVE25",
@@ -422,7 +414,7 @@ func TestCouponsCreatePercent_AllOptionalFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "FULL",
@@ -505,7 +497,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	// Missing --code
 	_, stderr, err := executeCommand(app, "coupons", "create-percent",
@@ -555,7 +547,7 @@ func TestCouponsCreatePercent_UnsetOptionalFlagsNotSent(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "MINIMAL",
@@ -633,7 +625,7 @@ func TestCouponsCreateFixed_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "FIXED10",
@@ -682,7 +674,7 @@ func TestCouponsCreateFixed_CurrencyAmountMismatch(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "BAD",
@@ -706,7 +698,7 @@ func TestCouponsCreateFixed_MultiCurrency(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "MULTI",
@@ -745,7 +737,7 @@ func TestCouponsCreateFreeTrial_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "create-free-trial",
 		"--code", "FREETRIAL",
@@ -784,7 +776,7 @@ func TestCouponsCreateFreeTrial_MissingRequiredFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	// Missing --free-trial-amount and --free-trial-unit
 	_, stderr, err := executeCommand(app, "coupons", "create-free-trial",
@@ -812,7 +804,7 @@ func TestCouponsUpdate_SuccessWithChangedFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "update", "SAVE25",
 		"--name", "Updated Name",
@@ -861,7 +853,7 @@ func TestCouponsUpdate_NoFlags_EmptyBody(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "update", "SAVE25")
 	if err != nil {
@@ -894,7 +886,7 @@ func TestCouponsUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "update", "SAVE25", "--name", "bad")
 	if err == nil {
@@ -921,7 +913,7 @@ func TestCouponsDeactivate_YesFlag_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, stderr, err := executeCommand(app, "coupons", "deactivate", "SAVE25", "--yes")
 	if err != nil {
@@ -948,7 +940,7 @@ func TestCouponsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return detail, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "coupons", "deactivate", "SAVE25")
@@ -1004,7 +996,7 @@ func TestCouponsDeactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "deactivate", "SAVE25", "--yes")
 	if err == nil {
@@ -1024,7 +1016,7 @@ func TestCouponsRestore_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "restore", "SAVE25",
 		"--name", "Restored Coupon",
@@ -1052,7 +1044,7 @@ func TestCouponsRestore_NoFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "restore", "SAVE25")
 	if err != nil {
@@ -1080,7 +1072,7 @@ func TestCouponsRestore_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "restore", "SAVE25")
 	if err == nil {
@@ -1106,7 +1098,7 @@ func TestCouponsGenerateCodes_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "50",
@@ -1146,7 +1138,7 @@ func TestCouponsGenerateCodes_ZeroCodes_ReturnsError(t *testing.T) {
 			return nil, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, stderr, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "0",
@@ -1172,7 +1164,7 @@ func TestCouponsGenerateCodes_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("server error")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "10",
@@ -1206,7 +1198,7 @@ func TestCouponsListCodes_Success(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: codes}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err != nil {
@@ -1235,7 +1227,7 @@ func TestCouponsListCodes_Pagination(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON",
 		"--limit", "25",
@@ -1266,7 +1258,7 @@ func TestCouponsListCodes_EmptyResults(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err != nil {
@@ -1291,7 +1283,7 @@ func TestCouponsListCodes_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	_, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err == nil {
@@ -1308,7 +1300,7 @@ func TestCouponsGet_JSONOutput(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "get", "SAVE25", "--output", "json")
 	if err != nil {
@@ -1329,7 +1321,7 @@ func TestCouponsList_JSONOutput(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
 		},
 	}
-	app := setMockCouponAPI(mock)
+	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
 
 	out, _, err := executeCommand(app, "coupons", "list", "--output", "json")
 	if err != nil {
