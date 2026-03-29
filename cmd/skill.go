@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/built-fast/recurly-cli/skills"
 	"github.com/spf13/cobra"
@@ -77,6 +78,41 @@ func newSkillUninstallCmd() *cobra.Command {
 			return runSkillUninstall(cmd.OutOrStdout(), cfg)
 		},
 	}
+}
+
+// RefreshSkillsIfVersionChanged silently re-installs SKILL.md when the CLI
+// version has changed since the last install. It is best-effort: no output on
+// success, no error on failure. It is a no-op if the skill was never installed
+// or the build is a dev build.
+func RefreshSkillsIfVersionChanged() {
+	cfg, err := defaultInstallConfig()
+	if err != nil {
+		return
+	}
+	refreshSkills(cfg)
+}
+
+func refreshSkills(cfg *installConfig) {
+	// Skip dev builds
+	if cfg.version == "" || cfg.version == "dev" {
+		return
+	}
+
+	versionFile := filepath.Join(cfg.agentsDir, "recurly", ".version")
+	data, err := os.ReadFile(versionFile)
+	if err != nil {
+		// .version missing → never installed → no-op
+		return
+	}
+
+	installed := strings.TrimSpace(string(data))
+	if installed == cfg.version {
+		// Already up to date
+		return
+	}
+
+	// Version mismatch — silently re-install
+	_ = runSkillInstall(io.Discard, cfg)
 }
 
 func runSkillUninstall(w io.Writer, cfg *installConfig) error {

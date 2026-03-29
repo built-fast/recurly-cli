@@ -302,6 +302,130 @@ func TestRunSkillUninstall_NoOp(t *testing.T) {
 	}
 }
 
+func TestRefreshSkills_SentinelMissing(t *testing.T) {
+	t.Parallel()
+
+	cfg := testInstallConfig(t)
+	cfg.version = "v1.0.0"
+
+	// No .version file exists (never installed) — should be a no-op
+	refreshSkills(cfg)
+
+	// Verify SKILL.md was NOT written (no install happened)
+	dest := filepath.Join(cfg.agentsDir, "recurly", "SKILL.md")
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Error("expected SKILL.md to not exist when .version sentinel is missing")
+	}
+}
+
+func TestRefreshSkills_VersionMatch(t *testing.T) {
+	t.Parallel()
+
+	cfg := testInstallConfig(t)
+	cfg.version = "v1.0.0"
+
+	// Pre-install to create .version
+	buf := new(bytes.Buffer)
+	if err := runSkillInstall(buf, cfg); err != nil {
+		t.Fatalf("initial install failed: %v", err)
+	}
+
+	// Overwrite SKILL.md with sentinel content to detect if refresh overwrites it
+	dest := filepath.Join(cfg.agentsDir, "recurly", "SKILL.md")
+	sentinel := []byte("sentinel-do-not-overwrite")
+	if err := os.WriteFile(dest, sentinel, 0o644); err != nil {
+		t.Fatalf("writing sentinel: %v", err)
+	}
+
+	// Refresh with same version — should be a no-op
+	refreshSkills(cfg)
+
+	// Verify sentinel content is untouched
+	content, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading SKILL.md: %v", err)
+	}
+	if !bytes.Equal(content, sentinel) {
+		t.Error("SKILL.md was overwritten despite version match — expected no-op")
+	}
+}
+
+func TestRefreshSkills_VersionMismatch(t *testing.T) {
+	t.Parallel()
+
+	cfg := testInstallConfig(t)
+	cfg.version = "v1.0.0"
+
+	// Pre-install with v1.0.0
+	buf := new(bytes.Buffer)
+	if err := runSkillInstall(buf, cfg); err != nil {
+		t.Fatalf("initial install failed: %v", err)
+	}
+
+	// Bump version to simulate upgrade
+	cfg.version = "v2.0.0"
+	refreshSkills(cfg)
+
+	// Verify .version was updated to new version
+	versionFile := filepath.Join(cfg.agentsDir, "recurly", ".version")
+	content, err := os.ReadFile(versionFile)
+	if err != nil {
+		t.Fatalf("reading .version: %v", err)
+	}
+	if got := strings.TrimSpace(string(content)); got != "v2.0.0" {
+		t.Errorf(".version = %q, want %q", got, "v2.0.0")
+	}
+
+	// Verify SKILL.md was refreshed (matches embedded content, not sentinel)
+	dest := filepath.Join(cfg.agentsDir, "recurly", "SKILL.md")
+	installed, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("reading SKILL.md: %v", err)
+	}
+	expected, err := skills.SkillMD()
+	if err != nil {
+		t.Fatalf("reading embedded SKILL.md: %v", err)
+	}
+	if !bytes.Equal(installed, expected) {
+		t.Error("SKILL.md was not refreshed on version mismatch")
+	}
+}
+
+func TestRefreshSkills_DevSkip(t *testing.T) {
+	t.Parallel()
+
+	for _, devVersion := range []string{"dev", ""} {
+		cfg := testInstallConfig(t)
+		cfg.version = "v1.0.0"
+
+		// Pre-install
+		buf := new(bytes.Buffer)
+		if err := runSkillInstall(buf, cfg); err != nil {
+			t.Fatalf("initial install failed: %v", err)
+		}
+
+		// Overwrite SKILL.md with sentinel
+		dest := filepath.Join(cfg.agentsDir, "recurly", "SKILL.md")
+		sentinel := []byte("sentinel-dev-" + devVersion)
+		if err := os.WriteFile(dest, sentinel, 0o644); err != nil {
+			t.Fatalf("writing sentinel: %v", err)
+		}
+
+		// Set dev version and refresh — should skip
+		cfg.version = devVersion
+		refreshSkills(cfg)
+
+		// Verify sentinel untouched
+		content, err := os.ReadFile(dest)
+		if err != nil {
+			t.Fatalf("reading SKILL.md: %v", err)
+		}
+		if !bytes.Equal(content, sentinel) {
+			t.Errorf("version=%q: SKILL.md was overwritten despite dev build — expected skip", devVersion)
+		}
+	}
+}
+
 func TestRunSkillInstall_VersionStamp(t *testing.T) {
 	t.Parallel()
 

@@ -31,6 +31,8 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		RefreshSkillsIfVersionChanged()
+
 		cfg := &output.Config{}
 
 		// Parse --field flag
