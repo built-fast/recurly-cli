@@ -22,6 +22,7 @@ func compileJQ(t *testing.T, expr string) *gojq.Code {
 }
 
 func TestApplyJQ_FieldAccess(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".email")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -35,6 +36,7 @@ func TestApplyJQ_FieldAccess(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayIteration(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".[].name")
 
 	items := []any{
@@ -52,6 +54,7 @@ func TestApplyJQ_ArrayIteration(t *testing.T) {
 }
 
 func TestApplyJQ_SelectFilter(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `[.[] | select(.name == "Bob")] | length`)
 
 	items := []any{
@@ -68,6 +71,7 @@ func TestApplyJQ_SelectFilter(t *testing.T) {
 }
 
 func TestApplyJQ_Length(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, "length")
 
 	items := []any{
@@ -84,6 +88,7 @@ func TestApplyJQ_Length(t *testing.T) {
 }
 
 func TestApplyJQ_PipeChain(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `[.[] | .name] | sort`)
 
 	items := []any{
@@ -100,6 +105,7 @@ func TestApplyJQ_PipeChain(t *testing.T) {
 }
 
 func TestApplyJQ_Base64(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".name | @base64")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -113,6 +119,7 @@ func TestApplyJQ_Base64(t *testing.T) {
 }
 
 func TestApplyJQ_CSV(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `[.name, .email] | @csv`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -126,6 +133,7 @@ func TestApplyJQ_CSV(t *testing.T) {
 }
 
 func TestApplyJQ_NullResult(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".nonexistent")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -139,6 +147,7 @@ func TestApplyJQ_NullResult(t *testing.T) {
 }
 
 func TestApplyJQ_BoolResult_True(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".has_more")
 
 	input := map[string]any{"has_more": true}
@@ -152,6 +161,7 @@ func TestApplyJQ_BoolResult_True(t *testing.T) {
 }
 
 func TestApplyJQ_BoolResult_False(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".has_more")
 
 	input := map[string]any{"has_more": false}
@@ -165,6 +175,7 @@ func TestApplyJQ_BoolResult_False(t *testing.T) {
 }
 
 func TestApplyJQ_NumericResult_Int(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".data | length")
 
 	input := map[string]any{"data": []any{1, 2, 3}}
@@ -178,6 +189,7 @@ func TestApplyJQ_NumericResult_Int(t *testing.T) {
 }
 
 func TestApplyJQ_NumericResult_Float(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".price")
 
 	input := map[string]any{"price": 1.5}
@@ -191,6 +203,7 @@ func TestApplyJQ_NumericResult_Float(t *testing.T) {
 }
 
 func TestApplyJQ_ObjectResult_Compact(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -212,6 +225,7 @@ func TestApplyJQ_ObjectResult_Compact(t *testing.T) {
 }
 
 func TestApplyJQ_ObjectResult_Pretty(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -229,6 +243,7 @@ func TestApplyJQ_ObjectResult_Pretty(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayResult_Compact(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `[.[] | .name]`)
 
 	items := []any{
@@ -248,6 +263,7 @@ func TestApplyJQ_ArrayResult_Compact(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayResult_Pretty(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `[.[] | .name]`)
 
 	items := []any{
@@ -264,6 +280,7 @@ func TestApplyJQ_ArrayResult_Pretty(t *testing.T) {
 }
 
 func TestApplyJQ_EmptyResult(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `select(.name == "Nobody")`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -277,6 +294,7 @@ func TestApplyJQ_EmptyResult(t *testing.T) {
 }
 
 func TestApplyJQ_RuntimeError(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".name / 0")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -292,6 +310,7 @@ func TestApplyJQ_RuntimeError(t *testing.T) {
 // --- FormatList with jq ---
 
 func TestFormatList_WithJQ_SelectFilter(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `.data | map(select(.state == "active"))`)
 
 	items := []any{
@@ -318,6 +337,7 @@ func TestFormatList_WithJQ_SelectFilter(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_DataLength(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `.data | length`)
 
 	items := []any{
@@ -335,6 +355,7 @@ func TestFormatList_WithJQ_DataLength(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_PipeChainProjection(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `.data[] | {name, email}`)
 
 	items := []any{
@@ -364,6 +385,7 @@ func TestFormatList_WithJQ_PipeChainProjection(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_EnvelopeInput(t *testing.T) {
+	t.Parallel()
 	// jq input for FormatList is the full envelope, so .data[].name works
 	code := compileJQ(t, ".data[].name")
 
@@ -382,6 +404,7 @@ func TestFormatList_WithJQ_EnvelopeInput(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_EnvelopeFields(t *testing.T) {
+	t.Parallel()
 	// Verify the envelope object field is accessible
 	code := compileJQ(t, ".object")
 
@@ -396,6 +419,7 @@ func TestFormatList_WithJQ_EnvelopeFields(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_HasMore(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".has_more")
 
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
@@ -409,6 +433,7 @@ func TestFormatList_WithJQ_HasMore(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_NilItems(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".data | length")
 
 	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, nil, false)
@@ -421,6 +446,7 @@ func TestFormatList_WithJQ_NilItems(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_Pretty(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `.data[0] | {name: .name}`)
 
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
@@ -436,6 +462,7 @@ func TestFormatList_WithJQ_Pretty(t *testing.T) {
 // --- FormatOne with jq ---
 
 func TestFormatOne_WithJQ(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, ".email")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
@@ -449,6 +476,7 @@ func TestFormatOne_WithJQ(t *testing.T) {
 }
 
 func TestFormatOne_WithJQ_Pretty(t *testing.T) {
+	t.Parallel()
 	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}

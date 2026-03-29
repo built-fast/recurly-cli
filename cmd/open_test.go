@@ -235,7 +235,7 @@ func TestOpenCmd_TooManyArgs_ReturnsError(t *testing.T) {
 	}
 }
 
-func TestOpenCmd_OpenssBrowser(t *testing.T) {
+func TestOpenCmd_OpenssBrowser(t *testing.T) { //nolint:paralleltest // modifies global openBrowserFunc
 	// Cannot use t.Parallel() — modifies global openBrowserFunc
 	var openedURL string
 	orig := openBrowserFunc
@@ -255,7 +255,7 @@ func TestOpenCmd_OpenssBrowser(t *testing.T) {
 	}
 }
 
-func TestOpenCmd_BrowserError_ReturnsError(t *testing.T) {
+func TestOpenCmd_BrowserError_ReturnsError(t *testing.T) { //nolint:paralleltest // modifies global openBrowserFunc
 	// Cannot use t.Parallel() — modifies global openBrowserFunc
 	orig := openBrowserFunc
 	openBrowserFunc = func(url string) error {

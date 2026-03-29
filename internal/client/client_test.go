@@ -8,6 +8,7 @@ import (
 )
 
 func TestValidateRegion_ValidValues(t *testing.T) {
+	t.Parallel()
 	for _, region := range []string{"us", "eu", "US", "EU", "Us", "Eu"} {
 		if err := ValidateRegion(region); err != nil {
 			t.Errorf("ValidateRegion(%q) returned unexpected error: %v", region, err)
@@ -16,6 +17,7 @@ func TestValidateRegion_ValidValues(t *testing.T) {
 }
 
 func TestValidateRegion_InvalidValue(t *testing.T) {
+	t.Parallel()
 	err := ValidateRegion("asia")
 	if err == nil {
 		t.Fatal("expected error for invalid region")
@@ -29,6 +31,7 @@ func TestValidateRegion_InvalidValue(t *testing.T) {
 }
 
 func TestValidateRegion_EmptyString(t *testing.T) {
+	t.Parallel()
 	err := ValidateRegion("")
 	if err == nil {
 		t.Fatal("expected error for empty region")
@@ -38,6 +41,7 @@ func TestValidateRegion_EmptyString(t *testing.T) {
 func alwaysFalse() bool { return false }
 
 func TestNewClient_NoAPIKey_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, err := NewClient(ClientConfig{})
 	if err == nil {
 		t.Fatal("expected error when no API key configured")
@@ -49,6 +53,7 @@ func TestNewClient_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestNewClient_WithAPIKey_DefaultRegion(t *testing.T) {
+	t.Parallel()
 	c, err := NewClient(ClientConfig{APIKey: "test-key", IsJSON: alwaysFalse})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -59,6 +64,7 @@ func TestNewClient_WithAPIKey_DefaultRegion(t *testing.T) {
 }
 
 func TestNewClient_WithAPIKey_USRegion(t *testing.T) {
+	t.Parallel()
 	c, err := NewClient(ClientConfig{APIKey: "test-key", Region: "us", IsJSON: alwaysFalse})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -69,6 +75,7 @@ func TestNewClient_WithAPIKey_USRegion(t *testing.T) {
 }
 
 func TestNewClient_WithAPIKey_EURegion(t *testing.T) {
+	t.Parallel()
 	c, err := NewClient(ClientConfig{APIKey: "test-key", Region: "eu", IsJSON: alwaysFalse})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -79,6 +86,7 @@ func TestNewClient_WithAPIKey_EURegion(t *testing.T) {
 }
 
 func TestNewClient_EURegionCaseInsensitive(t *testing.T) {
+	t.Parallel()
 	c, err := NewClient(ClientConfig{APIKey: "test-key", Region: "EU", IsJSON: alwaysFalse})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -89,6 +97,7 @@ func TestNewClient_EURegionCaseInsensitive(t *testing.T) {
 }
 
 func TestNewClient_InvalidRegion_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, err := NewClient(ClientConfig{APIKey: "test-key", Region: "asia"})
 	if err == nil {
 		t.Fatal("expected error for invalid region")

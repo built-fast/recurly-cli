@@ -22,6 +22,7 @@ func newTestRetryTransport(handler http.Handler, stderr io.Writer, isJSON bool) 
 }
 
 func TestRetryTransport_NoRetryOn200(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -47,6 +48,7 @@ func TestRetryTransport_NoRetryOn200(t *testing.T) {
 }
 
 func TestRetryTransport_RetriesOn429(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -80,6 +82,7 @@ func TestRetryTransport_RetriesOn429(t *testing.T) {
 }
 
 func TestRetryTransport_MaxRetriesExhausted(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -118,6 +121,7 @@ func TestRetryTransport_MaxRetriesExhausted(t *testing.T) {
 }
 
 func TestRetryTransport_RespectsRetryAfterHeader(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -149,6 +153,7 @@ func TestRetryTransport_RespectsRetryAfterHeader(t *testing.T) {
 }
 
 func TestRetryTransport_ExponentialBackoffDelays(t *testing.T) {
+	t.Parallel()
 	var delays []time.Duration
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +186,7 @@ func TestRetryTransport_ExponentialBackoffDelays(t *testing.T) {
 }
 
 func TestRetryTransport_RetryAfterCappedAt30s(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -215,6 +221,7 @@ func TestRetryTransport_RetryAfterCappedAt30s(t *testing.T) {
 }
 
 func TestRetryTransport_JSONOutputNoANSI(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -249,6 +256,7 @@ func TestRetryTransport_JSONOutputNoANSI(t *testing.T) {
 }
 
 func TestRetryTransport_NonJSONOutputUsesANSI(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -277,6 +285,7 @@ func TestRetryTransport_NonJSONOutputUsesANSI(t *testing.T) {
 }
 
 func TestRetryTransport_RetryWithRequestBody(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	var bodies []string
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -315,8 +324,10 @@ func TestRetryTransport_RetryWithRequestBody(t *testing.T) {
 }
 
 func TestRetryTransport_NoRetryOnOtherErrors(t *testing.T) {
+	t.Parallel()
 	for _, status := range []int{400, 401, 403, 404, 500, 502, 503} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
+			t.Parallel()
 			calls := 0
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls++
@@ -341,6 +352,7 @@ func TestRetryTransport_NoRetryOnOtherErrors(t *testing.T) {
 }
 
 func TestRetryDelay_ExponentialBackoff(t *testing.T) {
+	t.Parallel()
 	resp := &http.Response{Header: http.Header{}}
 
 	tests := []struct {
@@ -363,6 +375,7 @@ func TestRetryDelay_ExponentialBackoff(t *testing.T) {
 }
 
 func TestRetryDelay_RetryAfterHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		header   string
@@ -378,6 +391,7 @@ func TestRetryDelay_RetryAfterHeader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			resp := &http.Response{Header: http.Header{}}
 			resp.Header.Set("Retry-After", tt.header)
 
@@ -391,6 +405,7 @@ func TestRetryDelay_RetryAfterHeader(t *testing.T) {
 }
 
 func TestRetryTransport_StderrOutput(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++

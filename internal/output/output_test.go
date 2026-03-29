@@ -17,6 +17,7 @@ var testColumns = []Column{
 }
 
 func TestValidateFormat(t *testing.T) {
+	t.Parallel()
 	for _, f := range []string{"table", "json", "json-pretty"} {
 		if err := ValidateFormat(f); err != nil {
 			t.Errorf("ValidateFormat(%q) returned error: %v", f, err)
@@ -36,6 +37,7 @@ func TestValidateFormat(t *testing.T) {
 }
 
 func TestFormatListJSON(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
@@ -71,6 +73,7 @@ func TestFormatListJSON(t *testing.T) {
 }
 
 func TestFormatListJSONHasMore(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
@@ -93,6 +96,7 @@ func TestFormatListJSONHasMore(t *testing.T) {
 }
 
 func TestFormatListJSONPretty(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
@@ -125,6 +129,7 @@ func TestFormatListJSONPretty(t *testing.T) {
 }
 
 func TestFormatListTable(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
@@ -151,6 +156,7 @@ func TestFormatListTable(t *testing.T) {
 }
 
 func TestFormatOneJSON(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "json"}, testColumns, item)
@@ -172,6 +178,7 @@ func TestFormatOneJSON(t *testing.T) {
 }
 
 func TestFormatOneJSON_NoEnvelope(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "json"}, testColumns, item)
@@ -196,6 +203,7 @@ func TestFormatOneJSON_NoEnvelope(t *testing.T) {
 }
 
 func TestFormatOneJSONPretty(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "json-pretty"}, testColumns, item)
@@ -209,6 +217,7 @@ func TestFormatOneJSONPretty(t *testing.T) {
 }
 
 func TestFormatOneTable(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "table"}, testColumns, item)
@@ -232,6 +241,7 @@ func TestFormatOneTable(t *testing.T) {
 }
 
 func TestFormatListInvalidFormat(t *testing.T) {
+	t.Parallel()
 	_, err := FormatList(&Config{Format: "xml"}, testColumns, nil, false)
 	if err == nil {
 		t.Fatal("expected error for invalid format")
@@ -239,6 +249,7 @@ func TestFormatListInvalidFormat(t *testing.T) {
 }
 
 func TestFormatOneInvalidFormat(t *testing.T) {
+	t.Parallel()
 	_, err := FormatOne(&Config{Format: "yaml"}, testColumns, testItem{})
 	if err == nil {
 		t.Fatal("expected error for invalid format")

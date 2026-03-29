@@ -79,7 +79,7 @@ func TestWithWatch_NoFlag_RunsNormally(t *testing.T) {
 	}
 }
 
-func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
+func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) { //nolint:paralleltest // modifies global stdoutIsPiped
 	// Cannot use t.Parallel() — modifies global stdoutIsPiped
 	origPiped := stdoutIsPiped
 	stdoutIsPiped = func() bool { return false }
@@ -101,7 +101,7 @@ func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
 	}
 }
 
-func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) {
+func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) { //nolint:paralleltest // modifies global stdoutIsPiped
 	// Cannot use t.Parallel() — modifies global stdoutIsPiped
 	origPiped := stdoutIsPiped
 	stdoutIsPiped = func() bool { return false }

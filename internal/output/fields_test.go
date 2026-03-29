@@ -9,6 +9,7 @@ import (
 )
 
 func TestNormalizeFieldName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input string
 		want  string
@@ -31,6 +32,7 @@ func TestNormalizeFieldName(t *testing.T) {
 }
 
 func TestValidateFields_AllValid(t *testing.T) {
+	t.Parallel()
 	err := ValidateFields(testColumns, []string{"Name", "Email"})
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
@@ -38,6 +40,7 @@ func TestValidateFields_AllValid(t *testing.T) {
 }
 
 func TestValidateFields_CaseInsensitive(t *testing.T) {
+	t.Parallel()
 	err := ValidateFields(testColumns, []string{"name", "EMAIL"})
 	if err != nil {
 		t.Errorf("expected no error for case-insensitive match, got: %v", err)
@@ -45,6 +48,7 @@ func TestValidateFields_CaseInsensitive(t *testing.T) {
 }
 
 func TestValidateFields_Invalid(t *testing.T) {
+	t.Parallel()
 	err := ValidateFields(testColumns, []string{"Name", "bogus"})
 	if err == nil {
 		t.Fatal("expected error for invalid field")
@@ -61,6 +65,7 @@ func TestValidateFields_Invalid(t *testing.T) {
 }
 
 func TestSelectColumns_OrderMatchesFieldOrder(t *testing.T) {
+	t.Parallel()
 	cols := SelectColumns(testColumns, []string{"Email", "Name"})
 	if len(cols) != 2 {
 		t.Fatalf("expected 2 columns, got %d", len(cols))
@@ -74,6 +79,7 @@ func TestSelectColumns_OrderMatchesFieldOrder(t *testing.T) {
 }
 
 func TestSelectColumns_CaseInsensitive(t *testing.T) {
+	t.Parallel()
 	cols := SelectColumns(testColumns, []string{"email"})
 	if len(cols) != 1 {
 		t.Fatalf("expected 1 column, got %d", len(cols))
@@ -86,6 +92,7 @@ func TestSelectColumns_CaseInsensitive(t *testing.T) {
 // --- Integration tests via FormatList / FormatOne ---
 
 func TestFieldSelection_ListTable(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
@@ -111,6 +118,7 @@ func TestFieldSelection_ListTable(t *testing.T) {
 }
 
 func TestFieldSelection_ListJSON(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
@@ -139,6 +147,7 @@ func TestFieldSelection_ListJSON(t *testing.T) {
 }
 
 func TestFieldSelection_OneTable(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "table", Fields: []string{"Email"}}, testColumns, item)
@@ -163,6 +172,7 @@ func TestFieldSelection_OneTable(t *testing.T) {
 }
 
 func TestFieldSelection_OneJSON(t *testing.T) {
+	t.Parallel()
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
 	out, err := FormatOne(&Config{Format: "json", Fields: []string{"Email"}}, testColumns, item)
@@ -183,6 +193,7 @@ func TestFieldSelection_OneJSON(t *testing.T) {
 }
 
 func TestFieldSelection_InvalidField_ReturnsError(t *testing.T) {
+	t.Parallel()
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
 
 	_, err := FormatList(&Config{Format: "table", Fields: []string{"bogus"}}, testColumns, items, false)
@@ -198,6 +209,7 @@ func TestFieldSelection_InvalidField_ReturnsError(t *testing.T) {
 }
 
 func TestFieldSelection_InvalidField_FormatOne(t *testing.T) {
+	t.Parallel()
 	_, err := FormatOne(&Config{Format: "json", Fields: []string{"nonexistent"}}, testColumns, testItem{Name: "Alice"})
 	if err == nil {
 		t.Fatal("expected error for invalid field")
@@ -208,6 +220,7 @@ func TestFieldSelection_InvalidField_FormatOne(t *testing.T) {
 }
 
 func TestFieldSelection_WithJQ(t *testing.T) {
+	t.Parallel()
 	// Field selection applied first, then jq
 	query, err := gojq.Parse(".data[].name")
 	if err != nil {
@@ -238,6 +251,7 @@ func TestFieldSelection_WithJQ(t *testing.T) {
 }
 
 func TestFieldSelection_WithJQ_FilteredFieldNotAccessible(t *testing.T) {
+	t.Parallel()
 	// Select only Name, then try to access email via jq — should get null
 	query, err := gojq.Parse(".data[].email")
 	if err != nil {
@@ -267,6 +281,7 @@ func TestFieldSelection_WithJQ_FilteredFieldNotAccessible(t *testing.T) {
 }
 
 func TestFieldSelection_CaseInsensitive_Integration(t *testing.T) {
+	t.Parallel()
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
@@ -295,6 +310,7 @@ func TestFieldSelection_CaseInsensitive_Integration(t *testing.T) {
 }
 
 func TestFieldSelection_ColumnOrder_Table(t *testing.T) {
+	t.Parallel()
 	// Verify that table columns appear in the order specified by --field
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},

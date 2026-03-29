@@ -1,0 +1,20 @@
+version: "2"
+
+linters:
+  enable:
+    - gocritic
+    - paralleltest
+    - tparallel
+    - cyclop
+
+  settings:
+    cyclop:
+      max-complexity: 30
+
+    errcheck:
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write

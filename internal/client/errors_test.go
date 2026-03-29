@@ -11,6 +11,7 @@ import (
 )
 
 func TestFormatError_Unauthorized(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Invalid API key",
 		Class:   recurly.ErrorClassClient,
@@ -24,6 +25,7 @@ func TestFormatError_Unauthorized(t *testing.T) {
 }
 
 func TestFormatError_InvalidApiKey(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Invalid API key",
 		Class:   recurly.ErrorClassClient,
@@ -37,6 +39,7 @@ func TestFormatError_InvalidApiKey(t *testing.T) {
 }
 
 func TestFormatError_NotFound(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Couldn't find Account with id = abc123",
 		Class:   recurly.ErrorClassClient,
@@ -50,6 +53,7 @@ func TestFormatError_NotFound(t *testing.T) {
 }
 
 func TestFormatError_RateLimited(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Too many requests",
 		Class:   recurly.ErrorClassClient,
@@ -63,6 +67,7 @@ func TestFormatError_RateLimited(t *testing.T) {
 }
 
 func TestFormatError_TooManyRequests(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Too many requests",
 		Class:   recurly.ErrorClassClient,
@@ -76,6 +81,7 @@ func TestFormatError_TooManyRequests(t *testing.T) {
 }
 
 func TestFormatError_ServerError(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Internal server error",
 		Class:   recurly.ErrorClassServer,
@@ -89,6 +95,7 @@ func TestFormatError_ServerError(t *testing.T) {
 }
 
 func TestFormatError_ServerErrorVariants(t *testing.T) {
+	t.Parallel()
 	serverTypes := []recurly.ErrorType{
 		recurly.ErrorTypeBadGateway,
 		recurly.ErrorTypeServiceUnavailable,
@@ -109,6 +116,7 @@ func TestFormatError_ServerErrorVariants(t *testing.T) {
 }
 
 func TestFormatError_Validation_NoParams(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "The record is invalid.",
 		Class:   recurly.ErrorClassClient,
@@ -122,6 +130,7 @@ func TestFormatError_Validation_NoParams(t *testing.T) {
 }
 
 func TestFormatError_Validation_WithParams(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "The record is invalid.",
 		Class:   recurly.ErrorClassClient,
@@ -144,6 +153,7 @@ func TestFormatError_Validation_WithParams(t *testing.T) {
 }
 
 func TestFormatError_GenericClientError(t *testing.T) {
+	t.Parallel()
 	err := &recurly.Error{
 		Message: "Something went wrong with the request.",
 		Class:   recurly.ErrorClassClient,
@@ -157,6 +167,7 @@ func TestFormatError_GenericClientError(t *testing.T) {
 }
 
 func TestFormatError_NetworkError_URLError(t *testing.T) {
+	t.Parallel()
 	err := &url.Error{
 		Op:  "Get",
 		URL: "https://v3.recurly.com/accounts",
@@ -174,6 +185,7 @@ func TestFormatError_NetworkError_URLError(t *testing.T) {
 }
 
 func TestFormatError_NetworkError_DNSError(t *testing.T) {
+	t.Parallel()
 	err := &url.Error{
 		Op:  "Get",
 		URL: "https://v3.recurly.com/accounts",
@@ -190,6 +202,7 @@ func TestFormatError_NetworkError_DNSError(t *testing.T) {
 }
 
 func TestFormatError_GenericError(t *testing.T) {
+	t.Parallel()
 	err := fmt.Errorf("API key not configured. Run 'recurly configure' or set RECURLY_API_KEY.")
 	got := FormatError(err)
 	expected := "Error: API key not configured. Run 'recurly configure' or set RECURLY_API_KEY."

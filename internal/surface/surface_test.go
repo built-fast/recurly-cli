@@ -11,6 +11,7 @@ import (
 )
 
 func TestGoldenSurface(t *testing.T) {
+	t.Parallel()
 	surfacePath := filepath.Join("..", "..", ".surface")
 
 	expected, err := os.ReadFile(surfacePath)
@@ -52,6 +53,7 @@ func assertNotContains(t *testing.T, output, substr string) {
 }
 
 func TestGenerate_BasicCommandTree(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	accounts := &cobra.Command{Use: "accounts"}
 	list := &cobra.Command{Use: "list"}
@@ -69,6 +71,7 @@ func TestGenerate_BasicCommandTree(t *testing.T) {
 }
 
 func TestGenerate_PositionalArgsSingleArg(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	get := &cobra.Command{Use: "get <account_id>"}
 	root.AddCommand(get)
@@ -79,6 +82,7 @@ func TestGenerate_PositionalArgsSingleArg(t *testing.T) {
 }
 
 func TestGenerate_PositionalArgsMultipleArgs(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	move := &cobra.Command{Use: "move <source> <destination>"}
 	root.AddCommand(move)
@@ -90,6 +94,7 @@ func TestGenerate_PositionalArgsMultipleArgs(t *testing.T) {
 }
 
 func TestGenerate_NoArgsProducesNoARGEntries(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	list := &cobra.Command{Use: "list"}
 	root.AddCommand(list)
@@ -100,6 +105,7 @@ func TestGenerate_NoArgsProducesNoARGEntries(t *testing.T) {
 }
 
 func TestGenerate_LocalFlagsWithTypes(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	list := &cobra.Command{Use: "list"}
 	list.Flags().String("filter", "", "filter expression")
@@ -115,6 +121,7 @@ func TestGenerate_LocalFlagsWithTypes(t *testing.T) {
 }
 
 func TestGenerate_PersistentFlagsOnlyOnDefiningCommand(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	root.PersistentFlags().String("api-key", "", "API key")
 	root.PersistentFlags().String("region", "us", "Region")
@@ -138,6 +145,7 @@ func TestGenerate_PersistentFlagsOnlyOnDefiningCommand(t *testing.T) {
 }
 
 func TestGenerate_ExcludesHelpCommand(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	root.AddCommand(&cobra.Command{Use: "real"})
 	// Cobra auto-adds a help command; also manually add one to be explicit
@@ -150,6 +158,7 @@ func TestGenerate_ExcludesHelpCommand(t *testing.T) {
 }
 
 func TestGenerate_ExcludesCompletionCommand(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	root.AddCommand(&cobra.Command{Use: "completion"})
 	root.AddCommand(&cobra.Command{Use: "real"})
@@ -161,6 +170,7 @@ func TestGenerate_ExcludesCompletionCommand(t *testing.T) {
 }
 
 func TestGenerate_ExcludesHelpFlag(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	sub := &cobra.Command{Use: "sub"}
 	sub.Flags().String("output", "", "output format")
@@ -174,6 +184,7 @@ func TestGenerate_ExcludesHelpFlag(t *testing.T) {
 }
 
 func TestGenerate_OutputSortedAlphabetically(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	root.PersistentFlags().String("api-key", "", "")
 
@@ -196,6 +207,7 @@ func TestGenerate_OutputSortedAlphabetically(t *testing.T) {
 }
 
 func TestGenerate_TrailingNewline(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	out := Generate(root)
 
@@ -205,6 +217,7 @@ func TestGenerate_TrailingNewline(t *testing.T) {
 }
 
 func TestGenerate_RootOnlyCommand(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	out := Generate(root)
 
@@ -216,6 +229,7 @@ func TestGenerate_RootOnlyCommand(t *testing.T) {
 }
 
 func TestGenerate_DeepNesting(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	l1 := &cobra.Command{Use: "level1"}
 	l2 := &cobra.Command{Use: "level2"}
@@ -237,6 +251,7 @@ func TestGenerate_DeepNesting(t *testing.T) {
 }
 
 func TestGenerate_ChildWithOwnPersistentFlags(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	sub := &cobra.Command{Use: "sub"}
 	sub.PersistentFlags().String("format", "json", "output format")
@@ -254,6 +269,7 @@ func TestGenerate_ChildWithOwnPersistentFlags(t *testing.T) {
 }
 
 func TestGenerate_MixedFlagTypes(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	cmd := &cobra.Command{Use: "do"}
 	cmd.Flags().Float64("rate", 0.0, "rate")
@@ -269,6 +285,7 @@ func TestGenerate_MixedFlagTypes(t *testing.T) {
 }
 
 func TestGenerate_ExcludesHelpAndCompletionAtNestedLevels(t *testing.T) {
+	t.Parallel()
 	root := &cobra.Command{Use: "cli"}
 	sub := &cobra.Command{Use: "sub"}
 	sub.AddCommand(&cobra.Command{Use: "help"})

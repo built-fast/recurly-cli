@@ -558,47 +558,57 @@ func TestSubscriptionsCreate_FlagToStructMapping(t *testing.T) {
 	if capturedBody == nil {
 		t.Fatal("expected body to be captured")
 	}
-	if capturedBody.PlanCode == nil || *capturedBody.PlanCode != "gold" {
-		t.Errorf("expected plan_code=gold, got %v", capturedBody.PlanCode)
+	assertSubscriptionCreateBody(t, capturedBody)
+}
+
+func assertSubscriptionCreateBody(t *testing.T, body *recurly.SubscriptionCreate) {
+	t.Helper()
+	if body.PlanCode == nil || *body.PlanCode != "gold" {
+		t.Errorf("expected plan_code=gold, got %v", body.PlanCode)
 	}
-	if capturedBody.Account == nil || capturedBody.Account.Code == nil || *capturedBody.Account.Code != "acct-new" {
+	if body.Account == nil || body.Account.Code == nil || *body.Account.Code != "acct-new" {
 		t.Error("expected account.code=acct-new")
 	}
-	if capturedBody.Currency == nil || *capturedBody.Currency != "USD" {
-		t.Errorf("expected currency=USD, got %v", capturedBody.Currency)
+	if body.Currency == nil || *body.Currency != "USD" {
+		t.Errorf("expected currency=USD, got %v", body.Currency)
 	}
-	if capturedBody.Quantity == nil || *capturedBody.Quantity != 2 {
-		t.Errorf("expected quantity=2, got %v", capturedBody.Quantity)
+	if body.Quantity == nil || *body.Quantity != 2 {
+		t.Errorf("expected quantity=2, got %v", body.Quantity)
 	}
-	if capturedBody.UnitAmount == nil || *capturedBody.UnitAmount != 29.99 {
-		t.Errorf("expected unit_amount=29.99, got %v", capturedBody.UnitAmount)
+	if body.UnitAmount == nil || *body.UnitAmount != 29.99 {
+		t.Errorf("expected unit_amount=29.99, got %v", body.UnitAmount)
 	}
-	if capturedBody.CollectionMethod == nil || *capturedBody.CollectionMethod != "manual" {
-		t.Errorf("expected collection_method=manual, got %v", capturedBody.CollectionMethod)
+	if body.CollectionMethod == nil || *body.CollectionMethod != "manual" {
+		t.Errorf("expected collection_method=manual, got %v", body.CollectionMethod)
 	}
-	if capturedBody.PoNumber == nil || *capturedBody.PoNumber != "PO-123" {
-		t.Errorf("expected po_number=PO-123, got %v", capturedBody.PoNumber)
+	if body.PoNumber == nil || *body.PoNumber != "PO-123" {
+		t.Errorf("expected po_number=PO-123, got %v", body.PoNumber)
 	}
-	if capturedBody.NetTerms == nil || *capturedBody.NetTerms != 30 {
-		t.Errorf("expected net_terms=30, got %v", capturedBody.NetTerms)
+	assertSubscriptionCreateBodyBilling(t, body)
+}
+
+func assertSubscriptionCreateBodyBilling(t *testing.T, body *recurly.SubscriptionCreate) {
+	t.Helper()
+	if body.NetTerms == nil || *body.NetTerms != 30 {
+		t.Errorf("expected net_terms=30, got %v", body.NetTerms)
 	}
-	if capturedBody.NetTermsType == nil || *capturedBody.NetTermsType != "net" {
-		t.Errorf("expected net_terms_type=net, got %v", capturedBody.NetTermsType)
+	if body.NetTermsType == nil || *body.NetTermsType != "net" {
+		t.Errorf("expected net_terms_type=net, got %v", body.NetTermsType)
 	}
-	if capturedBody.TotalBillingCycles == nil || *capturedBody.TotalBillingCycles != 12 {
-		t.Errorf("expected total_billing_cycles=12, got %v", capturedBody.TotalBillingCycles)
+	if body.TotalBillingCycles == nil || *body.TotalBillingCycles != 12 {
+		t.Errorf("expected total_billing_cycles=12, got %v", body.TotalBillingCycles)
 	}
-	if capturedBody.RenewalBillingCycles == nil || *capturedBody.RenewalBillingCycles != 6 {
-		t.Errorf("expected renewal_billing_cycles=6, got %v", capturedBody.RenewalBillingCycles)
+	if body.RenewalBillingCycles == nil || *body.RenewalBillingCycles != 6 {
+		t.Errorf("expected renewal_billing_cycles=6, got %v", body.RenewalBillingCycles)
 	}
-	if capturedBody.CouponCodes == nil || len(*capturedBody.CouponCodes) != 1 || (*capturedBody.CouponCodes)[0] != "SAVE10" {
-		t.Errorf("expected coupon_codes=[SAVE10], got %v", capturedBody.CouponCodes)
+	if body.CouponCodes == nil || len(*body.CouponCodes) != 1 || (*body.CouponCodes)[0] != "SAVE10" {
+		t.Errorf("expected coupon_codes=[SAVE10], got %v", body.CouponCodes)
 	}
-	if capturedBody.GatewayCode == nil || *capturedBody.GatewayCode != "gw-abc" {
-		t.Errorf("expected gateway_code=gw-abc, got %v", capturedBody.GatewayCode)
+	if body.GatewayCode == nil || *body.GatewayCode != "gw-abc" {
+		t.Errorf("expected gateway_code=gw-abc, got %v", body.GatewayCode)
 	}
-	if capturedBody.BillingInfoId == nil || *capturedBody.BillingInfoId != "bi-xyz" {
-		t.Errorf("expected billing_info_id=bi-xyz, got %v", capturedBody.BillingInfoId)
+	if body.BillingInfoId == nil || *body.BillingInfoId != "bi-xyz" {
+		t.Errorf("expected billing_info_id=bi-xyz, got %v", body.BillingInfoId)
 	}
 }
 

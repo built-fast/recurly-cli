@@ -14,6 +14,7 @@ type helperTestItem struct {
 }
 
 func TestStringColumn(t *testing.T) {
+	t.Parallel()
 	col := StringColumn("Name", func(v helperTestItem) string { return v.Name })
 	if col.Header != "Name" {
 		t.Errorf("expected header 'Name', got %q", col.Header)
@@ -27,6 +28,7 @@ func TestStringColumn(t *testing.T) {
 }
 
 func TestTimeColumnNonNil(t *testing.T) {
+	t.Parallel()
 	ts := time.Date(2024, 6, 15, 12, 30, 0, 0, time.UTC)
 	col := TimeColumn("Created At", func(v helperTestItem) *time.Time { return v.CreatedAt })
 	got := col.Extract(helperTestItem{CreatedAt: &ts})
@@ -37,6 +39,7 @@ func TestTimeColumnNonNil(t *testing.T) {
 }
 
 func TestTimeColumnNil(t *testing.T) {
+	t.Parallel()
 	col := TimeColumn("Created At", func(v helperTestItem) *time.Time { return v.CreatedAt })
 	got := col.Extract(helperTestItem{CreatedAt: nil})
 	if got != "" {
@@ -45,6 +48,7 @@ func TestTimeColumnNil(t *testing.T) {
 }
 
 func TestBoolColumn(t *testing.T) {
+	t.Parallel()
 	col := BoolColumn("Active", func(v helperTestItem) bool { return v.Active })
 	if col.Header != "Active" {
 		t.Errorf("expected header 'Active', got %q", col.Header)
@@ -58,6 +62,7 @@ func TestBoolColumn(t *testing.T) {
 }
 
 func TestIntColumn(t *testing.T) {
+	t.Parallel()
 	col := IntColumn("Count", func(v helperTestItem) int { return v.Count })
 	if col.Header != "Count" {
 		t.Errorf("expected header 'Count', got %q", col.Header)
@@ -74,6 +79,7 @@ func TestIntColumn(t *testing.T) {
 }
 
 func TestFloatColumn(t *testing.T) {
+	t.Parallel()
 	col := FloatColumn("Amount", func(v helperTestItem) float64 { return v.Amount })
 	if col.Header != "Amount" {
 		t.Errorf("expected header 'Amount', got %q", col.Header)
@@ -90,6 +96,7 @@ func TestFloatColumn(t *testing.T) {
 }
 
 func TestHelperColumnsWorkWithToColumns(t *testing.T) {
+	t.Parallel()
 	ts := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	typed := []TypedColumn[helperTestItem]{
 		StringColumn("Name", func(v helperTestItem) string { return v.Name }),

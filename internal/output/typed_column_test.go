@@ -5,6 +5,7 @@ import (
 )
 
 func TestToColumnsExtract(t *testing.T) {
+	t.Parallel()
 	typed := []TypedColumn[testItem]{
 		{Header: "Name", Extract: func(v testItem) string { return v.Name }},
 		{Header: "Email", Extract: func(v testItem) string { return v.Email }},
@@ -32,6 +33,7 @@ func TestToColumnsExtract(t *testing.T) {
 }
 
 func TestToColumnsPanicsOnTypeMismatch(t *testing.T) {
+	t.Parallel()
 	typed := []TypedColumn[testItem]{
 		{Header: "Name", Extract: func(v testItem) string { return v.Name }},
 	}
@@ -49,6 +51,7 @@ func TestToColumnsPanicsOnTypeMismatch(t *testing.T) {
 }
 
 func TestToColumnsEmpty(t *testing.T) {
+	t.Parallel()
 	cols := ToColumns([]TypedColumn[testItem]{})
 	if len(cols) != 0 {
 		t.Fatalf("expected 0 columns, got %d", len(cols))
@@ -56,6 +59,7 @@ func TestToColumnsEmpty(t *testing.T) {
 }
 
 func TestToColumnsWorksWithFormatList(t *testing.T) {
+	t.Parallel()
 	typed := []TypedColumn[testItem]{
 		{Header: "Name", Extract: func(v testItem) string { return v.Name }},
 		{Header: "Email", Extract: func(v testItem) string { return v.Email }},

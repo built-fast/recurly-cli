@@ -44,6 +44,7 @@ func (e *errorLister) Data() []string { return nil }
 func (e *errorLister) HasMore() bool  { return true }
 
 func TestCollect_AllPages(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"a", "b", "c"},
 		{"d", "e"},
@@ -69,6 +70,7 @@ func TestCollect_AllPages(t *testing.T) {
 }
 
 func TestCollect_LimitWithinFirstPage(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"a", "b", "c", "d", "e"},
 		{"f", "g"},
@@ -93,6 +95,7 @@ func TestCollect_LimitWithinFirstPage(t *testing.T) {
 }
 
 func TestCollect_LimitAcrossPages(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"a", "b"},
 		{"c", "d"},
@@ -118,6 +121,7 @@ func TestCollect_LimitAcrossPages(t *testing.T) {
 }
 
 func TestCollect_DefaultLimit(t *testing.T) {
+	t.Parallel()
 	// 30 items across pages, default limit should return 20
 	page := make([]string, 30)
 	for i := range page {
@@ -138,6 +142,7 @@ func TestCollect_DefaultLimit(t *testing.T) {
 }
 
 func TestCollect_LimitExceedsAvailable(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"a", "b"},
 	})
@@ -155,6 +160,7 @@ func TestCollect_LimitExceedsAvailable(t *testing.T) {
 }
 
 func TestCollect_EmptyLister(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{{}})
 
 	result, err := Collect[string](lister, 0, true)
@@ -170,6 +176,7 @@ func TestCollect_EmptyLister(t *testing.T) {
 }
 
 func TestCollect_FetchError(t *testing.T) {
+	t.Parallel()
 	lister := &errorLister{}
 
 	result, err := Collect[string](lister, 10, false)
@@ -185,6 +192,7 @@ func TestCollect_FetchError(t *testing.T) {
 }
 
 func TestCollect_AllIgnoresLimit(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"a", "b", "c"},
 		{"d", "e"},
@@ -204,6 +212,7 @@ func TestCollect_AllIgnoresLimit(t *testing.T) {
 }
 
 func TestCollect_SinglePage(t *testing.T) {
+	t.Parallel()
 	lister := newMockLister([][]string{
 		{"only"},
 	})
