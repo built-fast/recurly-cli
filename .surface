@@ -59,6 +59,7 @@ CMD recurly accounts update
 CMD recurly configure
 CMD recurly coupons
 CMD recurly coupons create-fixed
+CMD recurly coupons create-free-trial
 CMD recurly coupons create-percent
 CMD recurly coupons get
 CMD recurly coupons list
@@ -186,6 +187,20 @@ FLAG recurly coupons create-fixed --redemption-resource string
 FLAG recurly coupons create-fixed --temporal-amount int
 FLAG recurly coupons create-fixed --temporal-unit string
 FLAG recurly coupons create-fixed --unique-code-template string
+FLAG recurly coupons create-free-trial --applies-to-all-plans bool
+FLAG recurly coupons create-free-trial --code string
+FLAG recurly coupons create-free-trial --coupon-type string
+FLAG recurly coupons create-free-trial --free-trial-amount int
+FLAG recurly coupons create-free-trial --free-trial-unit string
+FLAG recurly coupons create-free-trial --hosted-page-description string
+FLAG recurly coupons create-free-trial --invoice-description string
+FLAG recurly coupons create-free-trial --max-redemptions int
+FLAG recurly coupons create-free-trial --max-redemptions-per-account int
+FLAG recurly coupons create-free-trial --name string
+FLAG recurly coupons create-free-trial --plan-codes stringSlice
+FLAG recurly coupons create-free-trial --redeem-by string
+FLAG recurly coupons create-free-trial --redemption-resource string
+FLAG recurly coupons create-free-trial --unique-code-template string
 FLAG recurly coupons create-percent --applies-to-all-items bool
 FLAG recurly coupons create-percent --applies-to-all-plans bool
 FLAG recurly coupons create-percent --applies-to-non-plan-charges bool

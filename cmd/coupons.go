@@ -21,6 +21,7 @@ func newCouponsCmd() *cobra.Command {
 	cmd.AddCommand(newCouponsGetCmd())
 	cmd.AddCommand(newCouponsCreatePercentCmd())
 	cmd.AddCommand(newCouponsCreateFixedCmd())
+	cmd.AddCommand(newCouponsCreateFreeTrialCmd())
 	return cmd
 }
 
@@ -432,6 +433,114 @@ func newCouponsCreateFixedCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("currency")
 	_ = cmd.MarkFlagRequired("discount-amount")
+
+	return cmd
+}
+
+func newCouponsCreateFreeTrialCmd() *cobra.Command {
+	var (
+		code                     string
+		name                     string
+		freeTrialAmount          int
+		freeTrialUnit            string
+		maxRedemptions           int
+		maxRedemptionsPerAccount int
+		couponType               string
+		uniqueCodeTemplate       string
+		appliesToAllPlans        bool
+		planCodes                []string
+		redemptionResource       string
+		hostedPageDescription    string
+		invoiceDescription       string
+		redeemBy                 string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create-free-trial",
+		Short: "Create a free trial coupon",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newCouponAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.CouponCreate{
+				Code:            recurly.String(code),
+				Name:            recurly.String(name),
+				DiscountType:    recurly.String("free_trial"),
+				FreeTrialAmount: recurly.Int(freeTrialAmount),
+				FreeTrialUnit:   recurly.String(freeTrialUnit),
+			}
+
+			if cmd.Flags().Changed("max-redemptions") {
+				body.MaxRedemptions = recurly.Int(maxRedemptions)
+			}
+			if cmd.Flags().Changed("max-redemptions-per-account") {
+				body.MaxRedemptionsPerAccount = recurly.Int(maxRedemptionsPerAccount)
+			}
+			if cmd.Flags().Changed("coupon-type") {
+				body.CouponType = recurly.String(couponType)
+			}
+			if cmd.Flags().Changed("unique-code-template") {
+				body.UniqueCodeTemplate = recurly.String(uniqueCodeTemplate)
+			}
+			if cmd.Flags().Changed("applies-to-all-plans") {
+				body.AppliesToAllPlans = recurly.Bool(appliesToAllPlans)
+			}
+			if cmd.Flags().Changed("plan-codes") {
+				body.PlanCodes = &planCodes
+			}
+			if cmd.Flags().Changed("redemption-resource") {
+				body.RedemptionResource = recurly.String(redemptionResource)
+			}
+			if cmd.Flags().Changed("hosted-page-description") {
+				body.HostedDescription = recurly.String(hostedPageDescription)
+			}
+			if cmd.Flags().Changed("invoice-description") {
+				body.InvoiceDescription = recurly.String(invoiceDescription)
+			}
+			if cmd.Flags().Changed("redeem-by") {
+				body.RedeemByDate = recurly.String(redeemBy)
+			}
+
+			coupon, err := c.CreateCoupon(body)
+			if err != nil {
+				return err
+			}
+
+			columns := couponDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, coupon)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&code, "code", "", "Coupon code (required)")
+	cmd.Flags().StringVar(&name, "name", "", "Coupon name (required)")
+	cmd.Flags().IntVar(&freeTrialAmount, "free-trial-amount", 0, "Free trial duration amount (required)")
+	cmd.Flags().StringVar(&freeTrialUnit, "free-trial-unit", "", "Free trial duration unit: day, week, month, or year (required)")
+	cmd.Flags().IntVar(&maxRedemptions, "max-redemptions", 0, "Maximum number of redemptions")
+	cmd.Flags().IntVar(&maxRedemptionsPerAccount, "max-redemptions-per-account", 0, "Maximum redemptions per account")
+	cmd.Flags().StringVar(&couponType, "coupon-type", "", "Coupon type: single_code or bulk")
+	cmd.Flags().StringVar(&uniqueCodeTemplate, "unique-code-template", "", "Template for bulk coupon unique codes")
+	cmd.Flags().BoolVar(&appliesToAllPlans, "applies-to-all-plans", false, "Applies to all plans")
+	cmd.Flags().StringSliceVar(&planCodes, "plan-codes", nil, "Plan codes this coupon applies to")
+	cmd.Flags().StringVar(&redemptionResource, "redemption-resource", "", "Redemption resource: account or subscription")
+	cmd.Flags().StringVar(&hostedPageDescription, "hosted-page-description", "", "Hosted page description")
+	cmd.Flags().StringVar(&invoiceDescription, "invoice-description", "", "Invoice description")
+	cmd.Flags().StringVar(&redeemBy, "redeem-by", "", "Coupon expiration date (YYYY-MM-DD)")
+
+	_ = cmd.MarkFlagRequired("code")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("free-trial-amount")
+	_ = cmd.MarkFlagRequired("free-trial-unit")
 
 	return cmd
 }
