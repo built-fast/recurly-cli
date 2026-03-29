@@ -1,0 +1,79 @@
+package cmd
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestCompletionBash_OutputsScript(t *testing.T) {
+	out, _, err := executeCommand("completion", "bash")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "bash") || !strings.Contains(out, "complete") {
+		t.Error("expected bash completion script output")
+	}
+}
+
+func TestCompletionZsh_OutputsScript(t *testing.T) {
+	out, _, err := executeCommand("completion", "zsh")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "zsh") || !strings.Contains(out, "compdef") {
+		t.Error("expected zsh completion script output")
+	}
+}
+
+func TestCompletionFish_OutputsScript(t *testing.T) {
+	out, _, err := executeCommand("completion", "fish")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "fish") || !strings.Contains(out, "complete") {
+		t.Error("expected fish completion script output")
+	}
+}
+
+func TestCompletionPowershell_OutputsScript(t *testing.T) {
+	out, _, err := executeCommand("completion", "powershell")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "PowerShell") || !strings.Contains(out, "Register-ArgumentCompleter") {
+		t.Error("expected PowerShell completion script output")
+	}
+}
+
+func TestCompletionBash_IncludesCompletionFunction(t *testing.T) {
+	out, _, err := executeCommand("completion", "bash")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "__recurly") {
+		t.Error("expected bash completion to include __recurly completion function")
+	}
+}
+
+func TestCompletionNoArgs_ShowsHelp(t *testing.T) {
+	out, _, err := executeCommand("completion")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "bash") || !strings.Contains(out, "zsh") {
+		t.Error("expected completion help to list shell subcommands")
+	}
+}
+
+func TestCompletion_HasUsageExamples(t *testing.T) {
+	shells := []string{"bash", "zsh", "fish", "powershell"}
+	for _, shell := range shells {
+		out, _, err := executeCommand("completion", shell, "--help")
+		if err != nil {
+			t.Fatalf("unexpected error for %s: %v", shell, err)
+		}
+		if !strings.Contains(out, "Examples:") {
+			t.Errorf("expected %s completion help to contain usage examples", shell)
+		}
+	}
+}

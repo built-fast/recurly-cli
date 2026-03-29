@@ -80,6 +80,7 @@ func NewRootCmd() *cobra.Command {
 	_ = viper.BindEnv("api_key", "RECURLY_API_KEY")
 	_ = viper.BindEnv("region", "RECURLY_REGION")
 
+	rootCmd.AddCommand(newCompletionCmd())
 	rootCmd.AddCommand(newConfigureCmd())
 	rootCmd.AddCommand(newAccountsCmd())
 	rootCmd.AddCommand(newPlansCmd())
