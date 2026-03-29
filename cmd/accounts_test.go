@@ -48,6 +48,7 @@ func (m *mockAccountAPI) ReactivateAccount(accountId string, opts ...recurly.Opt
 // --- accounts list ---
 
 func TestAccountsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -58,6 +59,7 @@ func TestAccountsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -83,8 +85,14 @@ func TestAccountsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsList_InvalidBeginTime_ReturnsError(t *testing.T) {
-	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand(nil, "accounts", "list", "--begin-time", "not-a-date")
+	t.Parallel()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
+		},
+	}
+	app := newTestAccountApp(mock)
+	_, stderr, err := executeCommand(app, "accounts", "list", "--begin-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid begin-time")
 	}
@@ -94,8 +102,14 @@ func TestAccountsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsList_InvalidEndTime_ReturnsError(t *testing.T) {
-	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand(nil, "accounts", "list", "--end-time", "not-a-date")
+	t.Parallel()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
+		},
+	}
+	app := newTestAccountApp(mock)
+	_, stderr, err := executeCommand(app, "accounts", "list", "--end-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid end-time")
 	}
@@ -213,6 +227,7 @@ func TestAccountsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestAccountsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -240,6 +255,7 @@ func TestAccountsList_TableOutput(t *testing.T) {
 }
 
 func TestAccountsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -276,6 +292,7 @@ func TestAccountsList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -292,6 +309,7 @@ func TestAccountsList_SDKError(t *testing.T) {
 // --- accounts get ---
 
 func TestAccountsGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -302,6 +320,7 @@ func TestAccountsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "get")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -325,6 +344,7 @@ func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockAccountAPI{
 		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -344,6 +364,7 @@ func TestAccountsGet_PositionalArg(t *testing.T) {
 }
 
 func TestAccountsGet_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 			return sampleAccount(), nil
@@ -365,6 +386,7 @@ func TestAccountsGet_TableOutput(t *testing.T) {
 }
 
 func TestAccountsGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 			return sampleAccount(), nil
@@ -387,6 +409,7 @@ func TestAccountsGet_JSONOutput(t *testing.T) {
 }
 
 func TestAccountsGet_NotFound(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 			return nil, &recurly.Error{
@@ -409,6 +432,7 @@ func TestAccountsGet_NotFound(t *testing.T) {
 // --- accounts create ---
 
 func TestAccountsCreate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -419,6 +443,7 @@ func TestAccountsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsCreateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -444,6 +469,7 @@ func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsCreate_FlagToStructMapping(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AccountCreate
 
 	mock := &mockAccountAPI{
@@ -502,6 +528,7 @@ func TestAccountsCreate_FlagToStructMapping(t *testing.T) {
 }
 
 func TestAccountsCreate_OnlySetFlagsAreSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AccountCreate
 
 	mock := &mockAccountAPI{
@@ -538,6 +565,7 @@ func TestAccountsCreate_OnlySetFlagsAreSent(t *testing.T) {
 }
 
 func TestAccountsCreate_SuccessOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			return sampleAccount(), nil
@@ -558,6 +586,7 @@ func TestAccountsCreate_SuccessOutput(t *testing.T) {
 }
 
 func TestAccountsCreate_ValidationError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			return nil, &recurly.Error{
@@ -583,6 +612,7 @@ func TestAccountsCreate_ValidationError(t *testing.T) {
 // --- accounts update ---
 
 func TestAccountsUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -593,6 +623,7 @@ func TestAccountsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsUpdateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -605,6 +636,7 @@ func TestAccountsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "update")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -628,6 +660,7 @@ func TestAccountsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.AccountUpdate
 
@@ -687,6 +720,7 @@ func TestAccountsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 }
 
 func TestAccountsUpdate_OnlySetFlagsAreSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AccountUpdate
 
 	mock := &mockAccountAPI{
@@ -717,6 +751,7 @@ func TestAccountsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 }
 
 func TestAccountsUpdate_SuccessOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		updateAccountFn: func(accountId string, body *recurly.AccountUpdate, opts ...recurly.Option) (*recurly.Account, error) {
 			return sampleAccount(), nil
@@ -735,6 +770,7 @@ func TestAccountsUpdate_SuccessOutput(t *testing.T) {
 }
 
 func TestAccountsUpdate_ValidationError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		updateAccountFn: func(accountId string, body *recurly.AccountUpdate, opts ...recurly.Option) (*recurly.Account, error) {
 			return nil, &recurly.Error{
@@ -760,6 +796,7 @@ func TestAccountsUpdate_ValidationError(t *testing.T) {
 // --- accounts deactivate ---
 
 func TestAccountsDeactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -770,6 +807,7 @@ func TestAccountsDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsDeactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -780,6 +818,7 @@ func TestAccountsDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "deactivate")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -803,6 +842,7 @@ func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "deactivate", "abc123")
 	if err != nil {
@@ -817,6 +857,7 @@ func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "deactivate", "abc123")
 	if err != nil {
@@ -828,6 +869,7 @@ func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestAccountsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockAccountAPI{
 		deactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -856,6 +898,7 @@ func TestAccountsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestAccountsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockAccountAPI{
 		deactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -883,6 +926,7 @@ func TestAccountsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestAccountsDeactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		deactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 			return nil, &recurly.Error{
@@ -905,6 +949,7 @@ func TestAccountsDeactivate_SDKError(t *testing.T) {
 // --- accounts reactivate ---
 
 func TestAccountsReactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -915,6 +960,7 @@ func TestAccountsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsReactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -925,6 +971,7 @@ func TestAccountsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsReactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "reactivate")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -948,6 +995,7 @@ func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "reactivate", "abc123")
 	if err != nil {
@@ -962,6 +1010,7 @@ func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestAccountsReactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "reactivate", "abc123")
 	if err != nil {
@@ -973,6 +1022,7 @@ func TestAccountsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestAccountsReactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockAccountAPI{
 		reactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -999,6 +1049,7 @@ func TestAccountsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestAccountsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockAccountAPI{
 		reactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -1024,6 +1075,7 @@ func TestAccountsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestAccountsReactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountAPI{
 		reactivateAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 			return nil, &recurly.Error{
@@ -1046,6 +1098,7 @@ func TestAccountsReactivate_SDKError(t *testing.T) {
 // --- --field flag ---
 
 func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -1081,6 +1134,7 @@ func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -1119,6 +1173,7 @@ func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -1137,6 +1192,7 @@ func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -1158,6 +1214,7 @@ func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
 }
 
 func TestAccountsGet_FieldFlag_JSONOutput(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
@@ -1187,6 +1244,7 @@ func TestAccountsGet_FieldFlag_JSONOutput(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
+	t.Parallel()
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
@@ -1208,6 +1266,7 @@ func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
