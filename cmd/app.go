@@ -3,7 +3,10 @@ package cmd
 import (
 	"context"
 
+	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/built-fast/recurly-cli/internal/output"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // appContextKey is an unexported type used as the key for storing App in a context.
@@ -37,4 +40,35 @@ func AppFromContext(ctx context.Context) *App {
 		return app
 	}
 	return &App{}
+}
+
+// newAPIFactory returns a factory function that creates an API client using
+// the standard viper/output config pattern.
+func newAPIFactory[T any](fn func(client.ClientConfig) (T, error)) func(cmd *cobra.Command) (T, error) {
+	return func(cmd *cobra.Command) (T, error) {
+		cfg := output.FromContext(cmd.Context())
+		return fn(client.ClientConfig{
+			APIKey: viper.GetString("api_key"),
+			Region: viper.GetString("region"),
+			IsJSON: func() bool { return isJSONFormat(cfg.Format) },
+		})
+	}
+}
+
+// DefaultApp returns an App with all factory functions wired to the
+// production implementations (viper config + real Recurly client).
+func DefaultApp() *App {
+	return &App{
+		NewAccountAPI:           newAPIFactory(func(c client.ClientConfig) (AccountAPI, error) { return client.NewClient(c) }),
+		NewPlanAPI:              newAPIFactory(func(c client.ClientConfig) (PlanAPI, error) { return client.NewClient(c) }),
+		NewItemAPI:              newAPIFactory(func(c client.ClientConfig) (ItemAPI, error) { return client.NewClient(c) }),
+		NewSubscriptionAPI:      newAPIFactory(func(c client.ClientConfig) (SubscriptionAPI, error) { return client.NewClient(c) }),
+		NewInvoiceAPI:           newAPIFactory(func(c client.ClientConfig) (InvoiceAPI, error) { return client.NewClient(c) }),
+		NewTransactionAPI:       newAPIFactory(func(c client.ClientConfig) (TransactionAPI, error) { return client.NewClient(c) }),
+		NewCouponAPI:            newAPIFactory(func(c client.ClientConfig) (CouponAPI, error) { return client.NewClient(c) }),
+		NewPlanAddOnAPI:         newAPIFactory(func(c client.ClientConfig) (PlanAddOnAPI, error) { return client.NewClient(c) }),
+		NewAccountBillingInfoAPI: newAPIFactory(func(c client.ClientConfig) (AccountBillingInfoAPI, error) { return client.NewClient(c) }),
+		NewAccountNestedAPI:     newAPIFactory(func(c client.ClientConfig) (AccountNestedAPI, error) { return client.NewClient(c) }),
+		NewAccountRedemptionAPI: newAPIFactory(func(c client.ClientConfig) (AccountRedemptionAPI, error) { return client.NewClient(c) }),
+	}
 }
