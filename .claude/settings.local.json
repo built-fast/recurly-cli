@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.stripe.com)",
+      "Bash(gh api:*)",
+      "Read(//Users/priddle/work/vector-cli/skills/**)",
+      "Read(//Users/priddle/work/vector-cli/**)",
+      "Read(//Users/priddle/work/vector-cli/scripts/**)",
+      "Bash(make check)",
+      "Bash(make build)",
+      "Bash(make test)",
+      "Bash(make lint)",
+      "Bash(make vet)",
+      "Bash(make fmt)",
+      "Bash(make fmt-check)",
+      "Bash(make tidy-check)",
+      "Bash(make surface)",
+      "Bash(make check-surface)",
+      "Bash(make check-skill-drift)",
+      "Bash(make test-e2e)",
+      "Bash(make vuln)",
+      "Bash(go test:*)",
+      "Bash(go vet:*)",
+      "Bash(go build:*)",
+      "Bash(go run:*)",
+      "Bash(golangci-lint run:*)"
+    ]
+  }
+}
