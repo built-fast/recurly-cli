@@ -1,0 +1,3 @@
+# Baselined skill drift entries — one per line.
+# Format: CMD: recurly <path> | FLAG: <cmd> --<flag> | UNDOCUMENTED: recurly <path>
+# Lines starting with # are comments.

@@ -881,6 +881,14 @@ Install SKILL.md to the Claude Code skills directory.
 recurly skill install
 ```
 
+#### recurly skill uninstall
+
+Remove installed SKILL.md from the skills directories.
+
+```
+recurly skill uninstall
+```
+
 ## Common Agent Workflows
 
 ### Create a Resource
