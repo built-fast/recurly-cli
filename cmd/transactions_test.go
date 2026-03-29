@@ -69,6 +69,34 @@ func (m *mockTransactionLister) Next() string {
 	return ""
 }
 
+func sampleTransaction() *recurly.Transaction {
+	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
+	return &recurly.Transaction{
+		Id:       "txn-001",
+		Uuid:     "uuid-001",
+		Type:     "purchase",
+		Origin:   "api",
+		Status:   "success",
+		Success:  true,
+		Amount:   99.99,
+		Currency: "USD",
+		Account:  recurly.AccountMini{Id: "acct-id-1", Code: "acct-code-1"},
+		Invoice:  recurly.InvoiceMini{Id: "inv-id-1", Number: "1001"},
+		CollectionMethod: "automatic",
+		PaymentMethod: recurly.PaymentMethod{
+			Object:   "credit_card",
+			CardType: "Visa",
+			LastFour: "1234",
+		},
+		IpAddressV4:   "192.168.1.1",
+		StatusCode:    "approved",
+		StatusMessage: "Transaction approved",
+		Refunded:      false,
+		CreatedAt:     &now,
+		UpdatedAt:     &now,
+	}
+}
+
 func sampleTransactions() []recurly.Transaction {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	return []recurly.Transaction{
@@ -210,6 +238,181 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 	trimmed := strings.TrimSpace(out)
 	if trimmed != "txn-001" {
 		t.Errorf("expected jq to extract first transaction id, got %q", trimmed)
+	}
+}
+
+// --- transactions get ---
+
+func TestTransactionsGet_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("transactions", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "get") {
+		t.Error("expected transactions help to show 'get' subcommand")
+	}
+}
+
+func TestTransactionsGet_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("transactions", "get")
+	if err == nil {
+		t.Fatal("expected error for missing arg")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected missing arg error, got %q", stderr)
+	}
+}
+
+func TestTransactionsGet_PositionalArg(t *testing.T) {
+	var capturedID string
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			capturedID = transactionId
+			return sampleTransaction(), nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("transactions", "get", "txn-abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "txn-abc123" {
+		t.Errorf("expected captured ID %q, got %q", "txn-abc123", capturedID)
+	}
+}
+
+func TestTransactionsGet_TableOutput(t *testing.T) {
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return sampleTransaction(), nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("transactions", "get", "txn-001")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"txn-001",
+		"uuid-001",
+		"purchase",
+		"api",
+		"success",
+		"true",
+		"99.99",
+		"USD",
+		"acct-id-1",
+		"acct-code-1",
+		"inv-id-1",
+		"1001",
+		"automatic",
+		"credit_card",
+		"Visa",
+		"1234",
+		"192.168.1.1",
+		"approved",
+		"Transaction approved",
+		"false",
+		"2025-01-15T10:30:00Z",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q", expected)
+		}
+	}
+}
+
+func TestTransactionsGet_JSONOutput(t *testing.T) {
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return sampleTransaction(), nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("transactions", "get", "txn-001", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if result["id"] != "txn-001" {
+		t.Errorf("expected id 'txn-001', got %v", result["id"])
+	}
+}
+
+func TestTransactionsGet_JSONPrettyOutput(t *testing.T) {
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return sampleTransaction(), nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("transactions", "get", "txn-001", "--output", "json-pretty")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if !strings.Contains(out, "\n") {
+		t.Error("expected indented JSON output")
+	}
+}
+
+func TestTransactionsGet_JQFilter(t *testing.T) {
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return sampleTransaction(), nil
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("transactions", "get", "txn-001", "--jq", ".id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "txn-001" {
+		t.Errorf("expected jq to extract id, got %q", trimmed)
+	}
+}
+
+func TestTransactionsGet_APIError(t *testing.T) {
+	mock := &mockTransactionAPI{
+		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "transaction not found",
+			}
+		},
+	}
+	cleanup := setMockTransactionAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("transactions", "get", "txn-nonexistent")
+	if err == nil {
+		t.Fatal("expected error for API failure")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected not found error, got %q", stderr)
 	}
 }
 

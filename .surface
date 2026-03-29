@@ -36,6 +36,7 @@ ARG recurly subscriptions reactivate <subscription_id>
 ARG recurly subscriptions resume <subscription_id>
 ARG recurly subscriptions terminate <subscription_id>
 ARG recurly subscriptions update <subscription_id>
+ARG recurly transactions get <transaction_id>
 CMD recurly
 CMD recurly accounts
 CMD recurly accounts billing-info
@@ -93,6 +94,7 @@ CMD recurly subscriptions resume
 CMD recurly subscriptions terminate
 CMD recurly subscriptions update
 CMD recurly transactions
+CMD recurly transactions get
 CMD recurly transactions list
 FLAG recurly --api-key string
 FLAG recurly --jq string

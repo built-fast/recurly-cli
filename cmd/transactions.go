@@ -17,6 +17,7 @@ func newTransactionsCmd() *cobra.Command {
 		Short: "Manage transactions",
 	}
 	cmd.AddCommand(newTransactionsListCmd())
+	cmd.AddCommand(newTransactionsGetCmd())
 	return cmd
 }
 
@@ -132,4 +133,99 @@ func newTransactionsListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&endTime, "end-time", "", "Filter by end time (ISO8601 format)")
 
 	return cmd
+}
+
+func newTransactionsGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <transaction_id>",
+		Short: "Get transaction details",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newTransactionAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			txn, err := c.GetTransaction(args[0])
+			if err != nil {
+				return err
+			}
+
+			// For JSON/jq output, format the whole transaction object
+			if format == "json" || format == "json-pretty" || output.HasJQ() {
+				formatted, err := output.FormatOne(format, nil, txn)
+				if err != nil {
+					return err
+				}
+				_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+				return err
+			}
+
+			// Table output: detail view
+			columns := transactionDetailColumns()
+			formatted, err := output.FormatOne(format, columns, txn)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	return cmd
+}
+
+func transactionDetailColumns() []output.Column {
+	return []output.Column{
+		{Header: "ID", Extract: func(v any) string { return v.(*recurly.Transaction).Id }},
+		{Header: "UUID", Extract: func(v any) string { return v.(*recurly.Transaction).Uuid }},
+		{Header: "Type", Extract: func(v any) string { return v.(*recurly.Transaction).Type }},
+		{Header: "Origin", Extract: func(v any) string { return v.(*recurly.Transaction).Origin }},
+		{Header: "Status", Extract: func(v any) string { return v.(*recurly.Transaction).Status }},
+		{Header: "Success", Extract: func(v any) string {
+			return fmt.Sprintf("%t", v.(*recurly.Transaction).Success)
+		}},
+		{Header: "Amount", Extract: func(v any) string {
+			return fmt.Sprintf("%.2f", v.(*recurly.Transaction).Amount)
+		}},
+		{Header: "Currency", Extract: func(v any) string { return v.(*recurly.Transaction).Currency }},
+		{Header: "Account ID", Extract: func(v any) string { return v.(*recurly.Transaction).Account.Id }},
+		{Header: "Account Code", Extract: func(v any) string { return v.(*recurly.Transaction).Account.Code }},
+		{Header: "Invoice ID", Extract: func(v any) string { return v.(*recurly.Transaction).Invoice.Id }},
+		{Header: "Invoice Number", Extract: func(v any) string { return v.(*recurly.Transaction).Invoice.Number }},
+		{Header: "Collection Method", Extract: func(v any) string { return v.(*recurly.Transaction).CollectionMethod }},
+		{Header: "Payment Method Type", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.Object }},
+		{Header: "Payment Method Card Type", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.CardType }},
+		{Header: "Payment Method Last Four", Extract: func(v any) string { return v.(*recurly.Transaction).PaymentMethod.LastFour }},
+		{Header: "IP Address", Extract: func(v any) string { return v.(*recurly.Transaction).IpAddressV4 }},
+		{Header: "Status Code", Extract: func(v any) string { return v.(*recurly.Transaction).StatusCode }},
+		{Header: "Status Message", Extract: func(v any) string { return v.(*recurly.Transaction).StatusMessage }},
+		{Header: "Refunded", Extract: func(v any) string {
+			return fmt.Sprintf("%t", v.(*recurly.Transaction).Refunded)
+		}},
+		{Header: "Created At", Extract: func(v any) string {
+			txn := v.(*recurly.Transaction)
+			if txn.CreatedAt != nil {
+				return txn.CreatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Updated At", Extract: func(v any) string {
+			txn := v.(*recurly.Transaction)
+			if txn.UpdatedAt != nil {
+				return txn.UpdatedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+		{Header: "Voided At", Extract: func(v any) string {
+			txn := v.(*recurly.Transaction)
+			if txn.VoidedAt != nil {
+				return txn.VoidedAt.Format(time.RFC3339)
+			}
+			return ""
+		}},
+	}
 }
