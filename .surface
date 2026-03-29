@@ -8,6 +8,7 @@ ARG recurly accounts reactivate <account_id>
 ARG recurly accounts subscriptions list <account_id>
 ARG recurly accounts transactions list <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly coupons get <coupon_id>
 ARG recurly invoices collect <invoice_id>
 ARG recurly invoices get <invoice_id>
 ARG recurly invoices line-items <invoice_id>
@@ -57,6 +58,7 @@ CMD recurly accounts transactions list
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly coupons
+CMD recurly coupons get
 CMD recurly coupons list
 CMD recurly invoices
 CMD recurly invoices collect
