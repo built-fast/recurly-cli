@@ -21,15 +21,14 @@ func TestFromFile_JSONInput(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "--from-file", jsonFile)
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -54,15 +53,14 @@ func TestFromFile_YAMLInput(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "--from-file", yamlFile)
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", yamlFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -87,15 +85,14 @@ func TestFromFile_YMLExtension(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "--from-file", ymlFile)
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", ymlFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -111,16 +108,15 @@ func TestFromFile_YMLExtension(t *testing.T) {
 
 func TestFromFile_StdinJSON(t *testing.T) {
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
 	stdin := bytes.NewBufferString(`{"code": "acct-stdin", "email": "stdin@test.com"}`)
-	_, _, err := executeCommandWithStdin(stdin, "accounts", "create", "--from-file", "-")
+	_, _, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -136,16 +132,15 @@ func TestFromFile_StdinJSON(t *testing.T) {
 
 func TestFromFile_StdinYAML(t *testing.T) {
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
 	stdin := bytes.NewBufferString("code: acct-stdin-yaml\nemail: yaml-stdin@test.com\n")
-	_, _, err := executeCommandWithStdin(stdin, "accounts", "create", "--from-file", "-")
+	_, _, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -167,16 +162,15 @@ func TestFromFile_FlagOverride(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
 	// CLI --code should override file code; email should come from file
-	_, _, err := executeCommand("accounts", "create", "--from-file", jsonFile, "--code", "cli-code")
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile, "--code", "cli-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -201,15 +195,14 @@ func TestFromFile_UnderscoreKeys(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "--from-file", jsonFile)
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -241,8 +234,7 @@ func TestFromFile_NestedObjects(t *testing.T) {
 	}
 
 	var captured *recurly.BillingInfoCreate
-	origApp := testApp
-	testApp = &App{
+	app := &App{
 		NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
 			return &mockBillingInfoAPI{
 				updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -252,9 +244,8 @@ func TestFromFile_NestedObjects(t *testing.T) {
 			}, nil
 		},
 	}
-	defer func() { testApp = origApp }()
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "acct-1", "--from-file", jsonFile)
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "acct-1", "--from-file", jsonFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -281,10 +272,9 @@ func TestFromFile_NestedObjects(t *testing.T) {
 // --- Error: invalid file path ---
 
 func TestFromFile_InvalidPath(t *testing.T) {
-	cleanup := setMockAPI(&mockAccountAPI{})
-	defer cleanup()
+	app := setMockAPI(&mockAccountAPI{})
 
-	_, stderr, err := executeCommand("accounts", "create", "--from-file", "/nonexistent/file.json")
+	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", "/nonexistent/file.json")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
@@ -302,10 +292,9 @@ func TestFromFile_UnparseableJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cleanup := setMockAPI(&mockAccountAPI{})
-	defer cleanup()
+	app := setMockAPI(&mockAccountAPI{})
 
-	_, stderr, err := executeCommand("accounts", "create", "--from-file", jsonFile)
+	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -323,10 +312,9 @@ func TestFromFile_UnknownKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cleanup := setMockAPI(&mockAccountAPI{})
-	defer cleanup()
+	app := setMockAPI(&mockAccountAPI{})
 
-	_, stderr, err := executeCommand("accounts", "create", "--from-file", jsonFile)
+	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err == nil {
 		t.Fatal("expected error for unknown key")
 	}
@@ -344,10 +332,9 @@ func TestFromFile_UnsupportedExtension(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cleanup := setMockAPI(&mockAccountAPI{})
-	defer cleanup()
+	app := setMockAPI(&mockAccountAPI{})
 
-	_, stderr, err := executeCommand("accounts", "create", "--from-file", txtFile)
+	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", txtFile)
 	if err == nil {
 		t.Fatal("expected error for unsupported extension")
 	}
@@ -359,11 +346,10 @@ func TestFromFile_UnsupportedExtension(t *testing.T) {
 // --- Error: empty stdin ---
 
 func TestFromFile_EmptyStdin(t *testing.T) {
-	cleanup := setMockAPI(&mockAccountAPI{})
-	defer cleanup()
+	app := setMockAPI(&mockAccountAPI{})
 
 	stdin := bytes.NewBufferString("")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "create", "--from-file", "-")
+	_, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "create", "--from-file", "-")
 	if err == nil {
 		t.Fatal("expected error for empty stdin")
 	}
@@ -382,15 +368,14 @@ func TestFromFile_ShortFlag(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "-F", jsonFile)
+	_, _, err := executeCommand(app, "accounts", "create", "-F", jsonFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -412,15 +397,14 @@ func TestFromFile_BooleanValue(t *testing.T) {
 	}
 
 	var captured *recurly.AccountCreate
-	cleanup := setMockAPI(&mockAccountAPI{
+	app := setMockAPI(&mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
 			captured = body
 			return sampleAccount(), nil
 		},
 	})
-	defer cleanup()
 
-	_, _, err := executeCommand("accounts", "create", "--from-file", jsonFile)
+	_, _, err := executeCommand(app, "accounts", "create", "--from-file", jsonFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -84,15 +84,13 @@ func (m *mockAccountLister) Next() string {
 	return ""
 }
 
-// setMockAPI installs a mock and returns a cleanup function.
-func setMockAPI(mock *mockAccountAPI) func() {
-	orig := testApp
-	testApp = &App{
+// setMockAPI installs a mock and returns an *App for context injection.
+func setMockAPI(mock *mockAccountAPI) *App {
+	return &App{
 		NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // sampleAccount returns a test account with predictable fields.
@@ -113,7 +111,7 @@ func sampleAccount() *recurly.Account {
 // --- accounts list ---
 
 func TestAccountsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -123,7 +121,7 @@ func TestAccountsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "list", "--help")
+	out, _, err := executeCommand(nil, "accounts", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -138,7 +136,7 @@ func TestAccountsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "list")
+	_, stderr, err := executeCommand(nil, "accounts", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -149,7 +147,7 @@ func TestAccountsList_NoAPIKey_ReturnsError(t *testing.T) {
 
 func TestAccountsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("accounts", "list", "--begin-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "accounts", "list", "--begin-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid begin-time")
 	}
@@ -160,7 +158,7 @@ func TestAccountsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 
 func TestAccountsList_InvalidEndTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("accounts", "list", "--end-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "accounts", "list", "--end-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid end-time")
 	}
@@ -178,10 +176,9 @@ func TestAccountsList_PaginationParams(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "accounts", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -209,10 +206,9 @@ func TestAccountsList_FilterParams(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "list",
+	_, _, err := executeCommand(app, "accounts", "list",
 		"--email", "user@example.com",
 		"--subscriber", "true",
 		"--past-due",
@@ -249,10 +245,9 @@ func TestAccountsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "list")
+	_, _, err := executeCommand(app, "accounts", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -284,10 +279,9 @@ func TestAccountsList_TableOutput(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list")
+	out, _, err := executeCommand(app, "accounts", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -312,10 +306,9 @@ func TestAccountsList_JSONOutput(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list", "--output", "json")
+	out, _, err := executeCommand(app, "accounts", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -348,10 +341,9 @@ func TestAccountsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "list")
+	_, _, err := executeCommand(app, "accounts", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -360,7 +352,7 @@ func TestAccountsList_SDKError(t *testing.T) {
 // --- accounts get ---
 
 func TestAccountsGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -370,7 +362,7 @@ func TestAccountsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "get")
+	_, stderr, err := executeCommand(nil, "accounts", "get")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -383,7 +375,7 @@ func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "get", "abc123")
+	_, stderr, err := executeCommand(nil, "accounts", "get", "abc123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -400,10 +392,9 @@ func TestAccountsGet_PositionalArg(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "get", "my-account-code")
+	_, _, err := executeCommand(app, "accounts", "get", "my-account-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -418,10 +409,9 @@ func TestAccountsGet_TableOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "get", "acct-123")
+	out, _, err := executeCommand(app, "accounts", "get", "acct-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -440,10 +430,9 @@ func TestAccountsGet_JSONOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "get", "acct-123", "--output", "json")
+	out, _, err := executeCommand(app, "accounts", "get", "acct-123", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -466,10 +455,9 @@ func TestAccountsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "accounts", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found account")
 	}
@@ -481,7 +469,7 @@ func TestAccountsGet_NotFound(t *testing.T) {
 // --- accounts create ---
 
 func TestAccountsCreate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -491,7 +479,7 @@ func TestAccountsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsCreateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "create", "--help")
+	out, _, err := executeCommand(nil, "accounts", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -506,7 +494,7 @@ func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "create", "--code", "test")
+	_, stderr, err := executeCommand(nil, "accounts", "create", "--code", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -524,10 +512,9 @@ func TestAccountsCreate_FlagToStructMapping(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "create",
+	_, _, err := executeCommand(app, "accounts", "create",
 		"--code", "new-acct",
 		"--email", "new@example.com",
 		"--first-name", "Jane",
@@ -583,10 +570,9 @@ func TestAccountsCreate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "create", "--code", "minimal")
+	_, _, err := executeCommand(app, "accounts", "create", "--code", "minimal")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -617,10 +603,9 @@ func TestAccountsCreate_SuccessOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "create", "--code", "test")
+	out, _, err := executeCommand(app, "accounts", "create", "--code", "test")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -644,10 +629,9 @@ func TestAccountsCreate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "create", "--code", "existing")
+	_, stderr, err := executeCommand(app, "accounts", "create", "--code", "existing")
 	if err == nil {
 		t.Fatal("expected error for validation failure")
 	}
@@ -659,7 +643,7 @@ func TestAccountsCreate_ValidationError(t *testing.T) {
 // --- accounts update ---
 
 func TestAccountsUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -669,7 +653,7 @@ func TestAccountsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsUpdateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "update", "--help")
+	out, _, err := executeCommand(nil, "accounts", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -681,7 +665,7 @@ func TestAccountsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsUpdate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "update")
+	_, stderr, err := executeCommand(nil, "accounts", "update")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -694,7 +678,7 @@ func TestAccountsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "update", "abc123", "--email", "new@example.com")
+	_, stderr, err := executeCommand(nil, "accounts", "update", "abc123", "--email", "new@example.com")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -714,10 +698,9 @@ func TestAccountsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "update", "acct-456",
+	_, _, err := executeCommand(app, "accounts", "update", "acct-456",
 		"--email", "updated@example.com",
 		"--first-name", "Updated",
 		"--last-name", "Name",
@@ -772,10 +755,9 @@ func TestAccountsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, _, err := executeCommand("accounts", "update", "acct-456", "--email", "only-email@example.com")
+	_, _, err := executeCommand(app, "accounts", "update", "acct-456", "--email", "only-email@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -800,10 +782,9 @@ func TestAccountsUpdate_SuccessOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "update", "acct-123", "--email", "new@example.com")
+	out, _, err := executeCommand(app, "accounts", "update", "acct-123", "--email", "new@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -825,10 +806,9 @@ func TestAccountsUpdate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "update", "acct-123", "--email", "bad-email")
+	_, stderr, err := executeCommand(app, "accounts", "update", "acct-123", "--email", "bad-email")
 	if err == nil {
 		t.Fatal("expected error for validation failure")
 	}
@@ -840,7 +820,7 @@ func TestAccountsUpdate_ValidationError(t *testing.T) {
 // --- accounts deactivate ---
 
 func TestAccountsDeactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -850,7 +830,7 @@ func TestAccountsDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsDeactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "deactivate", "--help")
+	out, _, err := executeCommand(nil, "accounts", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -860,7 +840,7 @@ func TestAccountsDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsDeactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "deactivate")
+	_, stderr, err := executeCommand(nil, "accounts", "deactivate")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -873,7 +853,7 @@ func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "deactivate", "abc123", "--yes")
+	_, stderr, err := executeCommand(nil, "accounts", "deactivate", "abc123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -884,7 +864,7 @@ func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 
 func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "deactivate", "abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "deactivate", "abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -898,7 +878,7 @@ func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "deactivate", "abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "deactivate", "abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -917,11 +897,10 @@ func TestAccountsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return acct, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "deactivate", "acct-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "deactivate", "acct-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -946,10 +925,9 @@ func TestAccountsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return acct, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, stderr, err := executeCommand("accounts", "deactivate", "acct-789", "--yes")
+	out, stderr, err := executeCommand(app, "accounts", "deactivate", "acct-789", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -973,10 +951,9 @@ func TestAccountsDeactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "deactivate", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "accounts", "deactivate", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -988,7 +965,7 @@ func TestAccountsDeactivate_SDKError(t *testing.T) {
 // --- accounts reactivate ---
 
 func TestAccountsReactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -998,7 +975,7 @@ func TestAccountsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountsReactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "reactivate", "--help")
+	out, _, err := executeCommand(nil, "accounts", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1008,7 +985,7 @@ func TestAccountsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsReactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "reactivate")
+	_, stderr, err := executeCommand(nil, "accounts", "reactivate")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -1021,7 +998,7 @@ func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "reactivate", "abc123", "--yes")
+	_, stderr, err := executeCommand(nil, "accounts", "reactivate", "abc123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -1032,7 +1009,7 @@ func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 
 func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "reactivate", "abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "reactivate", "abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1046,7 +1023,7 @@ func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestAccountsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "reactivate", "abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "reactivate", "abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1063,11 +1040,10 @@ func TestAccountsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
 	stdin := bytes.NewBufferString("yes\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "reactivate", "acct-closed")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "reactivate", "acct-closed")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1090,10 +1066,9 @@ func TestAccountsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, stderr, err := executeCommand("accounts", "reactivate", "acct-closed", "--yes")
+	out, stderr, err := executeCommand(app, "accounts", "reactivate", "acct-closed", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1117,10 +1092,9 @@ func TestAccountsReactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "reactivate", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "accounts", "reactivate", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1138,10 +1112,9 @@ func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list", "--field", "Code,Email")
+	out, _, err := executeCommand(app, "accounts", "list", "--field", "Code,Email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1174,10 +1147,9 @@ func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list", "--output", "json", "--field", "Code,State")
+	out, _, err := executeCommand(app, "accounts", "list", "--output", "json", "--field", "Code,State")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1213,10 +1185,9 @@ func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list", "-f", "Code")
+	out, _, err := executeCommand(app, "accounts", "list", "-f", "Code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1232,10 +1203,9 @@ func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	_, stderr, err := executeCommand("accounts", "list", "--field", "Code,bogus_field")
+	_, stderr, err := executeCommand(app, "accounts", "list", "--field", "Code,bogus_field")
 	if err == nil {
 		t.Fatal("expected error for invalid field")
 	}
@@ -1254,10 +1224,9 @@ func TestAccountsGet_FieldFlag_JSONOutput(t *testing.T) {
 			return acct, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "get", "acct-123", "--output", "json", "--field", "Code,Email")
+	out, _, err := executeCommand(app, "accounts", "get", "acct-123", "--output", "json", "--field", "Code,Email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1284,10 +1253,9 @@ func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
 			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
 		},
 	}
-	cleanup := setMockAPI(mock)
-	defer cleanup()
+	app := setMockAPI(mock)
 
-	out, _, err := executeCommand("accounts", "list", "--field", "code,email")
+	out, _, err := executeCommand(app, "accounts", "list", "--field", "code,email")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1300,7 +1268,7 @@ func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
 }
 
 func TestAccountsList_FieldFlag_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "list", "--help")
+	out, _, err := executeCommand(nil, "accounts", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -9,19 +9,18 @@ import (
 	"github.com/built-fast/recurly-cli/internal/client"
 )
 
-func executeCommand(args ...string) (string, string, error) {
-	return executeCommandWithStdin(nil, args...)
+// executeCommand runs a command with an optional *App injected into context.
+// Pass nil to use the default App from NewRootCmd.
+func executeCommand(app *App, args ...string) (string, string, error) {
+	return executeCommandWithStdin(app, nil, args...)
 }
 
-// testApp, when non-nil, is injected into the root command's context by
-// executeCommandWithStdin so tests can supply mock API factories via App
-// instead of overriding package-level vars.
-var testApp *App
-
-func executeCommandWithStdin(stdin *bytes.Buffer, args ...string) (string, string, error) {
+// executeCommandWithStdin runs a command with optional *App and stdin.
+// Pass nil for app to use the default App from NewRootCmd.
+func executeCommandWithStdin(app *App, stdin *bytes.Buffer, args ...string) (string, string, error) {
 	cmd := NewRootCmd()
-	if testApp != nil {
-		cmd.SetContext(NewAppContext(cmd.Context(), testApp))
+	if app != nil {
+		cmd.SetContext(NewAppContext(cmd.Context(), app))
 	}
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -40,7 +39,7 @@ func executeCommandWithStdin(stdin *bytes.Buffer, args ...string) (string, strin
 }
 
 func TestRootNoArgs_ShowsHelp(t *testing.T) {
-	out, _, err := executeCommand()
+	out, _, err := executeCommand(nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -58,7 +57,7 @@ func TestRootNoArgs_ShowsHelp(t *testing.T) {
 }
 
 func TestRootHelp_ShowsHelp(t *testing.T) {
-	out, _, err := executeCommand("--help")
+	out, _, err := executeCommand(nil, "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -70,7 +69,7 @@ func TestRootHelp_ShowsHelp(t *testing.T) {
 }
 
 func TestRootVersion_PrintsVersionString(t *testing.T) {
-	out, _, err := executeCommand("--version")
+	out, _, err := executeCommand(nil, "--version")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -81,7 +80,7 @@ func TestRootVersion_PrintsVersionString(t *testing.T) {
 }
 
 func TestRootUnknownCommand_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("nonexistent-command")
+	_, stderr, err := executeCommand(nil, "nonexistent-command")
 	if err == nil {
 		t.Fatal("expected error for unknown command, got nil")
 	}
@@ -91,7 +90,7 @@ func TestRootUnknownCommand_ReturnsError(t *testing.T) {
 }
 
 func TestRootInvalidRegion_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("--region", "asia", "configure")
+	_, stderr, err := executeCommand(nil, "--region", "asia", "configure")
 	if err == nil {
 		t.Fatal("expected error for invalid region")
 	}
@@ -105,7 +104,7 @@ func TestRootInvalidRegion_ReturnsError(t *testing.T) {
 
 func TestRootValidRegion_CaseInsensitive(t *testing.T) {
 	// Passing --region=EU should not cause an error (help output for configure)
-	out, _, err := executeCommand("--region", "EU", "--help")
+	out, _, err := executeCommand(nil, "--region", "EU", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error with --region EU: %v", err)
 	}
@@ -115,7 +114,7 @@ func TestRootValidRegion_CaseInsensitive(t *testing.T) {
 }
 
 func TestRootJQFlag_InvalidExpression(t *testing.T) {
-	_, stderr, err := executeCommand("--jq", "invalid[[[", "configure")
+	_, stderr, err := executeCommand(nil, "--jq", "invalid[[[", "configure")
 	if err == nil {
 		t.Fatal("expected error for invalid jq expression")
 	}
@@ -125,7 +124,7 @@ func TestRootJQFlag_InvalidExpression(t *testing.T) {
 }
 
 func TestRootJQFlag_MutuallyExclusiveWithTable(t *testing.T) {
-	_, stderr, err := executeCommand("--jq", ".name", "--output", "table", "configure")
+	_, stderr, err := executeCommand(nil, "--jq", ".name", "--output", "table", "configure")
 	if err == nil {
 		t.Fatal("expected error for --jq with --output table")
 	}
@@ -136,7 +135,7 @@ func TestRootJQFlag_MutuallyExclusiveWithTable(t *testing.T) {
 
 func TestRootJQFlag_AllowedWithJSON(t *testing.T) {
 	// --jq with --output json should not produce a mutual exclusivity error
-	_, stderr, err := executeCommand("--jq", ".", "--output", "json", "configure")
+	_, stderr, err := executeCommand(nil, "--jq", ".", "--output", "json", "configure")
 	if err != nil && strings.Contains(stderr, "mutually exclusive") {
 		t.Error("--jq with --output json should not be mutually exclusive")
 	}
@@ -144,14 +143,14 @@ func TestRootJQFlag_AllowedWithJSON(t *testing.T) {
 
 func TestRootJQFlag_AllowedWithJSONPretty(t *testing.T) {
 	// --jq with --output json-pretty should not produce a mutual exclusivity error
-	_, stderr, err := executeCommand("--jq", ".", "--output", "json-pretty", "configure")
+	_, stderr, err := executeCommand(nil, "--jq", ".", "--output", "json-pretty", "configure")
 	if err != nil && strings.Contains(stderr, "mutually exclusive") {
 		t.Error("--jq with --output json-pretty should not be mutually exclusive")
 	}
 }
 
 func TestRootJQFlag_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("--help")
+	out, _, err := executeCommand(nil, "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

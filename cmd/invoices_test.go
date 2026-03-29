@@ -47,14 +47,12 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 	return m.listInvoiceLineItemsFn(invoiceId, params, opts...)
 }
 
-func setMockInvoiceAPI(mock *mockInvoiceAPI) func() {
-	orig := testApp
-	testApp = &App{
+func setMockInvoiceAPI(mock *mockInvoiceAPI) *App {
+	return &App{
 		NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // mockLineItemLister implements recurly.LineItemLister for testing.
@@ -220,7 +218,7 @@ func sampleInvoices() []recurly.Invoice {
 // --- invoices list ---
 
 func TestInvoicesList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -235,10 +233,9 @@ func TestInvoicesList_TableOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "list")
+	out, _, err := executeCommand(app, "invoices", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -266,10 +263,9 @@ func TestInvoicesList_JSONOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "list", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -293,10 +289,9 @@ func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "list", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "list", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -316,13 +311,12 @@ func TestInvoicesList_JQFilter(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "list", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "invoices", "list", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -341,10 +335,9 @@ func TestInvoicesList_Filters(t *testing.T) {
 			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "list",
+	_, _, err := executeCommand(app, "invoices", "list",
 		"--state", "paid",
 		"--type", "charge",
 		"--limit", "10",
@@ -392,10 +385,9 @@ func TestInvoicesList_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "list")
+	_, stderr, err := executeCommand(app, "invoices", "list")
 	if err == nil {
 		t.Fatal("expected error for API failure")
 	}
@@ -407,7 +399,7 @@ func TestInvoicesList_APIError(t *testing.T) {
 // --- invoices get ---
 
 func TestInvoicesGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -417,7 +409,7 @@ func TestInvoicesGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("invoices", "get")
+	_, stderr, err := executeCommand(nil, "invoices", "get")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
 	}
@@ -430,7 +422,7 @@ func TestInvoicesGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("invoices", "get", "inv-abc123")
+	_, stderr, err := executeCommand(nil, "invoices", "get", "inv-abc123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -447,10 +439,9 @@ func TestInvoicesGet_PositionalArg(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "get", "my-invoice-id")
+	_, _, err := executeCommand(app, "invoices", "get", "my-invoice-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -465,10 +456,9 @@ func TestInvoicesGet_TableOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -510,10 +500,9 @@ func TestInvoicesGet_TableOutput_NoLineItemsByDefault(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -529,10 +518,9 @@ func TestInvoicesGet_JSONOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -552,10 +540,9 @@ func TestInvoicesGet_JSONPrettyOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -578,10 +565,9 @@ func TestInvoicesGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "invoices", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found invoice")
 	}
@@ -599,10 +585,9 @@ func TestInvoicesGet_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "get", "inv-abc123")
+	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -619,10 +604,9 @@ func TestInvoicesGet_LineItems_Shown(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--line-items")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -653,10 +637,9 @@ func TestInvoicesGet_LineItems_WithCount(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "get", "inv-abc123", "--line-items=50")
+	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items=50")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -679,10 +662,9 @@ func TestInvoicesGet_LineItems_HasMoreMessage(t *testing.T) {
 			return lister, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--line-items=2")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items=2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -704,10 +686,9 @@ func TestInvoicesGet_LineItems_JSONOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--line-items", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--line-items", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -737,10 +718,9 @@ func TestInvoicesGet_LineItems_NotShownWithoutFlag(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "get", "inv-abc123")
+	_, _, err := executeCommand(app, "invoices", "get", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -756,13 +736,12 @@ func TestInvoicesGet_JQFilter(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "get", "inv-abc123", "--jq", ".id")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--jq", ".id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -815,7 +794,7 @@ func (m *mockLineItemListerWithMore) Next() string {
 // --- invoices void ---
 
 func TestInvoicesVoid_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -825,7 +804,7 @@ func TestInvoicesVoid_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesVoid_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("invoices", "void")
+	_, stderr, err := executeCommand(nil, "invoices", "void")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
 	}
@@ -836,7 +815,7 @@ func TestInvoicesVoid_MissingArg_ReturnsError(t *testing.T) {
 
 func TestInvoicesVoid_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "invoices", "void", "inv-abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "void", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -858,11 +837,10 @@ func TestInvoicesVoid_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "invoices", "void", "inv-abc123")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "void", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -885,10 +863,9 @@ func TestInvoicesVoid_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, stderr, err := executeCommand("invoices", "void", "inv-abc123", "--yes")
+	out, stderr, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -908,10 +885,9 @@ func TestInvoicesVoid_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -933,10 +909,9 @@ func TestInvoicesVoid_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -958,13 +933,12 @@ func TestInvoicesVoid_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "void", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -984,10 +958,9 @@ func TestInvoicesVoid_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "void", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "invoices", "void", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found invoice")
 	}
@@ -999,7 +972,7 @@ func TestInvoicesVoid_APIError(t *testing.T) {
 // --- invoices collect ---
 
 func TestInvoicesCollect_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1009,7 +982,7 @@ func TestInvoicesCollect_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesCollect_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("invoices", "collect")
+	_, stderr, err := executeCommand(nil, "invoices", "collect")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
 	}
@@ -1020,7 +993,7 @@ func TestInvoicesCollect_MissingArg_ReturnsError(t *testing.T) {
 
 func TestInvoicesCollect_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "invoices", "collect", "inv-abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "collect", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1042,11 +1015,10 @@ func TestInvoicesCollect_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "invoices", "collect", "inv-abc123")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "collect", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1069,10 +1041,9 @@ func TestInvoicesCollect_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, stderr, err := executeCommand("invoices", "collect", "inv-abc123", "--yes")
+	out, stderr, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1092,10 +1063,9 @@ func TestInvoicesCollect_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "collect", "inv-abc123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1117,10 +1087,9 @@ func TestInvoicesCollect_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "collect", "inv-abc123", "--yes", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1142,13 +1111,12 @@ func TestInvoicesCollect_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "collect", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1168,10 +1136,9 @@ func TestInvoicesCollect_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "collect", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "invoices", "collect", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found invoice")
 	}
@@ -1183,7 +1150,7 @@ func TestInvoicesCollect_APIError(t *testing.T) {
 // --- Mark Failed tests ---
 
 func TestInvoicesMarkFailed_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1193,7 +1160,7 @@ func TestInvoicesMarkFailed_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("invoices", "mark-failed")
+	_, stderr, err := executeCommand(nil, "invoices", "mark-failed")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
 	}
@@ -1204,7 +1171,7 @@ func TestInvoicesMarkFailed_MissingArg_ReturnsError(t *testing.T) {
 
 func TestInvoicesMarkFailed_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "invoices", "mark-failed", "inv-abc123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "mark-failed", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1226,11 +1193,10 @@ func TestInvoicesMarkFailed_ConfirmYes_Succeeds(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "invoices", "mark-failed", "inv-abc123")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "invoices", "mark-failed", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1253,10 +1219,9 @@ func TestInvoicesMarkFailed_YesFlag_SkipsConfirmation(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, stderr, err := executeCommand("invoices", "mark-failed", "inv-abc123", "--yes")
+	out, stderr, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1276,10 +1241,9 @@ func TestInvoicesMarkFailed_JSONOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1301,10 +1265,9 @@ func TestInvoicesMarkFailed_JSONPrettyOutput(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1326,13 +1289,12 @@ func TestInvoicesMarkFailed_JQFilter(t *testing.T) {
 			return inv, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "mark-failed", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1352,10 +1314,9 @@ func TestInvoicesMarkFailed_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "mark-failed", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "invoices", "mark-failed", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found invoice")
 	}
@@ -1367,7 +1328,7 @@ func TestInvoicesMarkFailed_APIError(t *testing.T) {
 // --- invoices line-items ---
 
 func TestInvoicesLineItems_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("invoices", "--help")
+	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1377,7 +1338,7 @@ func TestInvoicesLineItems_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesLineItems_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("invoices", "line-items")
+	_, stderr, err := executeCommand(nil, "invoices", "line-items")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
 	}
@@ -1392,10 +1353,9 @@ func TestInvoicesLineItems_TableOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "line-items", "inv-abc123")
+	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1422,10 +1382,9 @@ func TestInvoicesLineItems_PositionalArg(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, _, err := executeCommand("invoices", "line-items", "my-invoice-id")
+	_, _, err := executeCommand(app, "invoices", "line-items", "my-invoice-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1440,10 +1399,9 @@ func TestInvoicesLineItems_JSONOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--output", "json")
+	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1467,10 +1425,9 @@ func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1490,13 +1447,12 @@ func TestInvoicesLineItems_JQFilter(t *testing.T) {
 			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1516,10 +1472,9 @@ func TestInvoicesLineItems_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockInvoiceAPI(mock)
-	defer cleanup()
+	app := setMockInvoiceAPI(mock)
 
-	_, stderr, err := executeCommand("invoices", "line-items", "nonexistent")
+	_, stderr, err := executeCommand(app, "invoices", "line-items", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found invoice")
 	}

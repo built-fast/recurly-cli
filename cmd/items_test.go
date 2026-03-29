@@ -84,15 +84,13 @@ func (m *mockItemLister) Next() string {
 	return ""
 }
 
-// setMockItemAPI installs a mock and returns a cleanup function.
-func setMockItemAPI(mock *mockItemAPI) func() {
-	orig := testApp
-	testApp = &App{
+// setMockItemAPI installs a mock and returns an *App for context injection.
+func setMockItemAPI(mock *mockItemAPI) *App {
+	return &App{
 		NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // sampleItem returns a test item with predictable fields.
@@ -132,7 +130,7 @@ func sampleItemDetail() *recurly.Item {
 // --- items get ---
 
 func TestItemsGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -142,7 +140,7 @@ func TestItemsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("items", "get")
+	_, stderr, err := executeCommand(nil, "items", "get")
 	if err == nil {
 		t.Fatal("expected error when no item ID is provided")
 	}
@@ -155,7 +153,7 @@ func TestItemsGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("items", "get", "item123")
+	_, stderr, err := executeCommand(nil, "items", "get", "item123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -172,10 +170,9 @@ func TestItemsGet_PositionalArg(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "get", "my-item-id")
+	_, _, err := executeCommand(app, "items", "get", "my-item-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -191,10 +188,9 @@ func TestItemsGet_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "get", "item123", "--output", "table")
+	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -228,10 +224,9 @@ func TestItemsGet_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "get", "item123", "--output", "json")
+	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -257,10 +252,9 @@ func TestItemsGet_JSONPrettyOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "get", "item123", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -285,10 +279,9 @@ func TestItemsGet_JQFilter(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "get", "item123", "--jq", ".code")
+	out, _, err := executeCommand(app, "items", "get", "item123", "--jq", ".code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -305,10 +298,9 @@ func TestItemsGet_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "get", "item123")
+	_, _, err := executeCommand(app, "items", "get", "item123")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -323,10 +315,9 @@ func TestItemsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "items", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found item")
 	}
@@ -338,7 +329,7 @@ func TestItemsGet_NotFound(t *testing.T) {
 // --- items list ---
 
 func TestItemsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -348,7 +339,7 @@ func TestItemsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("items", "list", "--help")
+	out, _, err := executeCommand(nil, "items", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -363,7 +354,7 @@ func TestItemsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("items", "list")
+	_, stderr, err := executeCommand(nil, "items", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -374,7 +365,7 @@ func TestItemsList_NoAPIKey_ReturnsError(t *testing.T) {
 
 func TestItemsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("items", "list", "--begin-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "items", "list", "--begin-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid begin-time")
 	}
@@ -385,7 +376,7 @@ func TestItemsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 
 func TestItemsList_InvalidEndTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("items", "list", "--end-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "items", "list", "--end-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid end-time")
 	}
@@ -403,10 +394,9 @@ func TestItemsList_PaginationParams(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "items", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -434,10 +424,9 @@ func TestItemsList_FilterParams(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "list",
+	_, _, err := executeCommand(app, "items", "list",
 		"--state", "active",
 		"--begin-time", "2025-01-01T00:00:00Z",
 		"--end-time", "2025-12-31T23:59:59Z",
@@ -466,10 +455,9 @@ func TestItemsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "list")
+	_, _, err := executeCommand(app, "items", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -501,10 +489,9 @@ func TestItemsList_TableOutput(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{item}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list")
+	out, _, err := executeCommand(app, "items", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -529,10 +516,9 @@ func TestItemsList_JSONOutput(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{item}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list", "--output", "json")
+	out, _, err := executeCommand(app, "items", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -566,10 +552,9 @@ func TestItemsList_JSONPrettyOutput(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{item}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "items", "list", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -599,10 +584,9 @@ func TestItemsList_JQFilter(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{item}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list", "--jq", ".data[].code")
+	out, _, err := executeCommand(app, "items", "list", "--jq", ".data[].code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -619,10 +603,9 @@ func TestItemsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "list")
+	_, _, err := executeCommand(app, "items", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -634,10 +617,9 @@ func TestItemsList_EmptyResults(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list")
+	out, _, err := executeCommand(app, "items", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -653,10 +635,9 @@ func TestItemsList_EmptyResults_JSON(t *testing.T) {
 			return &mockItemLister{items: []recurly.Item{}}, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "list", "--output", "json")
+	out, _, err := executeCommand(app, "items", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -677,7 +658,7 @@ func TestItemsList_EmptyResults_JSON(t *testing.T) {
 // --- items create ---
 
 func TestItemsCreate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -687,7 +668,7 @@ func TestItemsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsCreateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("items", "create", "--help")
+	out, _, err := executeCommand(nil, "items", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -707,7 +688,7 @@ func TestItemsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("items", "create", "--code", "test")
+	_, stderr, err := executeCommand(nil, "items", "create", "--code", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -724,10 +705,9 @@ func TestItemsCreate_CoreFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create",
+	_, _, err := executeCommand(app, "items", "create",
 		"--code", "widget-1",
 		"--name", "Premium Widget",
 		"--description", "A high-quality widget",
@@ -770,10 +750,9 @@ func TestItemsCreate_TaxFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create",
+	_, _, err := executeCommand(app, "items", "create",
 		"--code", "tax-item",
 		"--tax-code", "digital",
 		"--tax-exempt",
@@ -810,10 +789,9 @@ func TestItemsCreate_MultiCurrencyFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create",
+	_, _, err := executeCommand(app, "items", "create",
 		"--code", "multi",
 		"--name", "Multi Currency Item",
 		"--currency", "USD", "--currency", "EUR",
@@ -846,10 +824,9 @@ func TestItemsCreate_SingleCurrency(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create",
+	_, _, err := executeCommand(app, "items", "create",
 		"--code", "single",
 		"--name", "Single Currency Item",
 		"--currency", "USD",
@@ -877,10 +854,9 @@ func TestItemsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "create",
+	_, stderr, err := executeCommand(app, "items", "create",
 		"--code", "bad",
 		"--name", "Bad Item",
 		"--currency", "USD", "--currency", "EUR",
@@ -902,10 +878,9 @@ func TestItemsCreate_UnsetFlagsNotSent(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create", "--code", "minimal")
+	_, _, err := executeCommand(app, "items", "create", "--code", "minimal")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -953,10 +928,9 @@ func TestItemsCreate_AllFlagsPopulated(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create",
+	_, _, err := executeCommand(app, "items", "create",
 		"--code", "full",
 		"--name", "Full Item",
 		"--description", "All flags test",
@@ -1020,10 +994,9 @@ func TestItemsCreate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "create", "--code", "widget-1", "--output", "table")
+	out, _, err := executeCommand(app, "items", "create", "--code", "widget-1", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1048,10 +1021,9 @@ func TestItemsCreate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "create", "--code", "widget-1", "--output", "json")
+	out, _, err := executeCommand(app, "items", "create", "--code", "widget-1", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1071,10 +1043,9 @@ func TestItemsCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "create", "--code", "bad")
+	_, _, err := executeCommand(app, "items", "create", "--code", "bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1083,7 +1054,7 @@ func TestItemsCreate_SDKError(t *testing.T) {
 // --- items update ---
 
 func TestItemsUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1093,7 +1064,7 @@ func TestItemsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsUpdateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("items", "update", "--help")
+	out, _, err := executeCommand(nil, "items", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1115,10 +1086,9 @@ func TestItemsUpdate_MissingArg_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update")
+	_, _, err := executeCommand(app, "items", "update")
 	if err == nil {
 		t.Fatal("expected error when item_id is missing")
 	}
@@ -1128,7 +1098,7 @@ func TestItemsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("items", "update", "item-123", "--name", "test")
+	_, stderr, err := executeCommand(nil, "items", "update", "item-123", "--name", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -1145,10 +1115,9 @@ func TestItemsUpdate_PositionalArg(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-abc123", "--name", "Updated")
+	_, _, err := executeCommand(app, "items", "update", "item-abc123", "--name", "Updated")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1165,10 +1134,9 @@ func TestItemsUpdate_CoreFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-123",
+	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--code", "widget-1",
 		"--name", "Premium Widget",
 		"--description", "A high-quality widget",
@@ -1211,10 +1179,9 @@ func TestItemsUpdate_TaxFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-123",
+	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--tax-code", "digital",
 		"--tax-exempt",
 		"--avalara-transaction-type", "3",
@@ -1250,10 +1217,9 @@ func TestItemsUpdate_MultiCurrencyFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-123",
+	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "10.00", "--unit-amount", "9.00",
 	)
@@ -1288,10 +1254,9 @@ func TestItemsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "update", "item-123",
+	_, stderr, err := executeCommand(app, "items", "update", "item-123",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "10.00",
 	)
@@ -1311,10 +1276,9 @@ func TestItemsUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-123", "--name", "Only Name")
+	_, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Only Name")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1361,10 +1325,9 @@ func TestItemsUpdate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "update", "item-123", "--name", "Updated", "--output", "table")
+	out, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Updated", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1389,10 +1352,9 @@ func TestItemsUpdate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "update", "item-123", "--name", "Updated", "--output", "json")
+	out, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Updated", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1412,10 +1374,9 @@ func TestItemsUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "update", "item-123", "--name", "bad")
+	_, _, err := executeCommand(app, "items", "update", "item-123", "--name", "bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1424,7 +1385,7 @@ func TestItemsUpdate_SDKError(t *testing.T) {
 // --- Deactivate tests ---
 
 func TestItemsDeactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1434,7 +1395,7 @@ func TestItemsDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsDeactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("items", "deactivate", "--help")
+	out, _, err := executeCommand(nil, "items", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1444,7 +1405,7 @@ func TestItemsDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsDeactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("items", "deactivate")
+	_, _, err := executeCommand(nil, "items", "deactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
 	}
@@ -1454,7 +1415,7 @@ func TestItemsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 	viper.Set("api_key", "")
 	defer viper.Set("api_key", "")
 
-	_, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
+	_, _, err := executeCommand(nil, "items", "deactivate", "item-123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is set")
 	}
@@ -1462,7 +1423,7 @@ func TestItemsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 
 func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "deactivate", "item-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1476,7 +1437,7 @@ func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestItemsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "deactivate", "item-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1495,11 +1456,10 @@ func TestItemsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return item, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "items", "deactivate", "item-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "items", "deactivate", "item-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1524,10 +1484,9 @@ func TestItemsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return item, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, stderr, err := executeCommand("items", "deactivate", "item-456", "--yes")
+	out, stderr, err := executeCommand(app, "items", "deactivate", "item-456", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1550,10 +1509,9 @@ func TestItemsDeactivate_TableOutput(t *testing.T) {
 			return item, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
+	out, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1573,10 +1531,9 @@ func TestItemsDeactivate_JSONOutput(t *testing.T) {
 			return item, nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "deactivate", "item-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1595,10 +1552,9 @@ func TestItemsDeactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "deactivate", "item-123", "--yes")
+	_, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1607,7 +1563,7 @@ func TestItemsDeactivate_SDKError(t *testing.T) {
 // --- Reactivate command tests ---
 
 func TestItemsReactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "--help")
+	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1617,7 +1573,7 @@ func TestItemsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsReactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("items", "reactivate", "--help")
+	out, _, err := executeCommand(nil, "items", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1627,7 +1583,7 @@ func TestItemsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsReactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("items", "reactivate")
+	_, _, err := executeCommand(nil, "items", "reactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
 	}
@@ -1637,7 +1593,7 @@ func TestItemsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 	viper.Set("api_key", "")
 	defer viper.Set("api_key", "")
 
-	_, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	_, _, err := executeCommand(nil, "items", "reactivate", "item-123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is set")
 	}
@@ -1645,7 +1601,7 @@ func TestItemsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 
 func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "reactivate", "item-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1659,7 +1615,7 @@ func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestItemsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "reactivate", "item-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1676,11 +1632,10 @@ func TestItemsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "items", "reactivate", "item-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "items", "reactivate", "item-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1703,10 +1658,9 @@ func TestItemsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, stderr, err := executeCommand("items", "reactivate", "item-456", "--yes")
+	out, stderr, err := executeCommand(app, "items", "reactivate", "item-456", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1727,10 +1681,9 @@ func TestItemsReactivate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	out, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1748,10 +1701,9 @@ func TestItemsReactivate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "reactivate", "item-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1770,10 +1722,9 @@ func TestItemsReactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, _, err := executeCommand("items", "reactivate", "item-123", "--yes")
+	_, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}

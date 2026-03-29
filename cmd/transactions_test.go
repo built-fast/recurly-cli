@@ -26,14 +26,12 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 	return m.getTransactionFn(transactionId, opts...)
 }
 
-func setMockTransactionAPI(mock *mockTransactionAPI) func() {
-	orig := testApp
-	testApp = &App{
+func setMockTransactionAPI(mock *mockTransactionAPI) *App {
+	return &App{
 		NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // mockTransactionLister implements recurly.TransactionLister for testing.
@@ -131,7 +129,7 @@ func sampleTransactions() []recurly.Transaction {
 // --- transactions list ---
 
 func TestTransactionsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("transactions", "--help")
+	out, _, err := executeCommand(nil, "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -146,10 +144,9 @@ func TestTransactionsList_TableOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "list")
+	out, _, err := executeCommand(app, "transactions", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -177,10 +174,9 @@ func TestTransactionsList_JSONOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "list", "--output", "json")
+	out, _, err := executeCommand(app, "transactions", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -204,10 +200,9 @@ func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "list", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "transactions", "list", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -227,13 +222,12 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("transactions", "list", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "transactions", "list", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -247,7 +241,7 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 // --- transactions get ---
 
 func TestTransactionsGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("transactions", "--help")
+	out, _, err := executeCommand(nil, "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -257,7 +251,7 @@ func TestTransactionsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestTransactionsGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("transactions", "get")
+	_, stderr, err := executeCommand(nil, "transactions", "get")
 	if err == nil {
 		t.Fatal("expected error for missing arg")
 	}
@@ -274,10 +268,9 @@ func TestTransactionsGet_PositionalArg(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	_, _, err := executeCommand("transactions", "get", "txn-abc123")
+	_, _, err := executeCommand(app, "transactions", "get", "txn-abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -292,10 +285,9 @@ func TestTransactionsGet_TableOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "get", "txn-001")
+	out, _, err := executeCommand(app, "transactions", "get", "txn-001")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -335,10 +327,9 @@ func TestTransactionsGet_JSONOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "get", "txn-001", "--output", "json")
+	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -358,10 +349,9 @@ func TestTransactionsGet_JSONPrettyOutput(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	out, _, err := executeCommand("transactions", "get", "txn-001", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -381,13 +371,12 @@ func TestTransactionsGet_JQFilter(t *testing.T) {
 			return sampleTransaction(), nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("transactions", "get", "txn-001", "--jq", ".id")
+	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--jq", ".id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -407,10 +396,9 @@ func TestTransactionsGet_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	_, stderr, err := executeCommand("transactions", "get", "txn-nonexistent")
+	_, stderr, err := executeCommand(app, "transactions", "get", "txn-nonexistent")
 	if err == nil {
 		t.Fatal("expected error for API failure")
 	}
@@ -427,10 +415,9 @@ func TestTransactionsList_Filters(t *testing.T) {
 			return &mockTransactionLister{transactions: sampleTransactions()}, nil
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	_, _, err := executeCommand("transactions", "list",
+	_, _, err := executeCommand(app, "transactions", "list",
 		"--type", "purchase",
 		"--success", "true",
 		"--limit", "5",
@@ -478,10 +465,9 @@ func TestTransactionsList_APIError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockTransactionAPI(mock)
-	defer cleanup()
+	app := setMockTransactionAPI(mock)
 
-	_, stderr, err := executeCommand("transactions", "list")
+	_, stderr, err := executeCommand(app, "transactions", "list")
 	if err == nil {
 		t.Fatal("expected error for API failure")
 	}

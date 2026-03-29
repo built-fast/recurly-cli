@@ -79,15 +79,13 @@ func (m *mockPlanLister) Next() string {
 	return ""
 }
 
-// setMockPlanAPI installs a mock and returns a cleanup function.
-func setMockPlanAPI(mock *mockPlanAPI) func() {
-	orig := testApp
-	testApp = &App{
+// setMockPlanAPI installs a mock and returns an *App for context injection.
+func setMockPlanAPI(mock *mockPlanAPI) *App {
+	return &App{
 		NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // samplePlan returns a test plan with predictable fields.
@@ -137,7 +135,7 @@ func samplePlanDetail() *recurly.Plan {
 // --- plans list ---
 
 func TestPlansList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "--help")
+	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -147,7 +145,7 @@ func TestPlansList_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "list", "--help")
+	out, _, err := executeCommand(nil, "plans", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -162,7 +160,7 @@ func TestPlansList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "list")
+	_, stderr, err := executeCommand(nil, "plans", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -180,10 +178,9 @@ func TestPlansList_PaginationParams(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "plans", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -211,10 +208,9 @@ func TestPlansList_FilterParams(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "list", "--state", "active")
+	_, _, err := executeCommand(app, "plans", "list", "--state", "active")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -233,10 +229,9 @@ func TestPlansList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "list")
+	_, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -262,10 +257,9 @@ func TestPlansList_TableOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list")
+	out, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -290,10 +284,9 @@ func TestPlansList_JSONOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -327,10 +320,9 @@ func TestPlansList_JSONPrettyOutput(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "plans", "list", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -360,10 +352,9 @@ func TestPlansList_JQFilter(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list", "--jq", ".data[].code")
+	out, _, err := executeCommand(app, "plans", "list", "--jq", ".data[].code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -380,10 +371,9 @@ func TestPlansList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "list")
+	_, _, err := executeCommand(app, "plans", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -395,10 +385,9 @@ func TestPlansList_EmptyResults(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list")
+	out, _, err := executeCommand(app, "plans", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -415,10 +404,9 @@ func TestPlansList_EmptyResults_JSON(t *testing.T) {
 			return &mockPlanLister{plans: []recurly.Plan{}}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "list", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -442,7 +430,7 @@ func TestPlansList_EmptyResults_JSON(t *testing.T) {
 // --- plans get ---
 
 func TestPlansGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "--help")
+	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -452,7 +440,7 @@ func TestPlansGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("plans", "get")
+	_, stderr, err := executeCommand(nil, "plans", "get")
 	if err == nil {
 		t.Fatal("expected error when no plan ID is provided")
 	}
@@ -465,7 +453,7 @@ func TestPlansGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "get", "p1234")
+	_, stderr, err := executeCommand(nil, "plans", "get", "p1234")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -482,10 +470,9 @@ func TestPlansGet_PositionalArg(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "get", "my-plan-id")
+	_, _, err := executeCommand(app, "plans", "get", "my-plan-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -501,10 +488,9 @@ func TestPlansGet_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "get", "p1234", "--output", "table")
+	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -542,10 +528,9 @@ func TestPlansGet_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "get", "p1234", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -573,10 +558,9 @@ func TestPlansGet_JQFilter(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "get", "p1234", "--jq", ".code")
+	out, _, err := executeCommand(app, "plans", "get", "p1234", "--jq", ".code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -593,10 +577,9 @@ func TestPlansGet_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "get", "p1234")
+	_, _, err := executeCommand(app, "plans", "get", "p1234")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -611,10 +594,9 @@ func TestPlansGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, stderr, err := executeCommand("plans", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "plans", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found plan")
 	}
@@ -630,10 +612,9 @@ func TestPlansGet_CurrenciesFormatting(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "get", "p1234", "--output", "table")
+	out, _, err := executeCommand(app, "plans", "get", "p1234", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -650,7 +631,7 @@ func TestPlansGet_CurrenciesFormatting(t *testing.T) {
 // --- plans create ---
 
 func TestPlansCreate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "--help")
+	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -660,7 +641,7 @@ func TestPlansCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansCreateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "create", "--help")
+	out, _, err := executeCommand(nil, "plans", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -687,7 +668,7 @@ func TestPlansCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "create", "--code", "test")
+	_, stderr, err := executeCommand(nil, "plans", "create", "--code", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -704,10 +685,9 @@ func TestPlansCreate_CoreFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "gold",
 		"--name", "Gold Plan",
 		"--interval-unit", "month",
@@ -750,10 +730,9 @@ func TestPlansCreate_MultiCurrencyFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "multi",
 		"--name", "Multi Currency",
 		"--currency", "USD", "--currency", "EUR",
@@ -786,10 +765,9 @@ func TestPlansCreate_SingleCurrency(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "single",
 		"--name", "Single Currency",
 		"--currency", "USD",
@@ -819,10 +797,9 @@ func TestPlansCreate_AllFlagsPopulated(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		// Core
 		"--code", "full",
 		"--name", "Full Plan",
@@ -941,10 +918,9 @@ func TestPlansCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, stderr, err := executeCommand("plans", "create",
+	_, stderr, err := executeCommand(app, "plans", "create",
 		"--code", "bad",
 		"--name", "Bad Plan",
 		"--currency", "USD", "--currency", "EUR",
@@ -966,10 +942,9 @@ func TestPlansCreate_SetupFeeFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "fees",
 		"--name", "Fee Plan",
 		"--currency", "USD", "--currency", "EUR",
@@ -1001,10 +976,9 @@ func TestPlansCreate_SetupFeeCurrencyMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, stderr, err := executeCommand("plans", "create",
+	_, stderr, err := executeCommand(app, "plans", "create",
 		"--code", "bad",
 		"--name", "Bad Plan",
 		"--currency", "USD", "--currency", "EUR",
@@ -1027,10 +1001,9 @@ func TestPlansCreate_TrialFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "trial",
 		"--name", "Trial Plan",
 		"--trial-unit", "day",
@@ -1060,10 +1033,9 @@ func TestPlansCreate_BillingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "billing",
 		"--name", "Billing Plan",
 		"--auto-renew",
@@ -1089,10 +1061,9 @@ func TestPlansCreate_TaxFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "tax",
 		"--name", "Tax Plan",
 		"--tax-code", "digital",
@@ -1134,10 +1105,9 @@ func TestPlansCreate_AccountingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "acct",
 		"--name", "Acct Plan",
 		"--accounting-code", "plan-acct",
@@ -1195,10 +1165,9 @@ func TestPlansCreate_HostedPagesFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "hosted",
 		"--name", "Hosted Plan",
 		"--success-url", "https://example.com/success",
@@ -1236,10 +1205,9 @@ func TestPlansCreate_OtherFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create",
+	_, _, err := executeCommand(app, "plans", "create",
 		"--code", "other",
 		"--name", "Other Plan",
 		"--allow-any-item-on-subscriptions",
@@ -1265,10 +1233,9 @@ func TestPlansCreate_UnsetFlagsNotSent(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create", "--code", "minimal", "--name", "Minimal")
+	_, _, err := executeCommand(app, "plans", "create", "--code", "minimal", "--name", "Minimal")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1312,10 +1279,9 @@ func TestPlansCreate_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "create", "--code", "gold", "--name", "Gold Plan")
+	out, _, err := executeCommand(app, "plans", "create", "--code", "gold", "--name", "Gold Plan")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1335,10 +1301,9 @@ func TestPlansCreate_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "create", "--code", "gold", "--name", "Gold", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "create", "--code", "gold", "--name", "Gold", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1358,10 +1323,9 @@ func TestPlansCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation error")
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "create", "--code", "bad", "--name", "Bad")
+	_, _, err := executeCommand(app, "plans", "create", "--code", "bad", "--name", "Bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1380,10 +1344,9 @@ func TestPlansGet_EmptyCurrencies(t *testing.T) {
 			}, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "get", "p999", "--output", "table")
+	out, _, err := executeCommand(app, "plans", "get", "p999", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1396,7 +1359,7 @@ func TestPlansGet_EmptyCurrencies(t *testing.T) {
 // --- plans update ---
 
 func TestPlansUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "--help")
+	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1406,7 +1369,7 @@ func TestPlansUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansUpdateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "update", "--help")
+	out, _, err := executeCommand(nil, "plans", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1430,7 +1393,7 @@ func TestPlansUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansUpdateHelp_NoImmutableFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "update", "--help")
+	out, _, err := executeCommand(nil, "plans", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1442,7 +1405,7 @@ func TestPlansUpdateHelp_NoImmutableFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_MissingArg(t *testing.T) {
-	_, _, err := executeCommand("plans", "update")
+	_, _, err := executeCommand(nil, "plans", "update")
 	if err == nil {
 		t.Fatal("expected error when plan_id argument is missing")
 	}
@@ -1452,7 +1415,7 @@ func TestPlansUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "update", "p1234", "--name", "New Name")
+	_, stderr, err := executeCommand(nil, "plans", "update", "p1234", "--name", "New Name")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -1469,10 +1432,9 @@ func TestPlansUpdate_PlanIdArg(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Updated")
+	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Updated")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1489,10 +1451,9 @@ func TestPlansUpdate_CoreFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--code", "gold-v2",
 		"--name", "Gold Plan V2",
 		"--description", "Updated plan",
@@ -1523,10 +1484,9 @@ func TestPlansUpdate_MultiCurrencyFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "15.00", "--unit-amount", "13.00",
 	)
@@ -1555,10 +1515,9 @@ func TestPlansUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "10.00",
 	)
@@ -1578,10 +1537,9 @@ func TestPlansUpdate_SetupFeeFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "10.00", "--unit-amount", "9.00",
 		"--setup-fee", "5.00", "--setup-fee", "4.50",
@@ -1611,10 +1569,9 @@ func TestPlansUpdate_SetupFeeCurrencyMismatch(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--currency", "USD",
 		"--unit-amount", "10.00",
 		"--setup-fee", "5.00", "--setup-fee", "4.50",
@@ -1635,10 +1592,9 @@ func TestPlansUpdate_TrialFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--trial-unit", "day",
 		"--trial-length", "14",
 		"--trial-requires-billing-info",
@@ -1666,10 +1622,9 @@ func TestPlansUpdate_BillingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--auto-renew",
 		"--total-billing-cycles", "12",
 	)
@@ -1693,10 +1648,9 @@ func TestPlansUpdate_TaxFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--tax-code", "digital",
 		"--tax-exempt",
 		"--avalara-transaction-type", "600",
@@ -1736,10 +1690,9 @@ func TestPlansUpdate_AccountingFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--accounting-code", "PLAN-001",
 		"--revenue-schedule-type", "evenly",
 		"--liability-gl-account-id", "gl-001",
@@ -1795,10 +1748,9 @@ func TestPlansUpdate_HostedPagesFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--success-url", "https://example.com/success",
 		"--cancel-url", "https://example.com/cancel",
 		"--bypass-confirmation",
@@ -1834,10 +1786,9 @@ func TestPlansUpdate_OtherFlags(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234",
+	_, _, err := executeCommand(app, "plans", "update", "p1234",
 		"--allow-any-item-on-subscriptions",
 		"--dunning-campaign-id", "dc-001",
 	)
@@ -1861,10 +1812,9 @@ func TestPlansUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Updated")
+	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Updated")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1905,10 +1855,9 @@ func TestPlansUpdate_TableOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "update", "p1234", "--name", "Gold Plan")
+	out, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Gold Plan")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1927,10 +1876,9 @@ func TestPlansUpdate_JSONOutput(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "update", "p1234", "--name", "Gold", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Gold", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1950,10 +1898,9 @@ func TestPlansUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, _, err := executeCommand("plans", "update", "p1234", "--name", "Bad")
+	_, _, err := executeCommand(app, "plans", "update", "p1234", "--name", "Bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1962,7 +1909,7 @@ func TestPlansUpdate_SDKError(t *testing.T) {
 // --- plans deactivate ---
 
 func TestPlansDeactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "--help")
+	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1972,7 +1919,7 @@ func TestPlansDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansDeactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "deactivate", "--help")
+	out, _, err := executeCommand(nil, "plans", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1982,7 +1929,7 @@ func TestPlansDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansDeactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("plans", "deactivate")
+	_, stderr, err := executeCommand(nil, "plans", "deactivate")
 	if err == nil {
 		t.Fatal("expected error when no plan ID is provided")
 	}
@@ -1993,7 +1940,7 @@ func TestPlansDeactivate_MissingArg_ReturnsError(t *testing.T) {
 
 func TestPlansDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "deactivate", "plan-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2007,7 +1954,7 @@ func TestPlansDeactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestPlansDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "deactivate", "plan-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2027,11 +1974,10 @@ func TestPlansDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return p, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "plans", "deactivate", "plan-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2055,11 +2001,10 @@ func TestPlansDeactivate_ConfirmYES_CaseInsensitive(t *testing.T) {
 			return p, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
 	stdin := bytes.NewBufferString("YES\n")
-	out, _, err := executeCommandWithStdin(stdin, "plans", "deactivate", "plan-789")
+	out, _, err := executeCommandWithStdin(app, stdin, "plans", "deactivate", "plan-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2079,10 +2024,9 @@ func TestPlansDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return p, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, stderr, err := executeCommand("plans", "deactivate", "plan-789", "--yes")
+	out, stderr, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2106,10 +2050,9 @@ func TestPlansDeactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	_, stderr, err := executeCommand("plans", "deactivate", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "plans", "deactivate", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -2127,10 +2070,9 @@ func TestPlansDeactivate_JSON_Output(t *testing.T) {
 			return p, nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "deactivate", "plan-789", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -2151,10 +2093,9 @@ func TestPlansDeactivate_UsesDetailColumns(t *testing.T) {
 			return samplePlanDetail(), nil
 		},
 	}
-	cleanup := setMockPlanAPI(mock)
-	defer cleanup()
+	app := setMockPlanAPI(mock)
 
-	out, _, err := executeCommand("plans", "deactivate", "plan-789", "--yes")
+	out, _, err := executeCommand(app, "plans", "deactivate", "plan-789", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -40,14 +40,12 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 	return nil, nil
 }
 
-func setMockAccountBillingInfoAPI(mock *mockAccountBillingInfoAPI) func() {
-	orig := testApp
-	testApp = &App{
+func setMockAccountBillingInfoAPI(mock *mockAccountBillingInfoAPI) *App {
+	return &App{
 		NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 func sampleBillingInfo() *recurly.BillingInfo {
@@ -72,7 +70,7 @@ func sampleBillingInfo() *recurly.BillingInfo {
 // --- billing-info get ---
 
 func TestAccountBillingInfoGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "billing-info", "--help")
+	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -82,7 +80,7 @@ func TestAccountBillingInfoGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_RequiresAccountID(t *testing.T) {
-	_, _, err := executeCommand("accounts", "billing-info", "get")
+	_, _, err := executeCommand(nil, "accounts", "billing-info", "get")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
@@ -92,7 +90,7 @@ func TestAccountBillingInfoGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "billing-info", "get", "acct1")
+	_, stderr, err := executeCommand(nil, "accounts", "billing-info", "get", "acct1")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -111,10 +109,9 @@ func TestAccountBillingInfoGet_PositionalArg(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -130,10 +127,9 @@ func TestAccountBillingInfoGet_TableOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	out, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -163,13 +159,12 @@ func TestAccountBillingInfoGet_JSONOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -193,13 +188,12 @@ func TestAccountBillingInfoGet_JSONPrettyOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -221,14 +215,13 @@ func TestAccountBillingInfoGet_JQFilter(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".first_name")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -244,10 +237,9 @@ func TestAccountBillingInfoGet_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "get", "code-acct1")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -256,7 +248,7 @@ func TestAccountBillingInfoGet_SDKError(t *testing.T) {
 // --- billing-info update ---
 
 func TestAccountBillingInfoUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "billing-info", "--help")
+	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -266,7 +258,7 @@ func TestAccountBillingInfoUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_RequiresAccountID(t *testing.T) {
-	_, _, err := executeCommand("accounts", "billing-info", "update")
+	_, _, err := executeCommand(nil, "accounts", "billing-info", "update")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
@@ -276,7 +268,7 @@ func TestAccountBillingInfoUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "billing-info", "update", "acct1", "--first-name", "Jane")
+	_, stderr, err := executeCommand(nil, "accounts", "billing-info", "update", "acct1", "--first-name", "Jane")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -295,10 +287,9 @@ func TestAccountBillingInfoUpdate_PositionalArg(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -317,10 +308,9 @@ func TestAccountBillingInfoUpdate_OnlyChangedFields(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane", "--company", "NewCo")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane", "--company", "NewCo")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -353,10 +343,9 @@ func TestAccountBillingInfoUpdate_BoolFlags(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--primary-payment-method", "--backup-payment-method")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--primary-payment-method", "--backup-payment-method")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -379,10 +368,9 @@ func TestAccountBillingInfoUpdate_AddressFlags(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1",
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1",
 		"--address-street1", "123 Main St",
 		"--address-street2", "Apt 4",
 		"--address-city", "San Francisco",
@@ -427,10 +415,9 @@ func TestAccountBillingInfoUpdate_NoAddressWhenNotSet(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -447,10 +434,9 @@ func TestAccountBillingInfoUpdate_TableOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	out, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -475,13 +461,12 @@ func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
 			return bi, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -501,10 +486,9 @@ func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -513,7 +497,7 @@ func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
 // --- billing-info remove ---
 
 func TestAccountBillingInfoRemove_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "billing-info", "--help")
+	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -523,7 +507,7 @@ func TestAccountBillingInfoRemove_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_RequiresAccountID(t *testing.T) {
-	_, _, err := executeCommand("accounts", "billing-info", "remove")
+	_, _, err := executeCommand(nil, "accounts", "billing-info", "remove")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
@@ -533,7 +517,7 @@ func TestAccountBillingInfoRemove_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommandWithStdin(
+	_, stderr, err := executeCommandWithStdin(nil,
 		bytes.NewBufferString("y\n"),
 		"accounts", "billing-info", "remove", "acct1",
 	)
@@ -547,7 +531,7 @@ func TestAccountBillingInfoRemove_NoAPIKey_ReturnsError(t *testing.T) {
 
 func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "billing-info", "remove", "acct-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -561,7 +545,7 @@ func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
 
 func TestAccountBillingInfoRemove_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "billing-info", "remove", "acct-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -578,11 +562,10 @@ func TestAccountBillingInfoRemove_ConfirmYes_Succeeds(t *testing.T) {
 			return &recurly.Empty{}, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "billing-info", "remove", "acct-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "billing-info", "remove", "acct-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -605,10 +588,9 @@ func TestAccountBillingInfoRemove_YesFlag_SkipsPrompt(t *testing.T) {
 			return &recurly.Empty{}, nil
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	out, stderr, err := executeCommand("accounts", "billing-info", "remove", "acct-456", "--yes")
+	out, stderr, err := executeCommand(app, "accounts", "billing-info", "remove", "acct-456", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -629,10 +611,9 @@ func TestAccountBillingInfoRemove_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockAccountBillingInfoAPI(mock)
-	defer cleanup()
+	app := setMockAccountBillingInfoAPI(mock)
 
-	_, _, err := executeCommand("accounts", "billing-info", "remove", "acct1", "--yes")
+	_, _, err := executeCommand(app, "accounts", "billing-info", "remove", "acct1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}

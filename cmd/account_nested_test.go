@@ -40,14 +40,12 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 	return nil, nil
 }
 
-func setMockAccountNestedAPI(mock *mockAccountNestedAPI) func() {
-	orig := testApp
-	testApp = &App{
+func setMockAccountNestedAPI(mock *mockAccountNestedAPI) *App {
+	return &App{
 		NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // --- Mock listers ---
@@ -212,7 +210,7 @@ func sampleAccountTransaction() recurly.Transaction {
 // --- accounts subscriptions list ---
 
 func TestAccountSubscriptions_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -222,7 +220,7 @@ func TestAccountSubscriptions_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "subscriptions", "--help")
+	out, _, err := executeCommand(nil, "accounts", "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -232,7 +230,7 @@ func TestAccountSubscriptionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountSubscriptionsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "--help")
+	out, _, err := executeCommand(nil, "accounts", "subscriptions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -249,10 +247,9 @@ func TestAccountSubscriptionsList_RequiresAccountID(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list")
 	if err == nil {
 		t.Fatal("expected error when account_id is missing")
 	}
@@ -262,7 +259,7 @@ func TestAccountSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	_, stderr, err := executeCommand(nil, "accounts", "subscriptions", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -280,10 +277,9 @@ func TestAccountSubscriptionsList_PassesAccountID(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -302,10 +298,9 @@ func TestAccountSubscriptionsList_PaginationParams(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -333,10 +328,9 @@ func TestAccountSubscriptionsList_FilterParams(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456", "--state", "active")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--state", "active")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -355,10 +349,9 @@ func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -384,10 +377,9 @@ func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -411,13 +403,12 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -441,13 +432,12 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -467,14 +457,13 @@ func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].id")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -490,10 +479,9 @@ func TestAccountSubscriptionsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -505,10 +493,9 @@ func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -524,13 +511,12 @@ func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -550,7 +536,7 @@ func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 // --- accounts invoices list ---
 
 func TestAccountInvoices_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -560,7 +546,7 @@ func TestAccountInvoices_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountInvoicesList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "invoices", "--help")
+	out, _, err := executeCommand(nil, "accounts", "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -570,7 +556,7 @@ func TestAccountInvoicesList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountInvoicesListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "invoices", "list", "--help")
+	out, _, err := executeCommand(nil, "accounts", "invoices", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -587,10 +573,9 @@ func TestAccountInvoicesList_RequiresAccountID(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list")
 	if err == nil {
 		t.Fatal("expected error when account_id is missing")
 	}
@@ -600,7 +585,7 @@ func TestAccountInvoicesList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	_, stderr, err := executeCommand(nil, "accounts", "invoices", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -618,10 +603,9 @@ func TestAccountInvoicesList_PassesAccountID(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -640,10 +624,9 @@ func TestAccountInvoicesList_PaginationParams(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -671,10 +654,9 @@ func TestAccountInvoicesList_FilterParams(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list", "acct-456", "--state", "paid", "--type", "charge")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--state", "paid", "--type", "charge")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -696,10 +678,9 @@ func TestAccountInvoicesList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -728,10 +709,9 @@ func TestAccountInvoicesList_TableOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -755,13 +735,12 @@ func TestAccountInvoicesList_JSONOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -785,13 +764,12 @@ func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -811,14 +789,13 @@ func TestAccountInvoicesList_JQFilter(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].number")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -834,10 +811,9 @@ func TestAccountInvoicesList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -849,10 +825,9 @@ func TestAccountInvoicesList_EmptyResults(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -868,13 +843,12 @@ func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -894,7 +868,7 @@ func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 // --- accounts transactions list ---
 
 func TestAccountTransactions_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "--help")
+	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -904,7 +878,7 @@ func TestAccountTransactions_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountTransactionsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "transactions", "--help")
+	out, _, err := executeCommand(nil, "accounts", "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -914,7 +888,7 @@ func TestAccountTransactionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountTransactionsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("accounts", "transactions", "list", "--help")
+	out, _, err := executeCommand(nil, "accounts", "transactions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -931,10 +905,9 @@ func TestAccountTransactionsList_RequiresAccountID(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list")
 	if err == nil {
 		t.Fatal("expected error when account_id is missing")
 	}
@@ -944,7 +917,7 @@ func TestAccountTransactionsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	_, stderr, err := executeCommand(nil, "accounts", "transactions", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -962,10 +935,9 @@ func TestAccountTransactionsList_PassesAccountID(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -984,10 +956,9 @@ func TestAccountTransactionsList_PaginationParams(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1015,10 +986,9 @@ func TestAccountTransactionsList_FilterParams(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list", "acct-456", "--type", "payment", "--success", "true")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--type", "payment", "--success", "true")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1040,10 +1010,9 @@ func TestAccountTransactionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1072,10 +1041,9 @@ func TestAccountTransactionsList_TableOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1099,13 +1067,12 @@ func TestAccountTransactionsList_JSONOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1129,13 +1096,12 @@ func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1155,14 +1121,13 @@ func TestAccountTransactionsList_JQFilter(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].id")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1178,10 +1143,9 @@ func TestAccountTransactionsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	_, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	_, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1193,10 +1157,9 @@ func TestAccountTransactionsList_EmptyResults(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1212,13 +1175,12 @@ func TestAccountTransactionsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
 		},
 	}
-	cleanup := setMockAccountNestedAPI(mock)
-	defer cleanup()
+	app := setMockAccountNestedAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

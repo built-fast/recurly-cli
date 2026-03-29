@@ -64,10 +64,9 @@ func TestWithWatch_NoFlag_RunsNormally(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	out, _, err := executeCommand("items", "get", "item123", "--output", "table")
+	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -90,10 +89,9 @@ func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "get", "item123", "--output", "json", "--watch=5s")
+	_, stderr, err := executeCommand(app, "items", "get", "item123", "--output", "json", "--watch=5s")
 	if err == nil {
 		t.Fatal("expected error for --watch with --output json in non-piped mode")
 	}
@@ -113,10 +111,9 @@ func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "get", "item123", "--output", "json-pretty", "--watch=5s")
+	_, stderr, err := executeCommand(app, "items", "get", "item123", "--output", "json-pretty", "--watch=5s")
 	if err == nil {
 		t.Fatal("expected error for --watch with --output json-pretty in non-piped mode")
 	}
@@ -132,10 +129,9 @@ func TestWithWatch_InvalidInterval_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "get", "item123", "--watch=abc")
+	_, stderr, err := executeCommand(app, "items", "get", "item123", "--watch=abc")
 	if err == nil {
 		t.Fatal("expected error for invalid watch interval")
 	}
@@ -151,10 +147,9 @@ func TestWithWatch_TooShortInterval_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	cleanup := setMockItemAPI(mock)
-	defer cleanup()
+	app := setMockItemAPI(mock)
 
-	_, stderr, err := executeCommand("items", "get", "item123", "--watch=500ms")
+	_, stderr, err := executeCommand(app, "items", "get", "item123", "--watch=500ms")
 	if err == nil {
 		t.Fatal("expected error for too-short watch interval")
 	}
@@ -164,7 +159,7 @@ func TestWithWatch_TooShortInterval_ReturnsError(t *testing.T) {
 }
 
 func TestWithWatch_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("items", "get", "--help")
+	out, _, err := executeCommand(nil, "items", "get", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

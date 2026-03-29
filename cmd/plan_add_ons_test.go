@@ -90,14 +90,12 @@ func (m *mockAddOnLister) Next() string {
 	return ""
 }
 
-func setMockPlanAddOnAPI(mock *mockPlanAddOnAPI) func() {
-	orig := testApp
-	testApp = &App{
+func setMockPlanAddOnAPI(mock *mockPlanAddOnAPI) *App {
+	return &App{
 		NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 func sampleAddOn() recurly.AddOn {
@@ -123,7 +121,7 @@ func sampleAddOn() recurly.AddOn {
 }
 
 func TestPlanAddOnsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +131,7 @@ func TestPlanAddOnsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "list", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -150,10 +148,9 @@ func TestPlanAddOnsList_RequiresPlanID(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "list")
+	_, _, err := executeCommand(app, "plans", "add-ons", "list")
 	if err == nil {
 		t.Fatal("expected error when plan_id is missing")
 	}
@@ -163,7 +160,7 @@ func TestPlanAddOnsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	_, stderr, err := executeCommand(nil, "plans", "add-ons", "list", "code-plan1")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -183,10 +180,9 @@ func TestPlanAddOnsList_PaginationParams(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "list", "code-plan1", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -217,10 +213,9 @@ func TestPlanAddOnsList_FilterParams(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "list", "code-plan1", "--state", "active")
+	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--state", "active")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -239,10 +234,9 @@ func TestPlanAddOnsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -268,10 +262,9 @@ func TestPlanAddOnsList_TableOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -295,13 +288,12 @@ func TestPlanAddOnsList_JSONOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -325,13 +317,12 @@ func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -356,14 +347,13 @@ func TestPlanAddOnsList_JQFilter(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".data[0].code")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -379,10 +369,9 @@ func TestPlanAddOnsList_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	_, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -394,10 +383,9 @@ func TestPlanAddOnsList_EmptyResults(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -414,13 +402,12 @@ func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -440,7 +427,7 @@ func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 // --- plan add-ons get ---
 
 func TestPlanAddOnsGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -450,12 +437,12 @@ func TestPlanAddOnsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_RequiresBothArgs(t *testing.T) {
-	_, _, err := executeCommand("plans", "add-ons", "get")
+	_, _, err := executeCommand(nil, "plans", "add-ons", "get")
 	if err == nil {
 		t.Fatal("expected error when no args provided")
 	}
 
-	_, _, err = executeCommand("plans", "add-ons", "get", "plan1")
+	_, _, err = executeCommand(nil, "plans", "add-ons", "get", "plan1")
 	if err == nil {
 		t.Fatal("expected error when only plan_id provided")
 	}
@@ -465,7 +452,7 @@ func TestPlanAddOnsGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	_, stderr, err := executeCommand(nil, "plans", "add-ons", "get", "plan1", "addon1")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -485,10 +472,9 @@ func TestPlanAddOnsGet_PositionalArgs(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "get", "code-plan1", "extra-users")
+	_, _, err := executeCommand(app, "plans", "add-ons", "get", "code-plan1", "extra-users")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -507,10 +493,9 @@ func TestPlanAddOnsGet_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -543,13 +528,12 @@ func TestPlanAddOnsGet_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -573,13 +557,12 @@ func TestPlanAddOnsGet_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -601,14 +584,13 @@ func TestPlanAddOnsGet_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -624,10 +606,9 @@ func TestPlanAddOnsGet_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "get", "plan1", "addon1")
+	_, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -636,7 +617,7 @@ func TestPlanAddOnsGet_SDKError(t *testing.T) {
 // --- plan add-ons create ---
 
 func TestPlanAddOnsCreate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -646,7 +627,7 @@ func TestPlanAddOnsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsCreateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "create", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -663,7 +644,7 @@ func TestPlanAddOnsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_RequiresPlanID(t *testing.T) {
-	_, _, err := executeCommand("plans", "add-ons", "create")
+	_, _, err := executeCommand(nil, "plans", "add-ons", "create")
 	if err == nil {
 		t.Fatal("expected error when plan_id is missing")
 	}
@@ -673,7 +654,7 @@ func TestPlanAddOnsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "add-ons", "create", "plan1", "--code", "test", "--name", "Test")
+	_, stderr, err := executeCommand(nil, "plans", "add-ons", "create", "plan1", "--code", "test", "--name", "Test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -694,10 +675,9 @@ func TestPlanAddOnsCreate_CoreFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "code-plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "code-plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 	)
@@ -726,10 +706,9 @@ func TestPlanAddOnsCreate_AllOptionalFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 		"--add-on-type", "usage",
@@ -789,10 +768,9 @@ func TestPlanAddOnsCreate_MultiCurrencyFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 		"--currency", "USD", "--currency", "EUR",
@@ -827,10 +805,9 @@ func TestPlanAddOnsCreate_SingleCurrency(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 		"--currency", "USD",
@@ -859,10 +836,9 @@ func TestPlanAddOnsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
 		"--name", "Test",
 		"--currency", "USD", "--currency", "EUR",
@@ -886,10 +862,9 @@ func TestPlanAddOnsCreate_UnsetFlagsNotSent(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
 		"--name", "Test",
 	)
@@ -939,10 +914,9 @@ func TestPlanAddOnsCreate_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 	)
@@ -972,13 +946,12 @@ func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 	)
@@ -1002,13 +975,12 @@ func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 	)
@@ -1033,14 +1005,13 @@ func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
 	)
@@ -1059,10 +1030,9 @@ func TestPlanAddOnsCreate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "create", "plan1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "test",
 		"--name", "Test",
 	)
@@ -1074,7 +1044,7 @@ func TestPlanAddOnsCreate_SDKError(t *testing.T) {
 // --- plan add-ons update ---
 
 func TestPlanAddOnsUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1084,7 +1054,7 @@ func TestPlanAddOnsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "update", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1101,12 +1071,12 @@ func TestPlanAddOnsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_RequiresBothArgs(t *testing.T) {
-	_, _, err := executeCommand("plans", "add-ons", "update")
+	_, _, err := executeCommand(nil, "plans", "add-ons", "update")
 	if err == nil {
 		t.Fatal("expected error when no args provided")
 	}
 
-	_, _, err = executeCommand("plans", "add-ons", "update", "plan1")
+	_, _, err = executeCommand(nil, "plans", "add-ons", "update", "plan1")
 	if err == nil {
 		t.Fatal("expected error when only plan_id provided")
 	}
@@ -1116,7 +1086,7 @@ func TestPlanAddOnsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1", "--name", "Updated")
+	_, stderr, err := executeCommand(nil, "plans", "add-ons", "update", "plan1", "addon1", "--name", "Updated")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -1136,10 +1106,9 @@ func TestPlanAddOnsUpdate_PositionalArgs(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "code-plan1", "extra-users", "--name", "Updated")
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "code-plan1", "extra-users", "--name", "Updated")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1161,10 +1130,9 @@ func TestPlanAddOnsUpdate_AllOptionalFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--code", "new-code",
 		"--name", "New Name",
 		"--default-quantity", "5",
@@ -1226,10 +1194,9 @@ func TestPlanAddOnsUpdate_MultiCurrencyFlags(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "5.00", "--unit-amount", "4.50",
 	)
@@ -1259,10 +1226,9 @@ func TestPlanAddOnsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--currency", "USD", "--currency", "EUR",
 		"--unit-amount", "5.00",
 	)
@@ -1284,10 +1250,9 @@ func TestPlanAddOnsUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Updated Name",
 	)
 	if err != nil {
@@ -1339,10 +1304,9 @@ func TestPlanAddOnsUpdate_TableOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
 	)
 	if err != nil {
@@ -1371,13 +1335,12 @@ func TestPlanAddOnsUpdate_JSONOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
 	)
 	if err != nil {
@@ -1400,13 +1363,12 @@ func TestPlanAddOnsUpdate_JSONPrettyOutput(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json-pretty")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
 	)
 	if err != nil {
@@ -1430,14 +1392,13 @@ func TestPlanAddOnsUpdate_JQFilter(t *testing.T) {
 			return &addOn, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	viper.Set("output", "json")
 	viper.Set("jq", ".code")
 	defer viper.Reset()
 
-	out, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
 	)
 	if err != nil {
@@ -1455,10 +1416,9 @@ func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "validation error"}
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "update", "plan1", "addon1",
+	_, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Test",
 	)
 	if err == nil {
@@ -1469,7 +1429,7 @@ func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
 // --- Delete tests ---
 
 func TestPlanAddOnsDelete_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1479,7 +1439,7 @@ func TestPlanAddOnsDelete_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsDeleteHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("plans", "add-ons", "delete", "--help")
+	out, _, err := executeCommand(nil, "plans", "add-ons", "delete", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1489,12 +1449,12 @@ func TestPlanAddOnsDeleteHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_MissingArgs_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("plans", "add-ons", "delete")
+	_, _, err := executeCommand(nil, "plans", "add-ons", "delete")
 	if err == nil {
 		t.Fatal("expected error for missing arguments")
 	}
 
-	_, _, err = executeCommand("plans", "add-ons", "delete", "plan1")
+	_, _, err = executeCommand(nil, "plans", "add-ons", "delete", "plan1")
 	if err == nil {
 		t.Fatal("expected error for missing add_on_id argument")
 	}
@@ -1502,7 +1462,7 @@ func TestPlanAddOnsDelete_MissingArgs_ReturnsError(t *testing.T) {
 
 func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1516,7 +1476,7 @@ func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
 
 func TestPlanAddOnsDelete_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1536,11 +1496,10 @@ func TestPlanAddOnsDelete_ConfirmYes_Succeeds(t *testing.T) {
 			return &a, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "plans", "add-ons", "delete", "plan-789", "addon-123")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "plans", "add-ons", "delete", "plan-789", "addon-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1569,10 +1528,9 @@ func TestPlanAddOnsDelete_YesFlag_SkipsPrompt(t *testing.T) {
 			return &a, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, stderr, err := executeCommand("plans", "add-ons", "delete", "plan-456", "addon-789", "--yes")
+	out, stderr, err := executeCommand(app, "plans", "add-ons", "delete", "plan-456", "addon-789", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1597,10 +1555,9 @@ func TestPlanAddOnsDelete_DetailView(t *testing.T) {
 			return &a, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes")
+	out, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1618,10 +1575,9 @@ func TestPlanAddOnsDelete_JSONOutput(t *testing.T) {
 			return &a, nil
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	out, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1640,10 +1596,9 @@ func TestPlanAddOnsDelete_SDKError(t *testing.T) {
 			return nil, &recurly.Error{Message: "not found"}
 		},
 	}
-	cleanup := setMockPlanAddOnAPI(mock)
-	defer cleanup()
+	app := setMockPlanAddOnAPI(mock)
 
-	_, _, err := executeCommand("plans", "add-ons", "delete", "plan1", "addon1", "--yes")
+	_, _, err := executeCommand(app, "plans", "add-ons", "delete", "plan1", "addon1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}

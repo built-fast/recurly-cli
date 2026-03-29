@@ -69,7 +69,7 @@ func TestOpenCmd_NoArgs_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url")
+	out, _, err := executeCommand(nil, "open", "--url")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestOpenCmd_ResourceOnly_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "accounts")
+	out, _, err := executeCommand(nil, "open", "--url", "accounts")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestOpenCmd_AccountWithCode_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "accounts", "acct123")
+	out, _, err := executeCommand(nil, "open", "--url", "accounts", "acct123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestOpenCmd_PlanWithCode_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "plans", "gold")
+	out, _, err := executeCommand(nil, "open", "--url", "plans", "gold")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestOpenCmd_ItemWithCode_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "items", "widget")
+	out, _, err := executeCommand(nil, "open", "--url", "items", "widget")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestOpenCmd_CouponWithCode_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "coupons", "SAVE10")
+	out, _, err := executeCommand(nil, "open", "--url", "coupons", "SAVE10")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestOpenCmd_InvoiceWithNumber_PrintsURL(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "invoices", "1001")
+	out, _, err := executeCommand(nil, "open", "--url", "invoices", "1001")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -167,8 +167,7 @@ func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	orig := testApp
-	testApp = &App{
+	app := &App{
 		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
 			return &mockSubscriptionAPI{
 				getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -177,9 +176,8 @@ func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
 			}, nil
 		},
 	}
-	defer func() { testApp = orig }()
 
-	out, _, err := executeCommand("open", "--url", "subscriptions", "sxyz")
+	out, _, err := executeCommand(app, "open", "--url", "subscriptions", "sxyz")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -193,8 +191,7 @@ func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	orig := testApp
-	testApp = &App{
+	app := &App{
 		NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) {
 			return &mockTransactionAPI{
 				getTransactionFn: func(id string, opts ...recurly.Option) (*recurly.Transaction, error) {
@@ -203,9 +200,8 @@ func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
 			}, nil
 		},
 	}
-	defer func() { testApp = orig }()
 
-	out, _, err := executeCommand("open", "--url", "transactions", "tabc")
+	out, _, err := executeCommand(app, "open", "--url", "transactions", "tabc")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -219,7 +215,7 @@ func TestOpenCmd_SiteFlagOverridesConfig(t *testing.T) {
 	viper.Set("site", "configsite")
 	defer viper.Set("site", "")
 
-	out, _, err := executeCommand("open", "--url", "--site", "override")
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "override")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -232,7 +228,7 @@ func TestOpenCmd_SiteFlagOverridesConfig(t *testing.T) {
 func TestOpenCmd_NoSiteConfigured_ReturnsError(t *testing.T) {
 	viper.Set("site", "")
 
-	_, stderr, err := executeCommand("open", "--url")
+	_, stderr, err := executeCommand(nil, "open", "--url")
 	if err == nil {
 		t.Fatal("expected error when no site configured")
 	}
@@ -245,7 +241,7 @@ func TestOpenCmd_InvalidResource_ReturnsError(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	_, stderr, err := executeCommand("open", "--url", "widgets")
+	_, stderr, err := executeCommand(nil, "open", "--url", "widgets")
 	if err == nil {
 		t.Fatal("expected error for invalid resource type")
 	}
@@ -263,7 +259,7 @@ func TestOpenCmd_TooManyArgs_ReturnsError(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	_, _, err := executeCommand("open", "accounts", "code", "extra")
+	_, _, err := executeCommand(nil, "open", "accounts", "code", "extra")
 	if err == nil {
 		t.Fatal("expected error for too many args")
 	}
@@ -281,7 +277,7 @@ func TestOpenCmd_OpenssBrowser(t *testing.T) {
 	}
 	defer func() { openBrowserFunc = orig }()
 
-	_, _, err := executeCommand("open", "accounts", "acct123")
+	_, _, err := executeCommand(nil, "open", "accounts", "acct123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -301,7 +297,7 @@ func TestOpenCmd_BrowserError_ReturnsError(t *testing.T) {
 	}
 	defer func() { openBrowserFunc = orig }()
 
-	_, _, err := executeCommand("open")
+	_, _, err := executeCommand(nil, "open")
 	if err == nil {
 		t.Fatal("expected error when browser fails")
 	}
@@ -314,8 +310,7 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	orig := testApp
-	testApp = &App{
+	app := &App{
 		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
 			return &mockSubscriptionAPI{
 				getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -324,9 +319,8 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 			}, nil
 		},
 	}
-	defer func() { testApp = orig }()
 
-	_, stderr, err := executeCommand("open", "--url", "subscriptions", "bad-id")
+	_, stderr, err := executeCommand(app, "open", "--url", "subscriptions", "bad-id")
 	if err == nil {
 		t.Fatal("expected error when subscription fetch fails")
 	}
@@ -336,7 +330,7 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 }
 
 func TestOpenCmd_Help_ShowsUsage(t *testing.T) {
-	out, _, err := executeCommand("open", "--help")
+	out, _, err := executeCommand(nil, "open", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

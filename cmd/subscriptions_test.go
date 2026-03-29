@@ -104,15 +104,13 @@ func (m *mockSubscriptionLister) Next() string {
 	return ""
 }
 
-// setMockSubscriptionAPI installs a mock and returns a cleanup function.
-func setMockSubscriptionAPI(mock *mockSubscriptionAPI) func() {
-	orig := testApp
-	testApp = &App{
+// setMockSubscriptionAPI installs a mock and returns an *App for context injection.
+func setMockSubscriptionAPI(mock *mockSubscriptionAPI) *App {
+	return &App{
 		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // sampleSubscription returns a test subscription with predictable fields for list output.
@@ -167,7 +165,7 @@ func sampleSubscriptionDetail() *recurly.Subscription {
 // --- subscriptions list ---
 
 func TestSubscriptionsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -177,7 +175,7 @@ func TestSubscriptionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsListHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "list", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -192,7 +190,7 @@ func TestSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("subscriptions", "list")
+	_, stderr, err := executeCommand(nil, "subscriptions", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -203,7 +201,7 @@ func TestSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("subscriptions", "list", "--begin-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "subscriptions", "list", "--begin-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid begin-time")
 	}
@@ -214,7 +212,7 @@ func TestSubscriptionsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsList_InvalidEndTime_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("subscriptions", "list", "--end-time", "not-a-date")
+	_, stderr, err := executeCommand(nil, "subscriptions", "list", "--end-time", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid end-time")
 	}
@@ -232,10 +230,9 @@ func TestSubscriptionsList_PaginationParams(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "subscriptions", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -263,10 +260,9 @@ func TestSubscriptionsList_FilterParams(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "list",
+	_, _, err := executeCommand(app, "subscriptions", "list",
 		"--state", "active",
 		"--begin-time", "2025-01-01T00:00:00Z",
 		"--end-time", "2025-12-31T23:59:59Z",
@@ -295,10 +291,9 @@ func TestSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "list")
+	_, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -324,10 +319,9 @@ func TestSubscriptionsList_TableOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "list")
+	out, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -351,10 +345,9 @@ func TestSubscriptionsList_JSONOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "list", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -388,10 +381,9 @@ func TestSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "list", "--output", "json-pretty")
+	out, _, err := executeCommand(app, "subscriptions", "list", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -419,10 +411,9 @@ func TestSubscriptionsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "list")
+	_, _, err := executeCommand(app, "subscriptions", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -434,10 +425,9 @@ func TestSubscriptionsList_EmptyResults(t *testing.T) {
 			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "list")
+	out, _, err := executeCommand(app, "subscriptions", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -449,7 +439,7 @@ func TestSubscriptionsList_EmptyResults(t *testing.T) {
 // --- subscriptions get ---
 
 func TestSubscriptionsGet_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -459,7 +449,7 @@ func TestSubscriptionsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "get")
+	_, stderr, err := executeCommand(nil, "subscriptions", "get")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -472,7 +462,7 @@ func TestSubscriptionsGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("subscriptions", "get", "sub-123")
+	_, stderr, err := executeCommand(nil, "subscriptions", "get", "sub-123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -489,10 +479,9 @@ func TestSubscriptionsGet_PositionalArg(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "get", "my-sub-id")
+	_, _, err := executeCommand(app, "subscriptions", "get", "my-sub-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -508,10 +497,9 @@ func TestSubscriptionsGet_TableOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "get", "sub-123", "--output", "table")
+	out, _, err := executeCommand(app, "subscriptions", "get", "sub-123", "--output", "table")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -537,10 +525,9 @@ func TestSubscriptionsGet_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "get", "sub-123", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "get", "sub-123", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -563,10 +550,9 @@ func TestSubscriptionsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "subscriptions", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found subscription")
 	}
@@ -578,7 +564,7 @@ func TestSubscriptionsGet_NotFound(t *testing.T) {
 // --- subscriptions create ---
 
 func TestSubscriptionsCreate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -588,7 +574,7 @@ func TestSubscriptionsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsCreateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "create", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -603,7 +589,7 @@ func TestSubscriptionsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("subscriptions", "create", "--plan-code", "gold")
+	_, stderr, err := executeCommand(nil, "subscriptions", "create", "--plan-code", "gold")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -621,10 +607,9 @@ func TestSubscriptionsCreate_FlagToStructMapping(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "create",
+	_, _, err := executeCommand(app, "subscriptions", "create",
 		"--plan-code", "gold",
 		"--account-code", "acct-new",
 		"--currency", "USD",
@@ -700,10 +685,9 @@ func TestSubscriptionsCreate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "create", "--plan-code", "gold")
+	_, _, err := executeCommand(app, "subscriptions", "create", "--plan-code", "gold")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -734,10 +718,9 @@ func TestSubscriptionsCreate_TimestampFlags(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "create",
+	_, _, err := executeCommand(app, "subscriptions", "create",
 		"--plan-code", "gold",
 		"--trial-ends-at", "2025-06-01T00:00:00Z",
 		"--starts-at", "2025-05-01T00:00:00Z",
@@ -760,7 +743,7 @@ func TestSubscriptionsCreate_TimestampFlags(t *testing.T) {
 
 func TestSubscriptionsCreate_InvalidTimestamp_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("subscriptions", "create", "--plan-code", "gold", "--trial-ends-at", "not-a-date")
+	_, stderr, err := executeCommand(nil, "subscriptions", "create", "--plan-code", "gold", "--trial-ends-at", "not-a-date")
 	if err == nil {
 		t.Fatal("expected error for invalid timestamp")
 	}
@@ -775,10 +758,9 @@ func TestSubscriptionsCreate_SuccessOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "create", "--plan-code", "gold")
+	out, _, err := executeCommand(app, "subscriptions", "create", "--plan-code", "gold")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -802,10 +784,9 @@ func TestSubscriptionsCreate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "create")
+	_, stderr, err := executeCommand(app, "subscriptions", "create")
 	if err == nil {
 		t.Fatal("expected error for validation failure")
 	}
@@ -817,7 +798,7 @@ func TestSubscriptionsCreate_ValidationError(t *testing.T) {
 // --- subscriptions update ---
 
 func TestSubscriptionsUpdate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -827,7 +808,7 @@ func TestSubscriptionsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsUpdateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "update", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -839,7 +820,7 @@ func TestSubscriptionsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "update")
+	_, stderr, err := executeCommand(nil, "subscriptions", "update")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -852,7 +833,7 @@ func TestSubscriptionsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	_, stderr, err := executeCommand("subscriptions", "update", "sub-123", "--collection-method", "manual")
+	_, stderr, err := executeCommand(nil, "subscriptions", "update", "sub-123", "--collection-method", "manual")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
 	}
@@ -872,10 +853,9 @@ func TestSubscriptionsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "update", "sub-456",
+	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456",
 		"--collection-method", "manual",
 		"--remaining-billing-cycles", "5",
 		"--renewal-billing-cycles", "3",
@@ -946,10 +926,9 @@ func TestSubscriptionsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "update", "sub-456", "--collection-method", "manual")
+	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456", "--collection-method", "manual")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -977,10 +956,9 @@ func TestSubscriptionsUpdate_NextBillDate(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "update", "sub-456", "--next-bill-date", "2025-06-01T00:00:00Z")
+	_, _, err := executeCommand(app, "subscriptions", "update", "sub-456", "--next-bill-date", "2025-06-01T00:00:00Z")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -992,7 +970,7 @@ func TestSubscriptionsUpdate_NextBillDate(t *testing.T) {
 
 func TestSubscriptionsUpdate_InvalidNextBillDate_ReturnsError(t *testing.T) {
 	t.Setenv("RECURLY_API_KEY", "test-key")
-	_, stderr, err := executeCommand("subscriptions", "update", "sub-456", "--next-bill-date", "bad-date")
+	_, stderr, err := executeCommand(nil, "subscriptions", "update", "sub-456", "--next-bill-date", "bad-date")
 	if err == nil {
 		t.Fatal("expected error for invalid next-bill-date")
 	}
@@ -1007,10 +985,9 @@ func TestSubscriptionsUpdate_SuccessOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "update", "sub-123", "--collection-method", "manual")
+	out, _, err := executeCommand(app, "subscriptions", "update", "sub-123", "--collection-method", "manual")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1023,7 +1000,7 @@ func TestSubscriptionsUpdate_SuccessOutput(t *testing.T) {
 // --- subscriptions cancel ---
 
 func TestSubscriptionsCancel_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1033,7 +1010,7 @@ func TestSubscriptionsCancel_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsCancelHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "cancel", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "cancel", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1045,7 +1022,7 @@ func TestSubscriptionsCancelHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "cancel")
+	_, stderr, err := executeCommand(nil, "subscriptions", "cancel")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1056,7 +1033,7 @@ func TestSubscriptionsCancel_MissingArg_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsCancel_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "cancel", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "cancel", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1070,7 +1047,7 @@ func TestSubscriptionsCancel_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsCancel_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "cancel", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "cancel", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1089,11 +1066,10 @@ func TestSubscriptionsCancel_ConfirmYes_Succeeds(t *testing.T) {
 			return sub, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "cancel", "sub-789")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "cancel", "sub-789")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1118,10 +1094,9 @@ func TestSubscriptionsCancel_YesFlag_SkipsPrompt(t *testing.T) {
 			return sub, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "cancel", "sub-789", "--yes")
+	out, stderr, err := executeCommand(app, "subscriptions", "cancel", "sub-789", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1145,10 +1120,9 @@ func TestSubscriptionsCancel_TimeframeFlag(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "cancel", "sub-123", "--yes", "--timeframe", "term_end")
+	_, _, err := executeCommand(app, "subscriptions", "cancel", "sub-123", "--yes", "--timeframe", "term_end")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1170,10 +1144,9 @@ func TestSubscriptionsCancel_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "cancel", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "subscriptions", "cancel", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1188,10 +1161,9 @@ func TestSubscriptionsCancel_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "cancel", "sub-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "cancel", "sub-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1208,7 +1180,7 @@ func TestSubscriptionsCancel_JSONOutput(t *testing.T) {
 // --- subscriptions reactivate ---
 
 func TestSubscriptionsReactivate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1218,7 +1190,7 @@ func TestSubscriptionsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsReactivateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "reactivate", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1228,7 +1200,7 @@ func TestSubscriptionsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "reactivate")
+	_, stderr, err := executeCommand(nil, "subscriptions", "reactivate")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1239,7 +1211,7 @@ func TestSubscriptionsReactivate_MissingArg_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "reactivate", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "reactivate", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1253,7 +1225,7 @@ func TestSubscriptionsReactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "reactivate", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "reactivate", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1270,11 +1242,10 @@ func TestSubscriptionsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("yes\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "reactivate", "sub-closed")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "reactivate", "sub-closed")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1297,10 +1268,9 @@ func TestSubscriptionsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "reactivate", "sub-closed", "--yes")
+	out, stderr, err := executeCommand(app, "subscriptions", "reactivate", "sub-closed", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1324,10 +1294,9 @@ func TestSubscriptionsReactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "reactivate", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "subscriptions", "reactivate", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1342,10 +1311,9 @@ func TestSubscriptionsReactivate_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "reactivate", "sub-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "reactivate", "sub-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1362,7 +1330,7 @@ func TestSubscriptionsReactivate_JSONOutput(t *testing.T) {
 // --- subscriptions pause ---
 
 func TestSubscriptionsPause_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1372,7 +1340,7 @@ func TestSubscriptionsPause_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsPauseHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "pause", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "pause", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1384,7 +1352,7 @@ func TestSubscriptionsPauseHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsPause_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "pause", "--remaining-pause-cycles", "3")
+	_, stderr, err := executeCommand(nil, "subscriptions", "pause", "--remaining-pause-cycles", "3")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1394,7 +1362,7 @@ func TestSubscriptionsPause_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsPause_MissingRequiredFlag_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "pause", "sub-123", "--yes", "--no-input")
+	_, stderr, err := executeCommand(nil, "subscriptions", "pause", "sub-123", "--yes", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when required flag is missing")
 	}
@@ -1405,7 +1373,7 @@ func TestSubscriptionsPause_MissingRequiredFlag_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsPause_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1419,7 +1387,7 @@ func TestSubscriptionsPause_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsPause_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1439,11 +1407,10 @@ func TestSubscriptionsPause_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "pause", "sub-active", "--remaining-pause-cycles", "3")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "pause", "sub-active", "--remaining-pause-cycles", "3")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1469,10 +1436,9 @@ func TestSubscriptionsPause_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "pause", "sub-active", "--yes", "--remaining-pause-cycles", "2")
+	out, stderr, err := executeCommand(app, "subscriptions", "pause", "sub-active", "--yes", "--remaining-pause-cycles", "2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1496,10 +1462,9 @@ func TestSubscriptionsPause_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "pause", "nonexistent", "--yes", "--remaining-pause-cycles", "1")
+	_, stderr, err := executeCommand(app, "subscriptions", "pause", "nonexistent", "--yes", "--remaining-pause-cycles", "1")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1511,7 +1476,7 @@ func TestSubscriptionsPause_SDKError(t *testing.T) {
 // --- subscriptions resume ---
 
 func TestSubscriptionsResume_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1521,7 +1486,7 @@ func TestSubscriptionsResume_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsResumeHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "resume", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "resume", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1531,7 +1496,7 @@ func TestSubscriptionsResumeHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsResume_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "resume")
+	_, stderr, err := executeCommand(nil, "subscriptions", "resume")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1542,7 +1507,7 @@ func TestSubscriptionsResume_MissingArg_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsResume_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "resume", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "resume", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1556,7 +1521,7 @@ func TestSubscriptionsResume_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsResume_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "resume", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "resume", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1573,11 +1538,10 @@ func TestSubscriptionsResume_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("yes\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "resume", "sub-paused")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "resume", "sub-paused")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1600,10 +1564,9 @@ func TestSubscriptionsResume_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "resume", "sub-paused", "--yes")
+	out, stderr, err := executeCommand(app, "subscriptions", "resume", "sub-paused", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1627,10 +1590,9 @@ func TestSubscriptionsResume_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "resume", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "subscriptions", "resume", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1645,10 +1607,9 @@ func TestSubscriptionsResume_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "resume", "sub-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "resume", "sub-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1665,7 +1626,7 @@ func TestSubscriptionsResume_JSONOutput(t *testing.T) {
 // --- subscriptions terminate ---
 
 func TestSubscriptionsTerminate_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1675,7 +1636,7 @@ func TestSubscriptionsTerminate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsTerminateHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "terminate", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "terminate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1687,7 +1648,7 @@ func TestSubscriptionsTerminateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "terminate")
+	_, stderr, err := executeCommand(nil, "subscriptions", "terminate")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1698,7 +1659,7 @@ func TestSubscriptionsTerminate_MissingArg_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsTerminate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "terminate", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "terminate", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1712,7 +1673,7 @@ func TestSubscriptionsTerminate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsTerminate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "terminate", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "terminate", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1731,11 +1692,10 @@ func TestSubscriptionsTerminate_ConfirmYes_Succeeds(t *testing.T) {
 			return sub, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "terminate", "sub-active")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "terminate", "sub-active")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1760,10 +1720,9 @@ func TestSubscriptionsTerminate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sub, nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "terminate", "sub-active", "--yes")
+	out, stderr, err := executeCommand(app, "subscriptions", "terminate", "sub-active", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1787,10 +1746,9 @@ func TestSubscriptionsTerminate_RefundAndChargeFlags(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, _, err := executeCommand("subscriptions", "terminate", "sub-123", "--yes", "--refund", "full", "--charge")
+	_, _, err := executeCommand(app, "subscriptions", "terminate", "sub-123", "--yes", "--refund", "full", "--charge")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1815,10 +1773,9 @@ func TestSubscriptionsTerminate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "terminate", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "subscriptions", "terminate", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1833,10 +1790,9 @@ func TestSubscriptionsTerminate_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "terminate", "sub-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "terminate", "sub-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1853,7 +1809,7 @@ func TestSubscriptionsTerminate_JSONOutput(t *testing.T) {
 // --- subscriptions convert-trial ---
 
 func TestSubscriptionsConvertTrial_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1863,7 +1819,7 @@ func TestSubscriptionsConvertTrial_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrialHelp_ShowsFlags(t *testing.T) {
-	out, _, err := executeCommand("subscriptions", "convert-trial", "--help")
+	out, _, err := executeCommand(nil, "subscriptions", "convert-trial", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1873,7 +1829,7 @@ func TestSubscriptionsConvertTrialHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "convert-trial")
+	_, stderr, err := executeCommand(nil, "subscriptions", "convert-trial")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
 	}
@@ -1884,7 +1840,7 @@ func TestSubscriptionsConvertTrial_MissingArg_ReturnsError(t *testing.T) {
 
 func TestSubscriptionsConvertTrial_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "convert-trial", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "convert-trial", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1898,7 +1854,7 @@ func TestSubscriptionsConvertTrial_ConfirmNo_Cancels(t *testing.T) {
 
 func TestSubscriptionsConvertTrial_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "convert-trial", "sub-123")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "convert-trial", "sub-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1915,11 +1871,10 @@ func TestSubscriptionsConvertTrial_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "subscriptions", "convert-trial", "sub-trial")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "subscriptions", "convert-trial", "sub-trial")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1942,10 +1897,9 @@ func TestSubscriptionsConvertTrial_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, stderr, err := executeCommand("subscriptions", "convert-trial", "sub-trial", "--yes")
+	out, stderr, err := executeCommand(app, "subscriptions", "convert-trial", "sub-trial", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1969,10 +1923,9 @@ func TestSubscriptionsConvertTrial_SDKError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	_, stderr, err := executeCommand("subscriptions", "convert-trial", "nonexistent", "--yes")
+	_, stderr, err := executeCommand(app, "subscriptions", "convert-trial", "nonexistent", "--yes")
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -1987,10 +1940,9 @@ func TestSubscriptionsConvertTrial_JSONOutput(t *testing.T) {
 			return sampleSubscriptionDetail(), nil
 		},
 	}
-	cleanup := setMockSubscriptionAPI(mock)
-	defer cleanup()
+	app := setMockSubscriptionAPI(mock)
 
-	out, _, err := executeCommand("subscriptions", "convert-trial", "sub-123", "--yes", "--output", "json")
+	out, _, err := executeCommand(app, "subscriptions", "convert-trial", "sub-123", "--yes", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

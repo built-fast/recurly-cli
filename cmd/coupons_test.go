@@ -129,15 +129,13 @@ func (m *mockUniqueCouponCodeLister) Next() string {
 	return ""
 }
 
-// setMockCouponAPI installs a mock and returns a cleanup function.
-func setMockCouponAPI(mock *mockCouponAPI) func() {
-	orig := testApp
-	testApp = &App{
+// setMockCouponAPI installs a mock and returns an *App for context injection.
+func setMockCouponAPI(mock *mockCouponAPI) *App {
+	return &App{
 		NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) {
 			return mock, nil
 		},
 	}
-	return func() { testApp = orig }
 }
 
 // sampleCoupon returns a test coupon with predictable fields for list tests.
@@ -185,10 +183,9 @@ func TestCouponsList_Success(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "list")
+	out, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -211,10 +208,9 @@ func TestCouponsList_EmptyResults(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "list")
+	out, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -230,10 +226,9 @@ func TestCouponsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "list")
+	_, _, err := executeCommand(app, "coupons", "list")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -248,10 +243,9 @@ func TestCouponsList_FlagPassthrough(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
+	_, _, err := executeCommand(app, "coupons", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -279,10 +273,9 @@ func TestCouponsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "list")
+	_, _, err := executeCommand(app, "coupons", "list")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -312,10 +305,9 @@ func TestCouponsGet_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "get", "SAVE25")
+	out, _, err := executeCommand(app, "coupons", "get", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -339,10 +331,9 @@ func TestCouponsGet_PositionalArg(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "get", "my-coupon-id")
+	_, _, err := executeCommand(app, "coupons", "get", "my-coupon-id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -360,10 +351,9 @@ func TestCouponsGet_NotFoundError(t *testing.T) {
 			}
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, stderr, err := executeCommand("coupons", "get", "nonexistent")
+	_, stderr, err := executeCommand(app, "coupons", "get", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for not found coupon")
 	}
@@ -373,7 +363,7 @@ func TestCouponsGet_NotFoundError(t *testing.T) {
 }
 
 func TestCouponsGet_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("coupons", "get")
+	_, stderr, err := executeCommand(nil, "coupons", "get")
 	if err == nil {
 		t.Fatal("expected error when no coupon ID is provided")
 	}
@@ -392,10 +382,9 @@ func TestCouponsCreatePercent_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "create-percent",
+	out, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "SAVE25",
 		"--name", "Save 25%",
 		"--discount-percent", "25",
@@ -433,10 +422,9 @@ func TestCouponsCreatePercent_AllOptionalFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "create-percent",
+	_, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "FULL",
 		"--name", "Full Coupon",
 		"--discount-percent", "50",
@@ -517,11 +505,10 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
 	// Missing --code
-	_, stderr, err := executeCommand("coupons", "create-percent",
+	_, stderr, err := executeCommand(app, "coupons", "create-percent",
 		"--no-input",
 		"--name", "Test",
 		"--discount-percent", "10",
@@ -534,7 +521,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 	}
 
 	// Missing --name
-	_, stderr, err = executeCommand("coupons", "create-percent",
+	_, stderr, err = executeCommand(app, "coupons", "create-percent",
 		"--no-input",
 		"--code", "TEST",
 		"--discount-percent", "10",
@@ -547,7 +534,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 	}
 
 	// Missing --discount-percent
-	_, stderr, err = executeCommand("coupons", "create-percent",
+	_, stderr, err = executeCommand(app, "coupons", "create-percent",
 		"--no-input",
 		"--code", "TEST",
 		"--name", "Test",
@@ -568,10 +555,9 @@ func TestCouponsCreatePercent_UnsetOptionalFlagsNotSent(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "create-percent",
+	_, _, err := executeCommand(app, "coupons", "create-percent",
 		"--code", "MINIMAL",
 		"--name", "Minimal",
 		"--discount-percent", "10",
@@ -647,10 +633,9 @@ func TestCouponsCreateFixed_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "create-fixed",
+	out, _, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "FIXED10",
 		"--name", "Fixed $10",
 		"--currency", "USD",
@@ -697,10 +682,9 @@ func TestCouponsCreateFixed_CurrencyAmountMismatch(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, stderr, err := executeCommand("coupons", "create-fixed",
+	_, stderr, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "BAD",
 		"--name", "Bad",
 		"--currency", "USD", "--currency", "EUR",
@@ -722,10 +706,9 @@ func TestCouponsCreateFixed_MultiCurrency(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "create-fixed",
+	_, _, err := executeCommand(app, "coupons", "create-fixed",
 		"--code", "MULTI",
 		"--name", "Multi Currency",
 		"--currency", "USD", "--currency", "EUR",
@@ -762,10 +745,9 @@ func TestCouponsCreateFreeTrial_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "create-free-trial",
+	out, _, err := executeCommand(app, "coupons", "create-free-trial",
 		"--code", "FREETRIAL",
 		"--name", "Free Trial 30 Days",
 		"--free-trial-amount", "30",
@@ -802,11 +784,10 @@ func TestCouponsCreateFreeTrial_MissingRequiredFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
 	// Missing --free-trial-amount and --free-trial-unit
-	_, stderr, err := executeCommand("coupons", "create-free-trial",
+	_, stderr, err := executeCommand(app, "coupons", "create-free-trial",
 		"--no-input",
 		"--code", "TEST",
 		"--name", "Test",
@@ -831,10 +812,9 @@ func TestCouponsUpdate_SuccessWithChangedFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "update", "SAVE25",
+	out, _, err := executeCommand(app, "coupons", "update", "SAVE25",
 		"--name", "Updated Name",
 		"--max-redemptions", "200",
 		"--max-redemptions-per-account", "5",
@@ -881,10 +861,9 @@ func TestCouponsUpdate_NoFlags_EmptyBody(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "update", "SAVE25")
+	_, _, err := executeCommand(app, "coupons", "update", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -915,17 +894,16 @@ func TestCouponsUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "update", "SAVE25", "--name", "bad")
+	_, _, err := executeCommand(app, "coupons", "update", "SAVE25", "--name", "bad")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
 }
 
 func TestCouponsUpdate_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("coupons", "update")
+	_, _, err := executeCommand(nil, "coupons", "update")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
 	}
@@ -943,10 +921,9 @@ func TestCouponsDeactivate_YesFlag_Success(t *testing.T) {
 			return detail, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, stderr, err := executeCommand("coupons", "deactivate", "SAVE25", "--yes")
+	out, stderr, err := executeCommand(app, "coupons", "deactivate", "SAVE25", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -971,11 +948,10 @@ func TestCouponsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return detail, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "coupons", "deactivate", "SAVE25")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "coupons", "deactivate", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -992,7 +968,7 @@ func TestCouponsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 
 func TestCouponsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "coupons", "deactivate", "SAVE25")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "coupons", "deactivate", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1006,7 +982,7 @@ func TestCouponsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 
 func TestCouponsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "coupons", "deactivate", "SAVE25")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "coupons", "deactivate", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1016,7 +992,7 @@ func TestCouponsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestCouponsDeactivate_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("coupons", "deactivate")
+	_, _, err := executeCommand(nil, "coupons", "deactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
 	}
@@ -1028,10 +1004,9 @@ func TestCouponsDeactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "deactivate", "SAVE25", "--yes")
+	_, _, err := executeCommand(app, "coupons", "deactivate", "SAVE25", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1049,10 +1024,9 @@ func TestCouponsRestore_Success(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "restore", "SAVE25",
+	out, _, err := executeCommand(app, "coupons", "restore", "SAVE25",
 		"--name", "Restored Coupon",
 	)
 	if err != nil {
@@ -1078,10 +1052,9 @@ func TestCouponsRestore_NoFlags(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "restore", "SAVE25")
+	_, _, err := executeCommand(app, "coupons", "restore", "SAVE25")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1095,7 +1068,7 @@ func TestCouponsRestore_NoFlags(t *testing.T) {
 }
 
 func TestCouponsRestore_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("coupons", "restore")
+	_, _, err := executeCommand(nil, "coupons", "restore")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
 	}
@@ -1107,10 +1080,9 @@ func TestCouponsRestore_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "restore", "SAVE25")
+	_, _, err := executeCommand(app, "coupons", "restore", "SAVE25")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1134,10 +1106,9 @@ func TestCouponsGenerateCodes_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "generate-codes", "BULK-COUPON",
+	out, _, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "50",
 	)
 	if err != nil {
@@ -1160,7 +1131,7 @@ func TestCouponsGenerateCodes_Success(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_MissingRequiredFlag(t *testing.T) {
-	_, stderr, err := executeCommand("coupons", "generate-codes", "BULK-COUPON", "--no-input")
+	_, stderr, err := executeCommand(nil, "coupons", "generate-codes", "BULK-COUPON", "--no-input")
 	if err == nil {
 		t.Fatal("expected error for missing --number-of-codes")
 	}
@@ -1175,10 +1146,9 @@ func TestCouponsGenerateCodes_ZeroCodes_ReturnsError(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, stderr, err := executeCommand("coupons", "generate-codes", "BULK-COUPON",
+	_, stderr, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "0",
 	)
 	if err == nil {
@@ -1190,7 +1160,7 @@ func TestCouponsGenerateCodes_ZeroCodes_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("coupons", "generate-codes")
+	_, _, err := executeCommand(nil, "coupons", "generate-codes")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
 	}
@@ -1202,10 +1172,9 @@ func TestCouponsGenerateCodes_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("server error")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "generate-codes", "BULK-COUPON",
+	_, _, err := executeCommand(app, "coupons", "generate-codes", "BULK-COUPON",
 		"--number-of-codes", "10",
 	)
 	if err == nil {
@@ -1237,10 +1206,9 @@ func TestCouponsListCodes_Success(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: codes}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "list-codes", "BULK-COUPON")
+	out, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1267,10 +1235,9 @@ func TestCouponsListCodes_Pagination(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "list-codes", "BULK-COUPON",
+	_, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON",
 		"--limit", "25",
 		"--order", "desc",
 		"--sort", "created_at",
@@ -1299,10 +1266,9 @@ func TestCouponsListCodes_EmptyResults(t *testing.T) {
 			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "list-codes", "BULK-COUPON")
+	out, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1313,7 +1279,7 @@ func TestCouponsListCodes_EmptyResults(t *testing.T) {
 }
 
 func TestCouponsListCodes_MissingArg_ReturnsError(t *testing.T) {
-	_, _, err := executeCommand("coupons", "list-codes")
+	_, _, err := executeCommand(nil, "coupons", "list-codes")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
 	}
@@ -1325,10 +1291,9 @@ func TestCouponsListCodes_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	_, _, err := executeCommand("coupons", "list-codes", "BULK-COUPON")
+	_, _, err := executeCommand(app, "coupons", "list-codes", "BULK-COUPON")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -1343,10 +1308,9 @@ func TestCouponsGet_JSONOutput(t *testing.T) {
 			return sampleCouponDetail(), nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "get", "SAVE25", "--output", "json")
+	out, _, err := executeCommand(app, "coupons", "get", "SAVE25", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1365,10 +1329,9 @@ func TestCouponsList_JSONOutput(t *testing.T) {
 			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
 		},
 	}
-	cleanup := setMockCouponAPI(mock)
-	defer cleanup()
+	app := setMockCouponAPI(mock)
 
-	out, _, err := executeCommand("coupons", "list", "--output", "json")
+	out, _, err := executeCommand(app, "coupons", "list", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

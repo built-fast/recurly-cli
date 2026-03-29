@@ -81,7 +81,7 @@ func sampleRedemptionDetail() *recurly.CouponRedemption {
 // --- accounts redemptions list ---
 
 func TestAccountRedemptionsList_ShowsInHelp(t *testing.T) {
-	out, _, err := executeCommand("accounts", "redemptions", "--help")
+	out, _, err := executeCommand(nil, "accounts", "redemptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -100,10 +100,9 @@ func TestAccountRedemptionsList_Success(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "list", "acct-1")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -126,10 +125,9 @@ func TestAccountRedemptionsList_EmptyResults(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "list", "acct-1")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,10 +143,9 @@ func TestAccountRedemptionsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "list", "acct-1")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -163,10 +160,9 @@ func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "list", "acct-1", "--sort", "created_at")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "list", "acct-1", "--sort", "created_at")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -180,7 +176,7 @@ func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "list")
+	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "list")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -201,10 +197,9 @@ func TestAccountRedemptionsListActive_Success(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "list-active", "acct-1")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -222,10 +217,9 @@ func TestAccountRedemptionsListActive_EmptyResults(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "list-active", "acct-1")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -241,17 +235,16 @@ func TestAccountRedemptionsListActive_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("service unavailable")
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "list-active", "acct-1")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "list-active", "acct-1")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
 }
 
 func TestAccountRedemptionsListActive_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "list-active")
+	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "list-active")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -272,10 +265,9 @@ func TestAccountRedemptionsCreate_Success(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -305,10 +297,9 @@ func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "create", "acct-1",
+	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1",
 		"--coupon-id", "SAVE10",
 		"--currency", "EUR",
 		"--subscription-id", "sub-123",
@@ -332,7 +323,7 @@ func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_MissingCouponID_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "create", "acct-1", "--no-input")
+	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "create", "acct-1", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when --coupon-id is not provided")
 	}
@@ -342,7 +333,7 @@ func TestAccountRedemptionsCreate_MissingCouponID_ReturnsError(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "create")
+	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "create")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -357,10 +348,9 @@ func TestAccountRedemptionsCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("invalid coupon")
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "create", "acct-1", "--coupon-id", "BAD")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "BAD")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -374,10 +364,9 @@ func TestAccountRedemptionsCreate_UnsetOptionalFlagsNil(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -400,10 +389,9 @@ func TestAccountRedemptionsRemove_AccountOnly(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -428,10 +416,9 @@ func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "redemption-abc123", "--yes")
+	out, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "redemption-abc123", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -449,7 +436,7 @@ func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_MissingArg_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "remove")
+	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "remove")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
 	}
@@ -464,10 +451,9 @@ func TestAccountRedemptionsRemove_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -479,10 +465,9 @@ func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	_, _, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "bad-id", "--yes")
+	_, _, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "bad-id", "--yes")
 	if err == nil {
 		t.Fatal("expected error from SDK")
 	}
@@ -492,7 +477,7 @@ func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
 
 func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
 	stdin := bytes.NewBufferString("n\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "redemptions", "remove", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -506,7 +491,7 @@ func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
 
 func TestAccountRedemptionsRemove_ConfirmationEmpty(t *testing.T) {
 	stdin := bytes.NewBufferString("\n")
-	_, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "redemptions", "remove", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -521,11 +506,10 @@ func TestAccountRedemptionsRemove_ConfirmationYes(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
 	stdin := bytes.NewBufferString("y\n")
-	out, stderr, err := executeCommandWithStdin(stdin, "accounts", "redemptions", "remove", "acct-1")
+	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "redemptions", "remove", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -543,10 +527,9 @@ func TestAccountRedemptionsRemove_YesFlagSkipsConfirmation(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, stderr, err := executeCommand("accounts", "redemptions", "remove", "acct-1", "--yes")
+	out, stderr, err := executeCommand(app, "accounts", "redemptions", "remove", "acct-1", "--yes")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -567,10 +550,9 @@ func TestAccountRedemptionsList_JSONOutput(t *testing.T) {
 			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("--output", "json", "accounts", "redemptions", "list", "acct-1")
+	out, _, err := executeCommand(app, "--output", "json", "accounts", "redemptions", "list", "acct-1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -589,10 +571,9 @@ func TestAccountRedemptionsCreate_JSONOutput(t *testing.T) {
 			return sampleRedemptionDetail(), nil
 		},
 	}
-	cleanup := setMockAccountRedemptionAPI(mock)
-	defer cleanup()
+	app := setMockAccountRedemptionAPI(mock)
 
-	out, _, err := executeCommand("--output", "json", "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
+	out, _, err := executeCommand(app, "--output", "json", "accounts", "redemptions", "create", "acct-1", "--coupon-id", "SAVE10")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -6,7 +6,7 @@ import (
 )
 
 func TestCompletionBash_OutputsScript(t *testing.T) {
-	out, _, err := executeCommand("completion", "bash")
+	out, _, err := executeCommand(nil, "completion", "bash")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -16,7 +16,7 @@ func TestCompletionBash_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionZsh_OutputsScript(t *testing.T) {
-	out, _, err := executeCommand("completion", "zsh")
+	out, _, err := executeCommand(nil, "completion", "zsh")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -26,7 +26,7 @@ func TestCompletionZsh_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionFish_OutputsScript(t *testing.T) {
-	out, _, err := executeCommand("completion", "fish")
+	out, _, err := executeCommand(nil, "completion", "fish")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestCompletionFish_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionPowershell_OutputsScript(t *testing.T) {
-	out, _, err := executeCommand("completion", "powershell")
+	out, _, err := executeCommand(nil, "completion", "powershell")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCompletionPowershell_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionBash_IncludesCompletionFunction(t *testing.T) {
-	out, _, err := executeCommand("completion", "bash")
+	out, _, err := executeCommand(nil, "completion", "bash")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestCompletionBash_IncludesCompletionFunction(t *testing.T) {
 }
 
 func TestCompletionNoArgs_ShowsHelp(t *testing.T) {
-	out, _, err := executeCommand("completion")
+	out, _, err := executeCommand(nil, "completion")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestCompletionNoArgs_ShowsHelp(t *testing.T) {
 func TestCompletion_HasUsageExamples(t *testing.T) {
 	shells := []string{"bash", "zsh", "fish", "powershell"}
 	for _, shell := range shells {
-		out, _, err := executeCommand("completion", shell, "--help")
+		out, _, err := executeCommand(nil, "completion", shell, "--help")
 		if err != nil {
 			t.Fatalf("unexpected error for %s: %v", shell, err)
 		}
