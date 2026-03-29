@@ -58,6 +58,7 @@ CMD recurly accounts transactions list
 CMD recurly accounts update
 CMD recurly configure
 CMD recurly coupons
+CMD recurly coupons create-percent
 CMD recurly coupons get
 CMD recurly coupons list
 CMD recurly invoices
@@ -164,6 +165,25 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly coupons create-percent --applies-to-all-items bool
+FLAG recurly coupons create-percent --applies-to-all-plans bool
+FLAG recurly coupons create-percent --applies-to-non-plan-charges bool
+FLAG recurly coupons create-percent --code string
+FLAG recurly coupons create-percent --coupon-type string
+FLAG recurly coupons create-percent --discount-percent int
+FLAG recurly coupons create-percent --duration string
+FLAG recurly coupons create-percent --hosted-page-description string
+FLAG recurly coupons create-percent --invoice-description string
+FLAG recurly coupons create-percent --item-codes stringSlice
+FLAG recurly coupons create-percent --max-redemptions int
+FLAG recurly coupons create-percent --max-redemptions-per-account int
+FLAG recurly coupons create-percent --name string
+FLAG recurly coupons create-percent --plan-codes stringSlice
+FLAG recurly coupons create-percent --redeem-by string
+FLAG recurly coupons create-percent --redemption-resource string
+FLAG recurly coupons create-percent --temporal-amount int
+FLAG recurly coupons create-percent --temporal-unit string
+FLAG recurly coupons create-percent --unique-code-template string
 FLAG recurly coupons list --all bool
 FLAG recurly coupons list --begin-time string
 FLAG recurly coupons list --end-time string
