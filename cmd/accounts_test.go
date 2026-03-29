@@ -9,7 +9,6 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -131,7 +130,7 @@ func TestAccountsList_PaginationParams(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -162,7 +161,7 @@ func TestAccountsList_FilterParams(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "list",
 		"--email", "user@example.com",
@@ -202,7 +201,7 @@ func TestAccountsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "list")
 	if err != nil {
@@ -236,7 +235,7 @@ func TestAccountsList_TableOutput(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list")
 	if err != nil {
@@ -263,7 +262,7 @@ func TestAccountsList_JSONOutput(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list", "--output", "json")
 	if err != nil {
@@ -298,7 +297,7 @@ func TestAccountsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "list")
 	if err == nil {
@@ -349,7 +348,7 @@ func TestAccountsGet_PositionalArg(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "get", "my-account-code")
 	if err != nil {
@@ -366,7 +365,7 @@ func TestAccountsGet_TableOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "get", "acct-123")
 	if err != nil {
@@ -387,7 +386,7 @@ func TestAccountsGet_JSONOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "get", "acct-123", "--output", "json")
 	if err != nil {
@@ -412,7 +411,7 @@ func TestAccountsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "get", "nonexistent")
 	if err == nil {
@@ -469,7 +468,7 @@ func TestAccountsCreate_FlagToStructMapping(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "create",
 		"--code", "new-acct",
@@ -527,7 +526,7 @@ func TestAccountsCreate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "create", "--code", "minimal")
 	if err != nil {
@@ -560,7 +559,7 @@ func TestAccountsCreate_SuccessOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "create", "--code", "test")
 	if err != nil {
@@ -586,7 +585,7 @@ func TestAccountsCreate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--code", "existing")
 	if err == nil {
@@ -655,7 +654,7 @@ func TestAccountsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "update", "acct-456",
 		"--email", "updated@example.com",
@@ -712,7 +711,7 @@ func TestAccountsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, _, err := executeCommand(app, "accounts", "update", "acct-456", "--email", "only-email@example.com")
 	if err != nil {
@@ -739,7 +738,7 @@ func TestAccountsUpdate_SuccessOutput(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "update", "acct-123", "--email", "new@example.com")
 	if err != nil {
@@ -763,7 +762,7 @@ func TestAccountsUpdate_ValidationError(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "update", "acct-123", "--email", "bad-email")
 	if err == nil {
@@ -854,7 +853,7 @@ func TestAccountsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return acct, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "deactivate", "acct-789")
@@ -882,7 +881,7 @@ func TestAccountsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return acct, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, stderr, err := executeCommand(app, "accounts", "deactivate", "acct-789", "--yes")
 	if err != nil {
@@ -908,7 +907,7 @@ func TestAccountsDeactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "deactivate", "nonexistent", "--yes")
 	if err == nil {
@@ -997,7 +996,7 @@ func TestAccountsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	stdin := bytes.NewBufferString("yes\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "accounts", "reactivate", "acct-closed")
@@ -1023,7 +1022,7 @@ func TestAccountsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleAccount(), nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, stderr, err := executeCommand(app, "accounts", "reactivate", "acct-closed", "--yes")
 	if err != nil {
@@ -1049,7 +1048,7 @@ func TestAccountsReactivate_SDKError(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "reactivate", "nonexistent", "--yes")
 	if err == nil {
@@ -1069,7 +1068,7 @@ func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list", "--field", "Code,Email")
 	if err != nil {
@@ -1104,7 +1103,7 @@ func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list", "--output", "json", "--field", "Code,State")
 	if err != nil {
@@ -1142,7 +1141,7 @@ func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list", "-f", "Code")
 	if err != nil {
@@ -1160,7 +1159,7 @@ func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	_, stderr, err := executeCommand(app, "accounts", "list", "--field", "Code,bogus_field")
 	if err == nil {
@@ -1181,7 +1180,7 @@ func TestAccountsGet_FieldFlag_JSONOutput(t *testing.T) {
 			return acct, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "get", "acct-123", "--output", "json", "--field", "Code,Email")
 	if err != nil {
@@ -1210,7 +1209,7 @@ func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
 			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
-	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+	app := newTestAccountApp(mock)
 
 	out, _, err := executeCommand(app, "accounts", "list", "--field", "code,email")
 	if err != nil {

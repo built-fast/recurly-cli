@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -167,15 +166,11 @@ func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	app := &App{
-		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
-			return &mockSubscriptionAPI{
-				getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
-					return &recurly.Subscription{Uuid: "sub-uuid-123"}, nil
-				},
-			}, nil
+	app := newTestSubscriptionApp(&mockSubscriptionAPI{
+		getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
+			return &recurly.Subscription{Uuid: "sub-uuid-123"}, nil
 		},
-	}
+	})
 
 	out, _, err := executeCommand(app, "open", "--url", "subscriptions", "sxyz")
 	if err != nil {
@@ -191,15 +186,11 @@ func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	app := &App{
-		NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) {
-			return &mockTransactionAPI{
-				getTransactionFn: func(id string, opts ...recurly.Option) (*recurly.Transaction, error) {
-					return &recurly.Transaction{Uuid: "txn-uuid-456"}, nil
-				},
-			}, nil
+	app := newTestTransactionApp(&mockTransactionAPI{
+		getTransactionFn: func(id string, opts ...recurly.Option) (*recurly.Transaction, error) {
+			return &recurly.Transaction{Uuid: "txn-uuid-456"}, nil
 		},
-	}
+	})
 
 	out, _, err := executeCommand(app, "open", "--url", "transactions", "tabc")
 	if err != nil {
@@ -310,15 +301,11 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 	viper.Set("site", "testsite")
 	defer viper.Set("site", "")
 
-	app := &App{
-		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
-			return &mockSubscriptionAPI{
-				getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
-					return nil, fmt.Errorf("not found")
-				},
-			}, nil
+	app := newTestSubscriptionApp(&mockSubscriptionAPI{
+		getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
+			return nil, fmt.Errorf("not found")
 		},
-	}
+	})
 
 	_, stderr, err := executeCommand(app, "open", "--url", "subscriptions", "bad-id")
 	if err == nil {

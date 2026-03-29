@@ -4,6 +4,7 @@ import (
 	"context"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 )
 
 // Compile-time interface assertions for all concrete lister types used in tests.
@@ -61,4 +62,58 @@ func (m *mockLister[T]) HasMore() bool {
 
 func (m *mockLister[T]) Next() string {
 	return ""
+}
+
+// ---------------------------------------------------------------------------
+// Per-API helpers: wrap a mock into an *App with a single line.
+//
+//   app := newTestAccountApp(mock)
+//
+// replaces the verbose:
+//
+//   app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
+// ---------------------------------------------------------------------------
+
+func newTestAccountApp(api AccountAPI) *App {
+	return &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return api, nil }}
+}
+
+func newTestPlanApp(api PlanAPI) *App {
+	return &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return api, nil }}
+}
+
+func newTestItemApp(api ItemAPI) *App {
+	return &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return api, nil }}
+}
+
+func newTestSubscriptionApp(api SubscriptionAPI) *App {
+	return &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return api, nil }}
+}
+
+func newTestInvoiceApp(api InvoiceAPI) *App {
+	return &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return api, nil }}
+}
+
+func newTestTransactionApp(api TransactionAPI) *App {
+	return &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return api, nil }}
+}
+
+func newTestCouponApp(api CouponAPI) *App {
+	return &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return api, nil }}
+}
+
+func newTestPlanAddOnApp(api PlanAddOnAPI) *App {
+	return &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return api, nil }}
+}
+
+func newTestAccountBillingInfoApp(api AccountBillingInfoAPI) *App {
+	return &App{NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) { return api, nil }}
+}
+
+func newTestAccountNestedApp(api AccountNestedAPI) *App {
+	return &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return api, nil }}
+}
+
+func newTestAccountRedemptionApp(api AccountRedemptionAPI) *App {
+	return &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return api, nil }}
 }

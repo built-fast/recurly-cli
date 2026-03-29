@@ -9,7 +9,6 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -124,7 +123,7 @@ func TestItemsGet_PositionalArg(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "get", "my-item-id")
 	if err != nil {
@@ -142,7 +141,7 @@ func TestItemsGet_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "table")
 	if err != nil {
@@ -178,7 +177,7 @@ func TestItemsGet_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "json")
 	if err != nil {
@@ -206,7 +205,7 @@ func TestItemsGet_JSONPrettyOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "json-pretty")
 	if err != nil {
@@ -233,7 +232,7 @@ func TestItemsGet_JQFilter(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "get", "item123", "--jq", ".code")
 	if err != nil {
@@ -252,7 +251,7 @@ func TestItemsGet_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "get", "item123")
 	if err == nil {
@@ -269,7 +268,7 @@ func TestItemsGet_NotFound(t *testing.T) {
 			}
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "get", "nonexistent")
 	if err == nil {
@@ -348,7 +347,7 @@ func TestItemsList_PaginationParams(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "list", "--limit", "50", "--order", "desc", "--sort", "updated_at")
 	if err != nil {
@@ -378,7 +377,7 @@ func TestItemsList_FilterParams(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "list",
 		"--state", "active",
@@ -409,7 +408,7 @@ func TestItemsList_UnsetFlagsNotSent(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "list")
 	if err != nil {
@@ -443,7 +442,7 @@ func TestItemsList_TableOutput(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list")
 	if err != nil {
@@ -470,7 +469,7 @@ func TestItemsList_JSONOutput(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list", "--output", "json")
 	if err != nil {
@@ -506,7 +505,7 @@ func TestItemsList_JSONPrettyOutput(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list", "--output", "json-pretty")
 	if err != nil {
@@ -538,7 +537,7 @@ func TestItemsList_JQFilter(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list", "--jq", ".data[].code")
 	if err != nil {
@@ -557,7 +556,7 @@ func TestItemsList_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("connection refused")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "list")
 	if err == nil {
@@ -571,7 +570,7 @@ func TestItemsList_EmptyResults(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list")
 	if err != nil {
@@ -589,7 +588,7 @@ func TestItemsList_EmptyResults_JSON(t *testing.T) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "list", "--output", "json")
 	if err != nil {
@@ -659,7 +658,7 @@ func TestItemsCreate_CoreFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create",
 		"--code", "widget-1",
@@ -704,7 +703,7 @@ func TestItemsCreate_TaxFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create",
 		"--code", "tax-item",
@@ -743,7 +742,7 @@ func TestItemsCreate_MultiCurrencyFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create",
 		"--code", "multi",
@@ -778,7 +777,7 @@ func TestItemsCreate_SingleCurrency(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create",
 		"--code", "single",
@@ -808,7 +807,7 @@ func TestItemsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "create",
 		"--code", "bad",
@@ -832,7 +831,7 @@ func TestItemsCreate_UnsetFlagsNotSent(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create", "--code", "minimal")
 	if err != nil {
@@ -882,7 +881,7 @@ func TestItemsCreate_AllFlagsPopulated(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create",
 		"--code", "full",
@@ -948,7 +947,7 @@ func TestItemsCreate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "create", "--code", "widget-1", "--output", "table")
 	if err != nil {
@@ -975,7 +974,7 @@ func TestItemsCreate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "create", "--code", "widget-1", "--output", "json")
 	if err != nil {
@@ -997,7 +996,7 @@ func TestItemsCreate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "create", "--code", "bad")
 	if err == nil {
@@ -1040,7 +1039,7 @@ func TestItemsUpdate_MissingArg_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update")
 	if err == nil {
@@ -1069,7 +1068,7 @@ func TestItemsUpdate_PositionalArg(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-abc123", "--name", "Updated")
 	if err != nil {
@@ -1088,7 +1087,7 @@ func TestItemsUpdate_CoreFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--code", "widget-1",
@@ -1133,7 +1132,7 @@ func TestItemsUpdate_TaxFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--tax-code", "digital",
@@ -1171,7 +1170,7 @@ func TestItemsUpdate_MultiCurrencyFlags(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-123",
 		"--currency", "USD", "--currency", "EUR",
@@ -1208,7 +1207,7 @@ func TestItemsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "update", "item-123",
 		"--currency", "USD", "--currency", "EUR",
@@ -1230,7 +1229,7 @@ func TestItemsUpdate_UnsetFlagsNotSent(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Only Name")
 	if err != nil {
@@ -1279,7 +1278,7 @@ func TestItemsUpdate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Updated", "--output", "table")
 	if err != nil {
@@ -1306,7 +1305,7 @@ func TestItemsUpdate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "update", "item-123", "--name", "Updated", "--output", "json")
 	if err != nil {
@@ -1328,7 +1327,7 @@ func TestItemsUpdate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("validation failed")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "update", "item-123", "--name", "bad")
 	if err == nil {
@@ -1410,7 +1409,7 @@ func TestItemsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return item, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "items", "deactivate", "item-789")
@@ -1438,7 +1437,7 @@ func TestItemsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return item, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, stderr, err := executeCommand(app, "items", "deactivate", "item-456", "--yes")
 	if err != nil {
@@ -1463,7 +1462,7 @@ func TestItemsDeactivate_TableOutput(t *testing.T) {
 			return item, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes")
 	if err != nil {
@@ -1485,7 +1484,7 @@ func TestItemsDeactivate_JSONOutput(t *testing.T) {
 			return item, nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1506,7 +1505,7 @@ func TestItemsDeactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "deactivate", "item-123", "--yes")
 	if err == nil {
@@ -1586,7 +1585,7 @@ func TestItemsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	stdin := bytes.NewBufferString("y\n")
 	out, stderr, err := executeCommandWithStdin(app, stdin, "items", "reactivate", "item-789")
@@ -1612,7 +1611,7 @@ func TestItemsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, stderr, err := executeCommand(app, "items", "reactivate", "item-456", "--yes")
 	if err != nil {
@@ -1635,7 +1634,7 @@ func TestItemsReactivate_TableOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes")
 	if err != nil {
@@ -1655,7 +1654,7 @@ func TestItemsReactivate_JSONOutput(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes", "--output", "json")
 	if err != nil {
@@ -1676,7 +1675,7 @@ func TestItemsReactivate_SDKError(t *testing.T) {
 			return nil, fmt.Errorf("not found")
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, _, err := executeCommand(app, "items", "reactivate", "item-123", "--yes")
 	if err == nil {

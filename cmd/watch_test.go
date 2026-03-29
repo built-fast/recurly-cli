@@ -64,7 +64,7 @@ func TestWithWatch_NoFlag_RunsNormally(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	out, _, err := executeCommand(app, "items", "get", "item123", "--output", "table")
 	if err != nil {
@@ -89,7 +89,7 @@ func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "get", "item123", "--output", "json", "--watch=5s")
 	if err == nil {
@@ -111,7 +111,7 @@ func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "get", "item123", "--output", "json-pretty", "--watch=5s")
 	if err == nil {
@@ -129,7 +129,7 @@ func TestWithWatch_InvalidInterval_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "get", "item123", "--watch=abc")
 	if err == nil {
@@ -147,7 +147,7 @@ func TestWithWatch_TooShortInterval_ReturnsError(t *testing.T) {
 			return sampleItemDetail(), nil
 		},
 	}
-	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
+	app := newTestItemApp(mock)
 
 	_, stderr, err := executeCommand(app, "items", "get", "item123", "--watch=500ms")
 	if err == nil {
