@@ -1143,3 +1143,167 @@ func TestInvoicesMarkFailed_APIError(t *testing.T) {
 		t.Errorf("expected 'not found' error, got %q", stderr)
 	}
 }
+
+// --- invoices line-items ---
+
+func TestInvoicesLineItems_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("invoices", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "line-items") {
+		t.Error("expected invoices help to show 'line-items' subcommand")
+	}
+}
+
+func TestInvoicesLineItems_MissingArg_ReturnsError(t *testing.T) {
+	_, stderr, err := executeCommand("invoices", "line-items")
+	if err == nil {
+		t.Fatal("expected error when no invoice ID is provided")
+	}
+	if !strings.Contains(stderr, "accepts 1 arg") {
+		t.Errorf("expected usage error about missing argument, got %q", stderr)
+	}
+}
+
+func TestInvoicesLineItems_TableOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "line-items", "inv-abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, expected := range []string{
+		"li-001", "li-002",
+		"charge",
+		"Monthly subscription", "Add-on feature",
+		"USD",
+		"50.00",
+		"54.05",
+	} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("expected output to contain %q", expected)
+		}
+	}
+}
+
+func TestInvoicesLineItems_PositionalArg(t *testing.T) {
+	var capturedID string
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			capturedID = invoiceId
+			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	_, _, err := executeCommand("invoices", "line-items", "my-invoice-id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedID != "my-invoice-id" {
+		t.Errorf("expected invoice ID 'my-invoice-id', got %q", capturedID)
+	}
+}
+
+func TestInvoicesLineItems_JSONOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--output", "json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	data, ok := result["data"].([]interface{})
+	if !ok {
+		t.Fatal("expected 'data' array in JSON envelope")
+	}
+	if len(data) != 2 {
+		t.Errorf("expected 2 line items, got %d", len(data))
+	}
+}
+
+func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--output", "json-pretty")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &result); err != nil {
+		t.Fatalf("expected valid JSON, got error: %v", err)
+	}
+	if !strings.Contains(out, "\n") {
+		t.Error("expected indented JSON output")
+	}
+}
+
+func TestInvoicesLineItems_JQFilter(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	viper.Set("output", "json")
+	defer viper.Reset()
+
+	out, _, err := executeCommand("invoices", "line-items", "inv-abc123", "--jq", ".data[0].id")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "li-001" {
+		t.Errorf("expected jq to extract first line item id, got %q", trimmed)
+	}
+}
+
+func TestInvoicesLineItems_APIError(t *testing.T) {
+	mock := &mockInvoiceAPI{
+		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
+			return nil, &recurly.Error{
+				Type:    recurly.ErrorTypeNotFound,
+				Message: "Couldn't find Invoice with id = nonexistent",
+			}
+		},
+	}
+	cleanup := setMockInvoiceAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("invoices", "line-items", "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for not found invoice")
+	}
+	if !strings.Contains(stderr, "not found") {
+		t.Errorf("expected 'not found' error, got %q", stderr)
+	}
+}

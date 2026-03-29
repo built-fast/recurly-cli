@@ -23,6 +23,7 @@ func newInvoicesCmd() *cobra.Command {
 	cmd.AddCommand(newInvoicesVoidCmd())
 	cmd.AddCommand(newInvoicesCollectCmd())
 	cmd.AddCommand(newInvoicesMarkFailedCmd())
+	cmd.AddCommand(newInvoicesLineItemsCmd())
 	return cmd
 }
 
@@ -428,6 +429,91 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newInvoicesLineItemsCmd() *cobra.Command {
+	var (
+		limit     int
+		all       bool
+		order     string
+		sort      string
+		beginTime string
+		endTime   string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "line-items <invoice_id>",
+		Short: "List line items for an invoice",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newInvoiceAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			params := &recurly.ListInvoiceLineItemsParams{}
+
+			if limit > 0 {
+				params.Limit = recurly.Int(limit)
+			}
+			if cmd.Flags().Changed("order") {
+				params.Order = recurly.String(order)
+			}
+			if cmd.Flags().Changed("sort") {
+				params.Sort = recurly.String(sort)
+			}
+			if cmd.Flags().Changed("begin-time") {
+				t, err := time.Parse(time.RFC3339, beginTime)
+				if err != nil {
+					return fmt.Errorf("invalid --begin-time: %w", err)
+				}
+				params.BeginTime = &t
+			}
+			if cmd.Flags().Changed("end-time") {
+				t, err := time.Parse(time.RFC3339, endTime)
+				if err != nil {
+					return fmt.Errorf("invalid --end-time: %w", err)
+				}
+				params.EndTime = &t
+			}
+
+			lister, err := c.ListInvoiceLineItems(args[0], params)
+			if err != nil {
+				return err
+			}
+
+			result, err := pagination.Collect[recurly.LineItem](lister, limit, all)
+			if err != nil {
+				return err
+			}
+
+			columns := lineItemColumns()
+
+			items := make([]any, len(result.Items))
+			for i, li := range result.Items {
+				items[i] = li
+			}
+
+			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().IntVar(&limit, "limit", 0, "Maximum number of results to return (default 20)")
+	cmd.Flags().BoolVar(&all, "all", false, "Fetch all pages of results")
+	cmd.Flags().StringVar(&order, "order", "", "Sort order (asc or desc)")
+	cmd.Flags().StringVar(&sort, "sort", "", "Sort field (e.g. created_at, updated_at)")
+	cmd.Flags().StringVar(&beginTime, "begin-time", "", "Filter by begin time (ISO8601 format)")
+	cmd.Flags().StringVar(&endTime, "end-time", "", "Filter by end time (ISO8601 format)")
 
 	return cmd
 }

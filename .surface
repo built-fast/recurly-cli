@@ -8,6 +8,11 @@ ARG recurly accounts reactivate <account_id>
 ARG recurly accounts subscriptions list <account_id>
 ARG recurly accounts transactions list <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly invoices collect <invoice_id>
+ARG recurly invoices get <invoice_id>
+ARG recurly invoices line-items <invoice_id>
+ARG recurly invoices mark-failed <invoice_id>
+ARG recurly invoices void <invoice_id>
 ARG recurly items deactivate <item_id>
 ARG recurly items get <item_id>
 ARG recurly items reactivate <item_id>
@@ -50,6 +55,13 @@ CMD recurly accounts transactions
 CMD recurly accounts transactions list
 CMD recurly accounts update
 CMD recurly configure
+CMD recurly invoices
+CMD recurly invoices collect
+CMD recurly invoices get
+CMD recurly invoices line-items
+CMD recurly invoices list
+CMD recurly invoices mark-failed
+CMD recurly invoices void
 CMD recurly items
 CMD recurly items create
 CMD recurly items deactivate
@@ -144,6 +156,24 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly invoices collect --yes bool
+FLAG recurly invoices get --line-items int
+FLAG recurly invoices line-items --all bool
+FLAG recurly invoices line-items --begin-time string
+FLAG recurly invoices line-items --end-time string
+FLAG recurly invoices line-items --limit int
+FLAG recurly invoices line-items --order string
+FLAG recurly invoices line-items --sort string
+FLAG recurly invoices list --all bool
+FLAG recurly invoices list --begin-time string
+FLAG recurly invoices list --end-time string
+FLAG recurly invoices list --limit int
+FLAG recurly invoices list --order string
+FLAG recurly invoices list --sort string
+FLAG recurly invoices list --state string
+FLAG recurly invoices list --type string
+FLAG recurly invoices mark-failed --yes bool
+FLAG recurly invoices void --yes bool
 FLAG recurly items create --accounting-code string
 FLAG recurly items create --avalara-service-type int
 FLAG recurly items create --avalara-transaction-type int
