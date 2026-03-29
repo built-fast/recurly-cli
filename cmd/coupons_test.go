@@ -14,14 +14,14 @@ import (
 
 // mockCouponAPI implements CouponAPI for testing.
 type mockCouponAPI struct {
-	listCouponsFn              func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error)
-	getCouponFn                func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error)
-	createCouponFn             func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error)
-	updateCouponFn             func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error)
-	deactivateCouponFn         func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error)
-	restoreCouponFn            func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error)
+	listCouponsFn               func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error)
+	getCouponFn                 func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error)
+	createCouponFn              func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error)
+	updateCouponFn              func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error)
+	deactivateCouponFn          func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error)
+	restoreCouponFn             func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error)
 	generateUniqueCouponCodesFn func(couponId string, body *recurly.CouponBulkCreate, opts ...recurly.Option) (*recurly.UniqueCouponCodeParams, error)
-	listUniqueCouponCodesFn    func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error)
+	listUniqueCouponCodesFn     func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error)
 }
 
 func (m *mockCouponAPI) ListCoupons(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
@@ -141,11 +141,11 @@ func setMockCouponAPI(mock *mockCouponAPI) func() {
 func sampleCoupon() recurly.Coupon {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	return recurly.Coupon{
-		Id:       "coupon-abc123",
-		Code:     "SAVE25",
-		Name:     "Save 25%",
-		State:    "redeemable",
-		Discount: recurly.CouponDiscount{Type: "percent", Percent: 25},
+		Id:        "coupon-abc123",
+		Code:      "SAVE25",
+		Name:      "Save 25%",
+		State:     "redeemable",
+		Discount:  recurly.CouponDiscount{Type: "percent", Percent: 25},
 		CreatedAt: &now,
 	}
 }

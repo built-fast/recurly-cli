@@ -14,11 +14,11 @@ import (
 
 // mockInvoiceAPI implements InvoiceAPI for testing.
 type mockInvoiceAPI struct {
-	listInvoicesFn        func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error)
-	getInvoiceFn          func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
-	voidInvoiceFn         func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
-	collectInvoiceFn      func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error)
-	markInvoiceFailedFn   func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
+	listInvoicesFn         func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error)
+	getInvoiceFn           func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
+	voidInvoiceFn          func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
+	collectInvoiceFn       func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error)
+	markInvoiceFailedFn    func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error)
 	listInvoiceLineItemsFn func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error)
 }
 

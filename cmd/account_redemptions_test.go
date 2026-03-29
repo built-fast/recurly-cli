@@ -50,13 +50,13 @@ func (m *mockCouponRedemptionLister) Next() string {
 func sampleRedemption() recurly.CouponRedemption {
 	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
 	return recurly.CouponRedemption{
-		Id:       "redemption-abc123",
-		State:    "active",
-		Currency: "USD",
+		Id:         "redemption-abc123",
+		State:      "active",
+		Currency:   "USD",
 		Discounted: 10.50,
-		Account:  recurly.AccountMini{Code: "acct-1"},
-		Coupon:   recurly.Coupon{Code: "SAVE10"},
-		CreatedAt: &now,
+		Account:    recurly.AccountMini{Code: "acct-1"},
+		Coupon:     recurly.Coupon{Code: "SAVE10"},
+		CreatedAt:  &now,
 	}
 }
 
