@@ -8,6 +8,7 @@ ARG recurly accounts reactivate <account_id>
 ARG recurly accounts subscriptions list <account_id>
 ARG recurly accounts transactions list <account_id>
 ARG recurly accounts update <account_id>
+ARG recurly coupons deactivate <coupon_id>
 ARG recurly coupons get <coupon_id>
 ARG recurly coupons update <coupon_id>
 ARG recurly invoices collect <invoice_id>
@@ -62,6 +63,7 @@ CMD recurly coupons
 CMD recurly coupons create-fixed
 CMD recurly coupons create-free-trial
 CMD recurly coupons create-percent
+CMD recurly coupons deactivate
 CMD recurly coupons get
 CMD recurly coupons list
 CMD recurly coupons update
@@ -222,6 +224,7 @@ FLAG recurly coupons create-percent --redemption-resource string
 FLAG recurly coupons create-percent --temporal-amount int
 FLAG recurly coupons create-percent --temporal-unit string
 FLAG recurly coupons create-percent --unique-code-template string
+FLAG recurly coupons deactivate --yes bool
 FLAG recurly coupons list --all bool
 FLAG recurly coupons list --begin-time string
 FLAG recurly coupons list --end-time string

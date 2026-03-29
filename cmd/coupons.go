@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/built-fast/recurly-cli/internal/output"
@@ -23,6 +25,7 @@ func newCouponsCmd() *cobra.Command {
 	cmd.AddCommand(newCouponsCreateFixedCmd())
 	cmd.AddCommand(newCouponsCreateFreeTrialCmd())
 	cmd.AddCommand(newCouponsUpdateCmd())
+	cmd.AddCommand(newCouponsDeactivateCmd())
 	return cmd
 }
 
@@ -675,4 +678,59 @@ func couponDetailColumns() []output.Column {
 			return ""
 		}},
 	}
+}
+
+func newCouponsDeactivateCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "deactivate <coupon_id>",
+		Short: "Deactivate a coupon",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			couponID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to deactivate coupon %s? [y/N] ", couponID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					return err
+				}
+			}
+
+			c, err := newCouponAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			coupon, err := c.DeactivateCoupon(couponID)
+			if err != nil {
+				return err
+			}
+
+			columns := couponDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, coupon)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
 }
