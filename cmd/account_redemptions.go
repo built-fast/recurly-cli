@@ -81,7 +81,7 @@ func newAccountRedemptionsCreateCmd() *cobra.Command {
 		Short: "Redeem a coupon on an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountRedemptionAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountRedemptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -144,7 +144,7 @@ func newAccountRedemptionsRemoveCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newAccountRedemptionAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountRedemptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -191,7 +191,7 @@ func newAccountRedemptionsListCmd() *cobra.Command {
 		Short: "List coupon redemptions for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountRedemptionAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountRedemptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -254,7 +254,7 @@ func newAccountRedemptionsListActiveCmd() *cobra.Command {
 		Short: "List active coupon redemptions for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountRedemptionAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountRedemptionAPI(cmd)
 			if err != nil {
 				return err
 			}

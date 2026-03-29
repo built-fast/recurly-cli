@@ -48,11 +48,13 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 }
 
 func setMockInvoiceAPI(mock *mockInvoiceAPI) func() {
-	orig := newInvoiceAPI
-	newInvoiceAPI = func(_ *cobra.Command) (InvoiceAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newInvoiceAPI = orig }
+	return func() { testApp = orig }
 }
 
 // mockLineItemLister implements recurly.LineItemLister for testing.

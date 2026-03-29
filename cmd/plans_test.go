@@ -81,11 +81,13 @@ func (m *mockPlanLister) Next() string {
 
 // setMockPlanAPI installs a mock and returns a cleanup function.
 func setMockPlanAPI(mock *mockPlanAPI) func() {
-	orig := newPlanAPI
-	newPlanAPI = func(_ *cobra.Command) (PlanAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newPlanAPI = orig }
+	return func() { testApp = orig }
 }
 
 // samplePlan returns a test plan with predictable fields.

@@ -27,11 +27,13 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 }
 
 func setMockTransactionAPI(mock *mockTransactionAPI) func() {
-	orig := newTransactionAPI
-	newTransactionAPI = func(_ *cobra.Command) (TransactionAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newTransactionAPI = orig }
+	return func() { testApp = orig }
 }
 
 // mockTransactionLister implements recurly.TransactionLister for testing.

@@ -38,7 +38,7 @@ func newPlanAddOnsListCmd() *cobra.Command {
 		Short: "List add-ons for a plan",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newPlanAddOnAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewPlanAddOnAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -158,7 +158,7 @@ func newPlanAddOnsGetCmd() *cobra.Command {
 		Short: "Get details of a plan add-on",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newPlanAddOnAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewPlanAddOnAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -217,7 +217,7 @@ func newPlanAddOnsCreateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAddOnAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewPlanAddOnAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -342,7 +342,7 @@ func newPlanAddOnsUpdateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAddOnAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewPlanAddOnAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -454,7 +454,7 @@ func newPlanAddOnsDeleteCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAddOnAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewPlanAddOnAPI(cmd)
 			if err != nil {
 				return err
 			}

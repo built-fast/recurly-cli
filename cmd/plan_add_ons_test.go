@@ -91,11 +91,13 @@ func (m *mockAddOnLister) Next() string {
 }
 
 func setMockPlanAddOnAPI(mock *mockPlanAddOnAPI) func() {
-	orig := newPlanAddOnAPI
-	newPlanAddOnAPI = func(_ *cobra.Command) (PlanAddOnAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newPlanAddOnAPI = orig }
+	return func() { testApp = orig }
 }
 
 func sampleAddOn() recurly.AddOn {

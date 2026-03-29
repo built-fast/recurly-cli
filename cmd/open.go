@@ -60,7 +60,7 @@ func resolveIdentifier(cmd *cobra.Command, resource, id string) (string, error) 
 
 	switch resource {
 	case "subscriptions":
-		c, err := newSubscriptionAPI(cmd)
+		c, err := AppFromContext(cmd.Context()).NewSubscriptionAPI(cmd)
 		if err != nil {
 			return "", err
 		}
@@ -70,7 +70,7 @@ func resolveIdentifier(cmd *cobra.Command, resource, id string) (string, error) 
 		}
 		return sub.Uuid, nil
 	case "transactions":
-		c, err := newTransactionAPI(cmd)
+		c, err := AppFromContext(cmd.Context()).NewTransactionAPI(cmd)
 		if err != nil {
 			return "", err
 		}

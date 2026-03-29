@@ -13,8 +13,16 @@ func executeCommand(args ...string) (string, string, error) {
 	return executeCommandWithStdin(nil, args...)
 }
 
+// testApp, when non-nil, is injected into the root command's context by
+// executeCommandWithStdin so tests can supply mock API factories via App
+// instead of overriding package-level vars.
+var testApp *App
+
 func executeCommandWithStdin(stdin *bytes.Buffer, args ...string) (string, string, error) {
 	cmd := NewRootCmd()
+	if testApp != nil {
+		cmd.SetContext(NewAppContext(cmd.Context(), testApp))
+	}
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
 	cmd.SetOut(stdout)

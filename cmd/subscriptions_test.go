@@ -106,11 +106,13 @@ func (m *mockSubscriptionLister) Next() string {
 
 // setMockSubscriptionAPI installs a mock and returns a cleanup function.
 func setMockSubscriptionAPI(mock *mockSubscriptionAPI) func() {
-	orig := newSubscriptionAPI
-	newSubscriptionAPI = func(_ *cobra.Command) (SubscriptionAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newSubscriptionAPI = orig }
+	return func() { testApp = orig }
 }
 
 // sampleSubscription returns a test subscription with predictable fields for list output.

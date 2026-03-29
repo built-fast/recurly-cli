@@ -86,11 +86,13 @@ func (m *mockItemLister) Next() string {
 
 // setMockItemAPI installs a mock and returns a cleanup function.
 func setMockItemAPI(mock *mockItemAPI) func() {
-	orig := newItemAPI
-	newItemAPI = func(_ *cobra.Command) (ItemAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newItemAPI = orig }
+	return func() { testApp = orig }
 }
 
 // sampleItem returns a test item with predictable fields.

@@ -86,11 +86,13 @@ func (m *mockAccountLister) Next() string {
 
 // setMockAPI installs a mock and returns a cleanup function.
 func setMockAPI(mock *mockAccountAPI) func() {
-	orig := newAccountAPI
-	newAccountAPI = func(_ *cobra.Command) (AccountAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newAccountAPI = orig }
+	return func() { testApp = orig }
 }
 
 // sampleAccount returns a test account with predictable fields.

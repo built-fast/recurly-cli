@@ -58,9 +58,11 @@ func (m *mockAccountRedemptionAPI) GetCouponRedemption(accountId string, couponR
 }
 
 func setMockAccountRedemptionAPI(mock *mockAccountRedemptionAPI) func() {
-	orig := newAccountRedemptionAPI
-	newAccountRedemptionAPI = func(_ *cobra.Command) (AccountRedemptionAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newAccountRedemptionAPI = orig }
+	return func() { testApp = orig }
 }

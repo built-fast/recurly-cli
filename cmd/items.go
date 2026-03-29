@@ -68,7 +68,7 @@ func newItemsGetCmd() *cobra.Command {
 		Short: "Get item details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func newItemsCreateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -240,7 +240,7 @@ func newItemsUpdateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -343,7 +343,7 @@ func newItemsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List items",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -450,7 +450,7 @@ func newItemsDeactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -500,7 +500,7 @@ func newItemsReactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newItemAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewItemAPI(cmd)
 			if err != nil {
 				return err
 			}

@@ -43,7 +43,7 @@ func newCouponsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List coupons",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -131,7 +131,7 @@ func newCouponsGetCmd() *cobra.Command {
 		Short: "Get coupon details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -185,7 +185,7 @@ func newCouponsCreatePercentCmd() *cobra.Command {
 		Use:   "create-percent",
 		Short: "Create a percentage-based coupon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -324,7 +324,7 @@ func newCouponsCreateFixedCmd() *cobra.Command {
 				return fmt.Errorf("--currency and --discount-amount must be specified in pairs (got %d currencies and %d amounts)", len(currencies), len(discountAmounts))
 			}
 
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -463,7 +463,7 @@ func newCouponsCreateFreeTrialCmd() *cobra.Command {
 		Use:   "create-free-trial",
 		Short: "Create a free trial coupon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -566,7 +566,7 @@ func newCouponsUpdateCmd() *cobra.Command {
 		Short: "Update a coupon",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -703,7 +703,7 @@ func newCouponsDeactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -747,7 +747,7 @@ func newCouponsRestoreCmd() *cobra.Command {
 		Short: "Restore an inactive coupon",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -813,7 +813,7 @@ func newCouponsGenerateCodesCmd() *cobra.Command {
 				return fmt.Errorf("--number-of-codes must be at least 1")
 			}
 
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -878,7 +878,7 @@ func newCouponsListCodesCmd() *cobra.Command {
 		Short: "List unique coupon codes for a bulk coupon",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newCouponAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewCouponAPI(cmd)
 			if err != nil {
 				return err
 			}

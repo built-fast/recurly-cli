@@ -41,11 +41,13 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 }
 
 func setMockAccountNestedAPI(mock *mockAccountNestedAPI) func() {
-	orig := newAccountNestedAPI
-	newAccountNestedAPI = func(_ *cobra.Command) (AccountNestedAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newAccountNestedAPI = orig }
+	return func() { testApp = orig }
 }
 
 // --- Mock listers ---

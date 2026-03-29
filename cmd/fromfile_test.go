@@ -241,16 +241,18 @@ func TestFromFile_NestedObjects(t *testing.T) {
 	}
 
 	var captured *recurly.BillingInfoCreate
-	origAPI := newAccountBillingInfoAPI
-	newAccountBillingInfoAPI = func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
-		return &mockBillingInfoAPI{
-			updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
-				captured = body
-				return &recurly.BillingInfo{Id: "bi-1", AccountId: accountId, FirstName: "Jane"}, nil
-			},
-		}, nil
+	origApp := testApp
+	testApp = &App{
+		NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
+			return &mockBillingInfoAPI{
+				updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
+					captured = body
+					return &recurly.BillingInfo{Id: "bi-1", AccountId: accountId, FirstName: "Jane"}, nil
+				},
+			}, nil
+		},
 	}
-	defer func() { newAccountBillingInfoAPI = origAPI }()
+	defer func() { testApp = origApp }()
 
 	_, _, err := executeCommand("accounts", "billing-info", "update", "acct-1", "--from-file", jsonFile)
 	if err != nil {

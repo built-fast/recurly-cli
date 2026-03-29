@@ -59,7 +59,7 @@ func newAccountBillingInfoGetCmd() *cobra.Command {
 		Short: "Get billing info for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountBillingInfoAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountBillingInfoAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func newAccountBillingInfoUpdateCmd() *cobra.Command {
 		Short: "Update billing info for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountBillingInfoAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountBillingInfoAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -233,7 +233,7 @@ func newAccountBillingInfoRemoveCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newAccountBillingInfoAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountBillingInfoAPI(cmd)
 			if err != nil {
 				return err
 			}

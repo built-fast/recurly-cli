@@ -131,11 +131,13 @@ func (m *mockUniqueCouponCodeLister) Next() string {
 
 // setMockCouponAPI installs a mock and returns a cleanup function.
 func setMockCouponAPI(mock *mockCouponAPI) func() {
-	orig := newCouponAPI
-	newCouponAPI = func(_ *cobra.Command) (CouponAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newCouponAPI = orig }
+	return func() { testApp = orig }
 }
 
 // sampleCoupon returns a test coupon with predictable fields for list tests.

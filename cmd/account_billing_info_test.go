@@ -41,11 +41,13 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 }
 
 func setMockAccountBillingInfoAPI(mock *mockAccountBillingInfoAPI) func() {
-	orig := newAccountBillingInfoAPI
-	newAccountBillingInfoAPI = func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
-		return mock, nil
+	orig := testApp
+	testApp = &App{
+		NewAccountBillingInfoAPI: func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
+			return mock, nil
+		},
 	}
-	return func() { newAccountBillingInfoAPI = orig }
+	return func() { testApp = orig }
 }
 
 func sampleBillingInfo() *recurly.BillingInfo {

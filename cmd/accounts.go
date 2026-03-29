@@ -46,7 +46,7 @@ func newAccountsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List accounts",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -160,7 +160,7 @@ func newAccountsCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create an account",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -269,7 +269,7 @@ func newAccountsUpdateCmd() *cobra.Command {
 		Short: "Update an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -353,7 +353,7 @@ func newAccountsDeactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -403,7 +403,7 @@ func newAccountsReactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -438,7 +438,7 @@ func newAccountsGetCmd() *cobra.Command {
 		Short: "Get account details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewAccountAPI(cmd)
 			if err != nil {
 				return err
 			}

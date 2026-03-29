@@ -40,7 +40,7 @@ func newInvoicesListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List invoices",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -146,7 +146,7 @@ func newInvoicesGetCmd() *cobra.Command {
 		Short: "Get invoice details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -256,7 +256,7 @@ func newInvoicesVoidCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -316,7 +316,7 @@ func newInvoicesCollectCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -376,7 +376,7 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -430,7 +430,7 @@ func newInvoicesLineItemsCmd() *cobra.Command {
 		Short: "List line items for an invoice",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newInvoiceAPI(cmd)
+			c, err := AppFromContext(cmd.Context()).NewInvoiceAPI(cmd)
 			if err != nil {
 				return err
 			}
