@@ -8,7 +8,6 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/viper"
 )
 
 // mockCouponAPI implements CouponAPI for testing.
@@ -58,6 +57,7 @@ func (m *mockCouponAPI) ListUniqueCouponCodes(couponId string, params *recurly.L
 // --- coupons list ---
 
 func TestCouponsList_Success(t *testing.T) {
+	t.Parallel()
 	coupon := sampleCoupon()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
@@ -84,6 +84,7 @@ func TestCouponsList_Success(t *testing.T) {
 }
 
 func TestCouponsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
 			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{}}, nil
@@ -102,6 +103,7 @@ func TestCouponsList_EmptyResults(t *testing.T) {
 }
 
 func TestCouponsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -116,6 +118,7 @@ func TestCouponsList_SDKError(t *testing.T) {
 }
 
 func TestCouponsList_FlagPassthrough(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListCouponsParams
 
 	mock := &mockCouponAPI{
@@ -146,6 +149,7 @@ func TestCouponsList_FlagPassthrough(t *testing.T) {
 }
 
 func TestCouponsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListCouponsParams
 
 	mock := &mockCouponAPI{
@@ -181,6 +185,7 @@ func TestCouponsList_UnsetFlagsNotSent(t *testing.T) {
 // --- coupons get ---
 
 func TestCouponsGet_Success(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		getCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return sampleCouponDetail(), nil
@@ -205,6 +210,7 @@ func TestCouponsGet_Success(t *testing.T) {
 }
 
 func TestCouponsGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockCouponAPI{
 		getCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -224,6 +230,7 @@ func TestCouponsGet_PositionalArg(t *testing.T) {
 }
 
 func TestCouponsGet_NotFoundError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		getCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return nil, &recurly.Error{
@@ -244,6 +251,7 @@ func TestCouponsGet_NotFoundError(t *testing.T) {
 }
 
 func TestCouponsGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "coupons", "get")
 	if err == nil {
 		t.Fatal("expected error when no coupon ID is provided")
@@ -256,6 +264,7 @@ func TestCouponsGet_MissingArg_ReturnsError(t *testing.T) {
 // --- coupons create-percent ---
 
 func TestCouponsCreatePercent_Success(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -296,6 +305,7 @@ func TestCouponsCreatePercent_Success(t *testing.T) {
 }
 
 func TestCouponsCreatePercent_AllOptionalFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -381,6 +391,7 @@ func TestCouponsCreatePercent_AllOptionalFlags(t *testing.T) {
 }
 
 func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return sampleCouponDetail(), nil
@@ -429,6 +440,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 }
 
 func TestCouponsCreatePercent_UnsetOptionalFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -500,6 +512,7 @@ func TestCouponsCreatePercent_UnsetOptionalFlagsNotSent(t *testing.T) {
 // --- coupons create-fixed ---
 
 func TestCouponsCreateFixed_Success(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -558,6 +571,7 @@ func TestCouponsCreateFixed_Success(t *testing.T) {
 }
 
 func TestCouponsCreateFixed_CurrencyAmountMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return sampleCouponDetail(), nil
@@ -580,6 +594,7 @@ func TestCouponsCreateFixed_CurrencyAmountMismatch(t *testing.T) {
 }
 
 func TestCouponsCreateFixed_MultiCurrency(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -614,6 +629,7 @@ func TestCouponsCreateFixed_MultiCurrency(t *testing.T) {
 // --- coupons create-free-trial ---
 
 func TestCouponsCreateFreeTrial_Success(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponCreate
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -660,6 +676,7 @@ func TestCouponsCreateFreeTrial_Success(t *testing.T) {
 }
 
 func TestCouponsCreateFreeTrial_MissingRequiredFlags(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		createCouponFn: func(body *recurly.CouponCreate, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return sampleCouponDetail(), nil
@@ -684,6 +701,7 @@ func TestCouponsCreateFreeTrial_MissingRequiredFlags(t *testing.T) {
 // --- coupons update ---
 
 func TestCouponsUpdate_SuccessWithChangedFlags(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.CouponUpdate
 	mock := &mockCouponAPI{
@@ -735,6 +753,7 @@ func TestCouponsUpdate_SuccessWithChangedFlags(t *testing.T) {
 }
 
 func TestCouponsUpdate_NoFlags_EmptyBody(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponUpdate
 	mock := &mockCouponAPI{
 		updateCouponFn: func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -770,6 +789,7 @@ func TestCouponsUpdate_NoFlags_EmptyBody(t *testing.T) {
 }
 
 func TestCouponsUpdate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		updateCouponFn: func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return nil, fmt.Errorf("validation failed")
@@ -784,6 +804,7 @@ func TestCouponsUpdate_SDKError(t *testing.T) {
 }
 
 func TestCouponsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "coupons", "update")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
@@ -793,6 +814,7 @@ func TestCouponsUpdate_MissingArg_ReturnsError(t *testing.T) {
 // --- coupons deactivate ---
 
 func TestCouponsDeactivate_YesFlag_Success(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockCouponAPI{
 		deactivateCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -820,6 +842,7 @@ func TestCouponsDeactivate_YesFlag_Success(t *testing.T) {
 }
 
 func TestCouponsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockCouponAPI{
 		deactivateCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -848,6 +871,7 @@ func TestCouponsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestCouponsDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "coupons", "deactivate", "SAVE25")
 	if err != nil {
@@ -862,6 +886,7 @@ func TestCouponsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestCouponsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "coupons", "deactivate", "SAVE25")
 	if err != nil {
@@ -873,6 +898,7 @@ func TestCouponsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestCouponsDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "coupons", "deactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
@@ -880,6 +906,7 @@ func TestCouponsDeactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsDeactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		deactivateCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return nil, fmt.Errorf("not found")
@@ -896,6 +923,7 @@ func TestCouponsDeactivate_SDKError(t *testing.T) {
 // --- coupons restore ---
 
 func TestCouponsRestore_Success(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.CouponUpdate
 	mock := &mockCouponAPI{
@@ -926,6 +954,7 @@ func TestCouponsRestore_Success(t *testing.T) {
 }
 
 func TestCouponsRestore_NoFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponUpdate
 	mock := &mockCouponAPI{
 		restoreCouponFn: func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error) {
@@ -949,6 +978,7 @@ func TestCouponsRestore_NoFlags(t *testing.T) {
 }
 
 func TestCouponsRestore_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "coupons", "restore")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
@@ -956,6 +986,7 @@ func TestCouponsRestore_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsRestore_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		restoreCouponFn: func(couponId string, body *recurly.CouponUpdate, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return nil, fmt.Errorf("not found")
@@ -972,6 +1003,7 @@ func TestCouponsRestore_SDKError(t *testing.T) {
 // --- coupons generate-codes ---
 
 func TestCouponsGenerateCodes_Success(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.CouponBulkCreate
 	beginTime := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)
@@ -1012,6 +1044,7 @@ func TestCouponsGenerateCodes_Success(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_MissingRequiredFlag(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "coupons", "generate-codes", "BULK-COUPON", "--no-input")
 	if err == nil {
 		t.Fatal("expected error for missing --number-of-codes")
@@ -1022,6 +1055,7 @@ func TestCouponsGenerateCodes_MissingRequiredFlag(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_ZeroCodes_ReturnsError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		generateUniqueCouponCodesFn: func(couponId string, body *recurly.CouponBulkCreate, opts ...recurly.Option) (*recurly.UniqueCouponCodeParams, error) {
 			return nil, nil
@@ -1041,6 +1075,7 @@ func TestCouponsGenerateCodes_ZeroCodes_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "coupons", "generate-codes")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
@@ -1048,6 +1083,7 @@ func TestCouponsGenerateCodes_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		generateUniqueCouponCodesFn: func(couponId string, body *recurly.CouponBulkCreate, opts ...recurly.Option) (*recurly.UniqueCouponCodeParams, error) {
 			return nil, fmt.Errorf("server error")
@@ -1066,6 +1102,7 @@ func TestCouponsGenerateCodes_SDKError(t *testing.T) {
 // --- coupons list-codes ---
 
 func TestCouponsListCodes_Success(t *testing.T) {
+	t.Parallel()
 	now := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC)
 	codes := []recurly.UniqueCouponCode{
 		{
@@ -1107,6 +1144,7 @@ func TestCouponsListCodes_Success(t *testing.T) {
 }
 
 func TestCouponsListCodes_Pagination(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListUniqueCouponCodesParams
 	var capturedID string
 	mock := &mockCouponAPI{
@@ -1142,6 +1180,7 @@ func TestCouponsListCodes_Pagination(t *testing.T) {
 }
 
 func TestCouponsListCodes_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		listUniqueCouponCodesFn: func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error) {
 			return &mockLister[recurly.UniqueCouponCode]{items: []recurly.UniqueCouponCode{}}, nil
@@ -1160,6 +1199,7 @@ func TestCouponsListCodes_EmptyResults(t *testing.T) {
 }
 
 func TestCouponsListCodes_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "coupons", "list-codes")
 	if err == nil {
 		t.Fatal("expected error when coupon_id is missing")
@@ -1167,6 +1207,7 @@ func TestCouponsListCodes_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestCouponsListCodes_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockCouponAPI{
 		listUniqueCouponCodesFn: func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -1183,7 +1224,7 @@ func TestCouponsListCodes_SDKError(t *testing.T) {
 // --- JSON output tests ---
 
 func TestCouponsGet_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockCouponAPI{
 		getCouponFn: func(couponId string, opts ...recurly.Option) (*recurly.Coupon, error) {
 			return sampleCouponDetail(), nil
@@ -1203,7 +1244,7 @@ func TestCouponsGet_JSONOutput(t *testing.T) {
 }
 
 func TestCouponsList_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	coupon := sampleCoupon()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {

@@ -20,6 +20,7 @@ func newInteractiveTestCmd(runFn func(cmd *cobra.Command, args []string) error) 
 }
 
 func TestWithInteractive_MissingRequiredFlags_TTY(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -58,6 +59,7 @@ func TestWithInteractive_MissingRequiredFlags_TTY(t *testing.T) {
 }
 
 func TestWithInteractive_MissingRequiredFlags_NoTTY(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	defer func() { stdinIsTerminal = origIsTerminal }()
 
@@ -81,6 +83,7 @@ func TestWithInteractive_MissingRequiredFlags_NoTTY(t *testing.T) {
 }
 
 func TestWithInteractive_NoInputFlag(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	defer func() { stdinIsTerminal = origIsTerminal }()
 
@@ -104,6 +107,7 @@ func TestWithInteractive_NoInputFlag(t *testing.T) {
 }
 
 func TestWithInteractive_FlagProvidedOverridesPrompt(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -148,6 +152,7 @@ func TestWithInteractive_FlagProvidedOverridesPrompt(t *testing.T) {
 }
 
 func TestWithInteractive_AllFlagsProvided_NoPrompt(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -186,6 +191,7 @@ func TestWithInteractive_AllFlagsProvided_NoPrompt(t *testing.T) {
 }
 
 func TestWithInteractive_BoolFlag(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -217,6 +223,7 @@ func TestWithInteractive_BoolFlag(t *testing.T) {
 }
 
 func TestWithInteractive_EnumFlag(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -251,6 +258,7 @@ func TestWithInteractive_EnumFlag(t *testing.T) {
 }
 
 func TestWithInteractive_MultipleRequiredFlags_ErrorMessage(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	defer func() { stdinIsTerminal = origIsTerminal }()
 
@@ -275,6 +283,7 @@ func TestWithInteractive_MultipleRequiredFlags_ErrorMessage(t *testing.T) {
 }
 
 func TestWithInteractive_NoRequiredFlags(t *testing.T) {
+	t.Parallel()
 	var ranCmd bool
 	cmd := newInteractiveTestCmd(func(cmd *cobra.Command, args []string) error {
 		ranCmd = true
@@ -294,6 +303,7 @@ func TestWithInteractive_NoRequiredFlags(t *testing.T) {
 }
 
 func TestWithInteractive_HelpDisplay(t *testing.T) {
+	t.Parallel()
 	cmd := newInteractiveTestCmd(func(cmd *cobra.Command, args []string) error { return nil })
 	cmd.Flags().String("name", "", "Name (required)")
 	_ = cmd.MarkFlagRequired("name")
@@ -308,6 +318,7 @@ func TestWithInteractive_HelpDisplay(t *testing.T) {
 }
 
 func TestWithInteractive_SliceFlag(t *testing.T) {
+	// Cannot use t.Parallel() — modifies global function variable
 	origIsTerminal := stdinIsTerminal
 	origPrompt := promptForFlag
 	defer func() {
@@ -346,6 +357,7 @@ func TestWithInteractive_SliceFlag(t *testing.T) {
 }
 
 func TestSetFlagOptions(t *testing.T) {
+	t.Parallel()
 	cmd := &cobra.Command{Use: "test"}
 	cmd.Flags().String("unit", "", "Time unit")
 
@@ -362,6 +374,7 @@ func TestSetFlagOptions(t *testing.T) {
 }
 
 func TestSetFlagOptions_NonexistentFlag(t *testing.T) {
+	t.Parallel()
 	cmd := &cobra.Command{Use: "test"}
 
 	// Should not panic

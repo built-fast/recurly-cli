@@ -18,9 +18,11 @@ func newTestCmd(stdin *bytes.Buffer, stdout, stderr *bytes.Buffer) *cobra.Comman
 }
 
 func TestConfirm_AcceptsYes(t *testing.T) {
+	t.Parallel()
 	accepted := []string{"y", "yes", "Y", "YES", "Yes", "yEs"}
 	for _, input := range accepted {
 		t.Run(input, func(t *testing.T) {
+			t.Parallel()
 			stdin := bytes.NewBufferString(input + "\n")
 			stdout := new(bytes.Buffer)
 			stderr := new(bytes.Buffer)
@@ -41,9 +43,11 @@ func TestConfirm_AcceptsYes(t *testing.T) {
 }
 
 func TestConfirm_RejectsNo(t *testing.T) {
+	t.Parallel()
 	rejected := []string{"n", "no", "N", "NO", "No"}
 	for _, input := range rejected {
 		t.Run(input, func(t *testing.T) {
+			t.Parallel()
 			stdin := bytes.NewBufferString(input + "\n")
 			stdout := new(bytes.Buffer)
 			stderr := new(bytes.Buffer)
@@ -61,6 +65,7 @@ func TestConfirm_RejectsNo(t *testing.T) {
 }
 
 func TestConfirm_RejectsEmptyInput(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -76,9 +81,11 @@ func TestConfirm_RejectsEmptyInput(t *testing.T) {
 }
 
 func TestConfirm_RejectsRandomText(t *testing.T) {
+	t.Parallel()
 	inputs := []string{"maybe", "sure", "ok", "1", "true", "yep"}
 	for _, input := range inputs {
 		t.Run(input, func(t *testing.T) {
+			t.Parallel()
 			stdin := bytes.NewBufferString(input + "\n")
 			stdout := new(bytes.Buffer)
 			stderr := new(bytes.Buffer)
@@ -96,6 +103,7 @@ func TestConfirm_RejectsRandomText(t *testing.T) {
 }
 
 func TestConfirm_EOF_ReturnsError(t *testing.T) {
+	t.Parallel()
 	// Empty buffer with no newline simulates EOF
 	stdin := bytes.NewBufferString("")
 	stdout := new(bytes.Buffer)

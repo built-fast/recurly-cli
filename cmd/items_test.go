@@ -48,6 +48,7 @@ func (m *mockItemAPI) ReactivateItem(itemId string, opts ...recurly.Option) (*re
 // --- items get ---
 
 func TestItemsGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -58,6 +59,7 @@ func TestItemsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "items", "get")
 	if err == nil {
 		t.Fatal("expected error when no item ID is provided")
@@ -68,6 +70,7 @@ func TestItemsGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestItemsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -81,6 +84,7 @@ func TestItemsGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestItemsGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
@@ -100,7 +104,7 @@ func TestItemsGet_PositionalArg(t *testing.T) {
 }
 
 func TestItemsGet_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -136,7 +140,7 @@ func TestItemsGet_TableOutput(t *testing.T) {
 }
 
 func TestItemsGet_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -164,7 +168,7 @@ func TestItemsGet_JSONOutput(t *testing.T) {
 }
 
 func TestItemsGet_JSONPrettyOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -191,7 +195,7 @@ func TestItemsGet_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestItemsGet_JQFilter(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -211,6 +215,7 @@ func TestItemsGet_JQFilter(t *testing.T) {
 }
 
 func TestItemsGet_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -225,6 +230,7 @@ func TestItemsGet_SDKError(t *testing.T) {
 }
 
 func TestItemsGet_NotFound(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, &recurly.Error{
@@ -247,6 +253,7 @@ func TestItemsGet_NotFound(t *testing.T) {
 // --- items list ---
 
 func TestItemsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -257,6 +264,7 @@ func TestItemsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -269,6 +277,7 @@ func TestItemsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -282,6 +291,7 @@ func TestItemsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestItemsList_InvalidBeginTime_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "items", "list", "--begin-time", "not-a-date")
 	if err == nil {
@@ -293,6 +303,7 @@ func TestItemsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 }
 
 func TestItemsList_InvalidEndTime_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "items", "list", "--end-time", "not-a-date")
 	if err == nil {
@@ -304,6 +315,7 @@ func TestItemsList_InvalidEndTime_ReturnsError(t *testing.T) {
 }
 
 func TestItemsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListItemsParams
 
 	mock := &mockItemAPI{
@@ -334,6 +346,7 @@ func TestItemsList_PaginationParams(t *testing.T) {
 }
 
 func TestItemsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListItemsParams
 
 	mock := &mockItemAPI{
@@ -365,6 +378,7 @@ func TestItemsList_FilterParams(t *testing.T) {
 }
 
 func TestItemsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListItemsParams
 
 	mock := &mockItemAPI{
@@ -401,6 +415,7 @@ func TestItemsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestItemsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
@@ -428,6 +443,7 @@ func TestItemsList_TableOutput(t *testing.T) {
 }
 
 func TestItemsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
@@ -464,6 +480,7 @@ func TestItemsList_JSONOutput(t *testing.T) {
 }
 
 func TestItemsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
@@ -496,6 +513,7 @@ func TestItemsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestItemsList_JQFilter(t *testing.T) {
+	t.Parallel()
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
@@ -516,6 +534,7 @@ func TestItemsList_JQFilter(t *testing.T) {
 }
 
 func TestItemsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -530,6 +549,7 @@ func TestItemsList_SDKError(t *testing.T) {
 }
 
 func TestItemsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
@@ -548,6 +568,7 @@ func TestItemsList_EmptyResults(t *testing.T) {
 }
 
 func TestItemsList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
@@ -576,6 +597,7 @@ func TestItemsList_EmptyResults_JSON(t *testing.T) {
 // --- items create ---
 
 func TestItemsCreate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -586,6 +608,7 @@ func TestItemsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsCreateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -603,6 +626,7 @@ func TestItemsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -616,6 +640,7 @@ func TestItemsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestItemsCreate_CoreFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -661,6 +686,7 @@ func TestItemsCreate_CoreFlags(t *testing.T) {
 }
 
 func TestItemsCreate_TaxFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -700,6 +726,7 @@ func TestItemsCreate_TaxFlags(t *testing.T) {
 }
 
 func TestItemsCreate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -735,6 +762,7 @@ func TestItemsCreate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestItemsCreate_SingleCurrency(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -767,6 +795,7 @@ func TestItemsCreate_SingleCurrency(t *testing.T) {
 }
 
 func TestItemsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -789,6 +818,7 @@ func TestItemsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestItemsCreate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -839,6 +869,7 @@ func TestItemsCreate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestItemsCreate_AllFlagsPopulated(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemCreate
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -906,7 +937,7 @@ func TestItemsCreate_AllFlagsPopulated(t *testing.T) {
 }
 
 func TestItemsCreate_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -933,7 +964,7 @@ func TestItemsCreate_TableOutput(t *testing.T) {
 }
 
 func TestItemsCreate_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -956,6 +987,7 @@ func TestItemsCreate_JSONOutput(t *testing.T) {
 }
 
 func TestItemsCreate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		createItemFn: func(body *recurly.ItemCreate, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, fmt.Errorf("validation failed")
@@ -972,6 +1004,7 @@ func TestItemsCreate_SDKError(t *testing.T) {
 // --- items update ---
 
 func TestItemsUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -982,6 +1015,7 @@ func TestItemsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsUpdateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -999,6 +1033,7 @@ func TestItemsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1013,6 +1048,7 @@ func TestItemsUpdate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestItemsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -1026,6 +1062,7 @@ func TestItemsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestItemsUpdate_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1045,6 +1082,7 @@ func TestItemsUpdate_PositionalArg(t *testing.T) {
 }
 
 func TestItemsUpdate_CoreFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemUpdate
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1090,6 +1128,7 @@ func TestItemsUpdate_CoreFlags(t *testing.T) {
 }
 
 func TestItemsUpdate_TaxFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemUpdate
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1128,6 +1167,7 @@ func TestItemsUpdate_TaxFlags(t *testing.T) {
 }
 
 func TestItemsUpdate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemUpdate
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1167,6 +1207,7 @@ func TestItemsUpdate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestItemsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1187,6 +1228,7 @@ func TestItemsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestItemsUpdate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.ItemUpdate
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1237,7 +1279,7 @@ func TestItemsUpdate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestItemsUpdate_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1264,7 +1306,7 @@ func TestItemsUpdate_TableOutput(t *testing.T) {
 }
 
 func TestItemsUpdate_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1287,6 +1329,7 @@ func TestItemsUpdate_JSONOutput(t *testing.T) {
 }
 
 func TestItemsUpdate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		updateItemFn: func(itemId string, body *recurly.ItemUpdate, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, fmt.Errorf("validation failed")
@@ -1303,6 +1346,7 @@ func TestItemsUpdate_SDKError(t *testing.T) {
 // --- Deactivate tests ---
 
 func TestItemsDeactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1313,6 +1357,7 @@ func TestItemsDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsDeactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1323,6 +1368,7 @@ func TestItemsDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "items", "deactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
@@ -1330,8 +1376,7 @@ func TestItemsDeactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestItemsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
-	viper.Set("api_key", "")
-	defer viper.Set("api_key", "")
+	t.Parallel()
 
 	_, _, err := executeCommand(nil, "items", "deactivate", "item-123", "--yes")
 	if err == nil {
@@ -1340,6 +1385,7 @@ func TestItemsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 }
 
 func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "deactivate", "item-123")
 	if err != nil {
@@ -1354,6 +1400,7 @@ func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestItemsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "deactivate", "item-123")
 	if err != nil {
@@ -1365,6 +1412,7 @@ func TestItemsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestItemsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1393,6 +1441,7 @@ func TestItemsDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestItemsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1420,6 +1469,7 @@ func TestItemsDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestItemsDeactivate_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			item := sampleItemDetail()
@@ -1442,6 +1492,7 @@ func TestItemsDeactivate_TableOutput(t *testing.T) {
 }
 
 func TestItemsDeactivate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			item := sampleItemDetail()
@@ -1465,6 +1516,7 @@ func TestItemsDeactivate_JSONOutput(t *testing.T) {
 }
 
 func TestItemsDeactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		deactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, fmt.Errorf("not found")
@@ -1481,6 +1533,7 @@ func TestItemsDeactivate_SDKError(t *testing.T) {
 // --- Reactivate command tests ---
 
 func TestItemsReactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1491,6 +1544,7 @@ func TestItemsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestItemsReactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1501,6 +1555,7 @@ func TestItemsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestItemsReactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "items", "reactivate")
 	if err == nil {
 		t.Fatal("expected error for missing argument")
@@ -1508,8 +1563,7 @@ func TestItemsReactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestItemsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
-	viper.Set("api_key", "")
-	defer viper.Set("api_key", "")
+	t.Parallel()
 
 	_, _, err := executeCommand(nil, "items", "reactivate", "item-123", "--yes")
 	if err == nil {
@@ -1518,6 +1572,7 @@ func TestItemsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
 }
 
 func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "reactivate", "item-123")
 	if err != nil {
@@ -1532,6 +1587,7 @@ func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestItemsReactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "items", "reactivate", "item-123")
 	if err != nil {
@@ -1543,6 +1599,7 @@ func TestItemsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestItemsReactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1569,6 +1626,7 @@ func TestItemsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestItemsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockItemAPI{
 		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
@@ -1594,6 +1652,7 @@ func TestItemsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestItemsReactivate_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1614,6 +1673,7 @@ func TestItemsReactivate_TableOutput(t *testing.T) {
 }
 
 func TestItemsReactivate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -1635,6 +1695,7 @@ func TestItemsReactivate_JSONOutput(t *testing.T) {
 }
 
 func TestItemsReactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockItemAPI{
 		reactivateItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return nil, fmt.Errorf("not found")

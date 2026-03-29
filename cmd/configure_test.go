@@ -12,6 +12,7 @@ import (
 )
 
 func TestConfigure_NewConfig(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -62,6 +63,7 @@ func TestConfigure_NewConfig(t *testing.T) {
 }
 
 func TestConfigure_ExistingConfigShowsDefaults(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -115,6 +117,7 @@ func TestConfigure_ExistingConfigShowsDefaults(t *testing.T) {
 }
 
 func TestConfigure_InvalidRegionRePrompts(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -154,6 +157,7 @@ func TestConfigure_InvalidRegionRePrompts(t *testing.T) {
 }
 
 func TestConfigure_EmptyAPIKeyRequired(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -177,6 +181,7 @@ func TestConfigure_EmptyAPIKeyRequired(t *testing.T) {
 }
 
 func TestConfigure_RegionDefaultEnter(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -207,6 +212,7 @@ func TestConfigure_RegionDefaultEnter(t *testing.T) {
 }
 
 func TestConfigure_ConfirmationMessage(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	tmp := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tmp)
@@ -231,6 +237,7 @@ func TestConfigure_ConfirmationMessage(t *testing.T) {
 }
 
 func TestMaskKey(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input string
 		want  string

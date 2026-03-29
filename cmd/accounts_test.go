@@ -72,6 +72,7 @@ func TestAccountsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -331,6 +332,7 @@ func TestAccountsGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -456,6 +458,7 @@ func TestAccountsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -647,6 +650,7 @@ func TestAccountsUpdate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -829,6 +833,7 @@ func TestAccountsDeactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -982,6 +987,7 @@ func TestAccountsReactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())

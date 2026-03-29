@@ -12,6 +12,7 @@ import (
 // --- accounts redemptions list ---
 
 func TestAccountRedemptionsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "redemptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -22,6 +23,7 @@ func TestAccountRedemptionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_Success(t *testing.T) {
+	t.Parallel()
 	r := sampleRedemption()
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
@@ -51,6 +53,7 @@ func TestAccountRedemptionsList_Success(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
 			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{}}, nil
@@ -69,6 +72,7 @@ func TestAccountRedemptionsList_EmptyResults(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -83,6 +87,7 @@ func TestAccountRedemptionsList_SDKError(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountCouponRedemptionsParams
 
 	mock := &mockAccountRedemptionAPI{
@@ -107,6 +112,7 @@ func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
 }
 
 func TestAccountRedemptionsList_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "list")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -119,6 +125,7 @@ func TestAccountRedemptionsList_MissingArg_ReturnsError(t *testing.T) {
 // --- accounts redemptions list-active ---
 
 func TestAccountRedemptionsListActive_Success(t *testing.T) {
+	t.Parallel()
 	r := sampleRedemption()
 	mock := &mockAccountRedemptionAPI{
 		listActiveCouponRedemptionsFn: func(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
@@ -143,6 +150,7 @@ func TestAccountRedemptionsListActive_Success(t *testing.T) {
 }
 
 func TestAccountRedemptionsListActive_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		listActiveCouponRedemptionsFn: func(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
 			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{}}, nil
@@ -161,6 +169,7 @@ func TestAccountRedemptionsListActive_EmptyResults(t *testing.T) {
 }
 
 func TestAccountRedemptionsListActive_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		listActiveCouponRedemptionsFn: func(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
 			return nil, fmt.Errorf("service unavailable")
@@ -175,6 +184,7 @@ func TestAccountRedemptionsListActive_SDKError(t *testing.T) {
 }
 
 func TestAccountRedemptionsListActive_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "list-active")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -187,6 +197,7 @@ func TestAccountRedemptionsListActive_MissingArg_ReturnsError(t *testing.T) {
 // --- accounts redemptions create ---
 
 func TestAccountRedemptionsCreate_Success(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	var capturedBody *recurly.CouponRedemptionCreate
 	mock := &mockAccountRedemptionAPI{
@@ -221,6 +232,7 @@ func TestAccountRedemptionsCreate_Success(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponRedemptionCreate
 	mock := &mockAccountRedemptionAPI{
 		createCouponRedemptionFn: func(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
@@ -254,6 +266,7 @@ func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_MissingCouponID_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "create", "acct-1", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when --coupon-id is not provided")
@@ -264,6 +277,7 @@ func TestAccountRedemptionsCreate_MissingCouponID_ReturnsError(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "create")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -274,6 +288,7 @@ func TestAccountRedemptionsCreate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		createCouponRedemptionFn: func(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return nil, fmt.Errorf("invalid coupon")
@@ -288,6 +303,7 @@ func TestAccountRedemptionsCreate_SDKError(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_UnsetOptionalFlagsNil(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.CouponRedemptionCreate
 	mock := &mockAccountRedemptionAPI{
 		createCouponRedemptionFn: func(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
@@ -313,6 +329,7 @@ func TestAccountRedemptionsCreate_UnsetOptionalFlagsNil(t *testing.T) {
 // --- accounts redemptions remove ---
 
 func TestAccountRedemptionsRemove_AccountOnly(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
@@ -339,6 +356,7 @@ func TestAccountRedemptionsRemove_AccountOnly(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID, capturedRedemptionID string
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionByIdFn: func(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
@@ -367,6 +385,7 @@ func TestAccountRedemptionsRemove_WithRedemptionID(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "accounts", "redemptions", "remove")
 	if err == nil {
 		t.Fatal("expected error when no account ID is provided")
@@ -377,6 +396,7 @@ func TestAccountRedemptionsRemove_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return nil, fmt.Errorf("not found")
@@ -391,6 +411,7 @@ func TestAccountRedemptionsRemove_SDKError(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionByIdFn: func(accountId string, couponRedemptionId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return nil, fmt.Errorf("not found")
@@ -407,6 +428,7 @@ func TestAccountRedemptionsRemove_SDKErrorById(t *testing.T) {
 // --- accounts redemptions remove confirmation tests ---
 
 func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "redemptions", "remove", "acct-1")
 	if err != nil {
@@ -421,6 +443,7 @@ func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_ConfirmationEmpty(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "redemptions", "remove", "acct-1")
 	if err != nil {
@@ -432,6 +455,7 @@ func TestAccountRedemptionsRemove_ConfirmationEmpty(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_ConfirmationYes(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return sampleRedemptionDetail(), nil
@@ -453,6 +477,7 @@ func TestAccountRedemptionsRemove_ConfirmationYes(t *testing.T) {
 }
 
 func TestAccountRedemptionsRemove_YesFlagSkipsConfirmation(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		removeCouponRedemptionFn: func(accountId string, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return sampleRedemptionDetail(), nil
@@ -475,6 +500,7 @@ func TestAccountRedemptionsRemove_YesFlagSkipsConfirmation(t *testing.T) {
 // --- JSON output tests ---
 
 func TestAccountRedemptionsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	r := sampleRedemption()
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
@@ -497,6 +523,7 @@ func TestAccountRedemptionsList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountRedemptionAPI{
 		createCouponRedemptionFn: func(accountId string, body *recurly.CouponRedemptionCreate, opts ...recurly.Option) (*recurly.CouponRedemption, error) {
 			return sampleRedemptionDetail(), nil

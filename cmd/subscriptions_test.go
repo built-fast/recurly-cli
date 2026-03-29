@@ -68,6 +68,7 @@ func (m *mockSubscriptionAPI) ConvertTrial(subscriptionId string, opts ...recurl
 // --- subscriptions list ---
 
 func TestSubscriptionsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -78,6 +79,7 @@ func TestSubscriptionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -90,6 +92,7 @@ func TestSubscriptionsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -103,6 +106,7 @@ func TestSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsList_InvalidBeginTime_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "subscriptions", "list", "--begin-time", "not-a-date")
 	if err == nil {
@@ -114,6 +118,7 @@ func TestSubscriptionsList_InvalidBeginTime_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsList_InvalidEndTime_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "subscriptions", "list", "--end-time", "not-a-date")
 	if err == nil {
@@ -188,6 +193,7 @@ func TestSubscriptionsList_FilterParams(t *testing.T) {
 }
 
 func TestSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListSubscriptionsParams
 
 	mock := &mockSubscriptionAPI{
@@ -218,6 +224,7 @@ func TestSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestSubscriptionsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -244,6 +251,7 @@ func TestSubscriptionsList_TableOutput(t *testing.T) {
 }
 
 func TestSubscriptionsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -280,6 +288,7 @@ func TestSubscriptionsList_JSONOutput(t *testing.T) {
 }
 
 func TestSubscriptionsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -311,6 +320,7 @@ func TestSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestSubscriptionsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -325,6 +335,7 @@ func TestSubscriptionsList_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
@@ -344,6 +355,7 @@ func TestSubscriptionsList_EmptyResults(t *testing.T) {
 // --- subscriptions get ---
 
 func TestSubscriptionsGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -354,6 +366,7 @@ func TestSubscriptionsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "get")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -364,6 +377,7 @@ func TestSubscriptionsGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -377,6 +391,7 @@ func TestSubscriptionsGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		getSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -396,7 +411,7 @@ func TestSubscriptionsGet_PositionalArg(t *testing.T) {
 }
 
 func TestSubscriptionsGet_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		getSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -425,6 +440,7 @@ func TestSubscriptionsGet_TableOutput(t *testing.T) {
 }
 
 func TestSubscriptionsGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		getSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -447,6 +463,7 @@ func TestSubscriptionsGet_JSONOutput(t *testing.T) {
 }
 
 func TestSubscriptionsGet_NotFound(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		getSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -469,6 +486,7 @@ func TestSubscriptionsGet_NotFound(t *testing.T) {
 // --- subscriptions create ---
 
 func TestSubscriptionsCreate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -479,6 +497,7 @@ func TestSubscriptionsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsCreateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -491,6 +510,7 @@ func TestSubscriptionsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -504,6 +524,7 @@ func TestSubscriptionsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_FlagToStructMapping(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.SubscriptionCreate
 
 	mock := &mockSubscriptionAPI{
@@ -582,6 +603,7 @@ func TestSubscriptionsCreate_FlagToStructMapping(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_OnlySetFlagsAreSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.SubscriptionCreate
 
 	mock := &mockSubscriptionAPI{
@@ -615,6 +637,7 @@ func TestSubscriptionsCreate_OnlySetFlagsAreSent(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_TimestampFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.SubscriptionCreate
 
 	mock := &mockSubscriptionAPI{
@@ -647,6 +670,7 @@ func TestSubscriptionsCreate_TimestampFlags(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_InvalidTimestamp_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "subscriptions", "create", "--plan-code", "gold", "--trial-ends-at", "not-a-date")
 	if err == nil {
@@ -658,6 +682,7 @@ func TestSubscriptionsCreate_InvalidTimestamp_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_SuccessOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		createSubscriptionFn: func(body *recurly.SubscriptionCreate, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -678,6 +703,7 @@ func TestSubscriptionsCreate_SuccessOutput(t *testing.T) {
 }
 
 func TestSubscriptionsCreate_ValidationError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		createSubscriptionFn: func(body *recurly.SubscriptionCreate, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -703,6 +729,7 @@ func TestSubscriptionsCreate_ValidationError(t *testing.T) {
 // --- subscriptions update ---
 
 func TestSubscriptionsUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -713,6 +740,7 @@ func TestSubscriptionsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsUpdateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -725,6 +753,7 @@ func TestSubscriptionsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "update")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -735,6 +764,7 @@ func TestSubscriptionsUpdate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -748,6 +778,7 @@ func TestSubscriptionsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.SubscriptionUpdate
 
@@ -823,6 +854,7 @@ func TestSubscriptionsUpdate_PositionalArgAndFlagMapping(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_OnlySetFlagsAreSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.SubscriptionUpdate
 
 	mock := &mockSubscriptionAPI{
@@ -853,6 +885,7 @@ func TestSubscriptionsUpdate_OnlySetFlagsAreSent(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_NextBillDate(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.SubscriptionUpdate
 
 	mock := &mockSubscriptionAPI{
@@ -874,6 +907,7 @@ func TestSubscriptionsUpdate_NextBillDate(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_InvalidNextBillDate_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	t.Setenv("RECURLY_API_KEY", "test-key")
 	_, stderr, err := executeCommand(nil, "subscriptions", "update", "sub-456", "--next-bill-date", "bad-date")
 	if err == nil {
@@ -885,6 +919,7 @@ func TestSubscriptionsUpdate_InvalidNextBillDate_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsUpdate_SuccessOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		updateSubscriptionFn: func(subscriptionId string, body *recurly.SubscriptionUpdate, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -905,6 +940,7 @@ func TestSubscriptionsUpdate_SuccessOutput(t *testing.T) {
 // --- subscriptions cancel ---
 
 func TestSubscriptionsCancel_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -915,6 +951,7 @@ func TestSubscriptionsCancel_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsCancelHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "cancel", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -927,6 +964,7 @@ func TestSubscriptionsCancelHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "cancel")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -937,6 +975,7 @@ func TestSubscriptionsCancel_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "cancel", "sub-123")
 	if err != nil {
@@ -951,6 +990,7 @@ func TestSubscriptionsCancel_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "cancel", "sub-123")
 	if err != nil {
@@ -962,6 +1002,7 @@ func TestSubscriptionsCancel_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		cancelSubscriptionFn: func(subscriptionId string, params *recurly.CancelSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -990,6 +1031,7 @@ func TestSubscriptionsCancel_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		cancelSubscriptionFn: func(subscriptionId string, params *recurly.CancelSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1017,6 +1059,7 @@ func TestSubscriptionsCancel_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_TimeframeFlag(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.CancelSubscriptionParams
 
 	mock := &mockSubscriptionAPI{
@@ -1041,6 +1084,7 @@ func TestSubscriptionsCancel_TimeframeFlag(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		cancelSubscriptionFn: func(subscriptionId string, params *recurly.CancelSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1061,6 +1105,7 @@ func TestSubscriptionsCancel_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsCancel_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		cancelSubscriptionFn: func(subscriptionId string, params *recurly.CancelSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -1085,6 +1130,7 @@ func TestSubscriptionsCancel_JSONOutput(t *testing.T) {
 // --- subscriptions reactivate ---
 
 func TestSubscriptionsReactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1095,6 +1141,7 @@ func TestSubscriptionsReactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsReactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "reactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1105,6 +1152,7 @@ func TestSubscriptionsReactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "reactivate")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -1115,6 +1163,7 @@ func TestSubscriptionsReactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "reactivate", "sub-123")
 	if err != nil {
@@ -1129,6 +1178,7 @@ func TestSubscriptionsReactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "reactivate", "sub-123")
 	if err != nil {
@@ -1140,6 +1190,7 @@ func TestSubscriptionsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		reactivateSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1166,6 +1217,7 @@ func TestSubscriptionsReactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		reactivateSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1191,6 +1243,7 @@ func TestSubscriptionsReactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		reactivateSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1211,6 +1264,7 @@ func TestSubscriptionsReactivate_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsReactivate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		reactivateSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -1235,6 +1289,7 @@ func TestSubscriptionsReactivate_JSONOutput(t *testing.T) {
 // --- subscriptions pause ---
 
 func TestSubscriptionsPause_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1245,6 +1300,7 @@ func TestSubscriptionsPause_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsPauseHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "pause", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1257,6 +1313,7 @@ func TestSubscriptionsPauseHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsPause_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "pause", "--remaining-pause-cycles", "3")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -1267,6 +1324,7 @@ func TestSubscriptionsPause_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsPause_MissingRequiredFlag_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "pause", "sub-123", "--yes", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when required flag is missing")
@@ -1277,6 +1335,7 @@ func TestSubscriptionsPause_MissingRequiredFlag_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsPause_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
 	if err != nil {
@@ -1291,6 +1350,7 @@ func TestSubscriptionsPause_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsPause_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "pause", "sub-123", "--remaining-pause-cycles", "3")
 	if err != nil {
@@ -1302,6 +1362,7 @@ func TestSubscriptionsPause_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsPause_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	var capturedBody *recurly.SubscriptionPause
 
@@ -1334,6 +1395,7 @@ func TestSubscriptionsPause_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsPause_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		pauseSubscriptionFn: func(subscriptionId string, body *recurly.SubscriptionPause, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1359,6 +1421,7 @@ func TestSubscriptionsPause_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsPause_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		pauseSubscriptionFn: func(subscriptionId string, body *recurly.SubscriptionPause, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1381,6 +1444,7 @@ func TestSubscriptionsPause_SDKError(t *testing.T) {
 // --- subscriptions resume ---
 
 func TestSubscriptionsResume_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1391,6 +1455,7 @@ func TestSubscriptionsResume_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsResumeHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "resume", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1401,6 +1466,7 @@ func TestSubscriptionsResumeHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsResume_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "resume")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -1411,6 +1477,7 @@ func TestSubscriptionsResume_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsResume_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "resume", "sub-123")
 	if err != nil {
@@ -1425,6 +1492,7 @@ func TestSubscriptionsResume_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsResume_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "resume", "sub-123")
 	if err != nil {
@@ -1436,6 +1504,7 @@ func TestSubscriptionsResume_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsResume_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		resumeSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1462,6 +1531,7 @@ func TestSubscriptionsResume_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsResume_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		resumeSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1487,6 +1557,7 @@ func TestSubscriptionsResume_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsResume_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		resumeSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1507,6 +1578,7 @@ func TestSubscriptionsResume_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsResume_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		resumeSubscriptionFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -1531,6 +1603,7 @@ func TestSubscriptionsResume_JSONOutput(t *testing.T) {
 // --- subscriptions terminate ---
 
 func TestSubscriptionsTerminate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1541,6 +1614,7 @@ func TestSubscriptionsTerminate_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsTerminateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "terminate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1553,6 +1627,7 @@ func TestSubscriptionsTerminateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "terminate")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -1563,6 +1638,7 @@ func TestSubscriptionsTerminate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "terminate", "sub-123")
 	if err != nil {
@@ -1577,6 +1653,7 @@ func TestSubscriptionsTerminate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "terminate", "sub-123")
 	if err != nil {
@@ -1588,6 +1665,7 @@ func TestSubscriptionsTerminate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		terminateSubscriptionFn: func(subscriptionId string, params *recurly.TerminateSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1616,6 +1694,7 @@ func TestSubscriptionsTerminate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		terminateSubscriptionFn: func(subscriptionId string, params *recurly.TerminateSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1643,6 +1722,7 @@ func TestSubscriptionsTerminate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_RefundAndChargeFlags(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.TerminateSubscriptionParams
 
 	mock := &mockSubscriptionAPI{
@@ -1670,6 +1750,7 @@ func TestSubscriptionsTerminate_RefundAndChargeFlags(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		terminateSubscriptionFn: func(subscriptionId string, params *recurly.TerminateSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1690,6 +1771,7 @@ func TestSubscriptionsTerminate_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsTerminate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		terminateSubscriptionFn: func(subscriptionId string, params *recurly.TerminateSubscriptionParams, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil
@@ -1714,6 +1796,7 @@ func TestSubscriptionsTerminate_JSONOutput(t *testing.T) {
 // --- subscriptions convert-trial ---
 
 func TestSubscriptionsConvertTrial_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1724,6 +1807,7 @@ func TestSubscriptionsConvertTrial_ShowsInHelp(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrialHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "subscriptions", "convert-trial", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1734,6 +1818,7 @@ func TestSubscriptionsConvertTrialHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "subscriptions", "convert-trial")
 	if err == nil {
 		t.Fatal("expected error when no subscription ID is provided")
@@ -1744,6 +1829,7 @@ func TestSubscriptionsConvertTrial_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "convert-trial", "sub-123")
 	if err != nil {
@@ -1758,6 +1844,7 @@ func TestSubscriptionsConvertTrial_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "subscriptions", "convert-trial", "sub-123")
 	if err != nil {
@@ -1769,6 +1856,7 @@ func TestSubscriptionsConvertTrial_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		convertTrialFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1795,6 +1883,7 @@ func TestSubscriptionsConvertTrial_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockSubscriptionAPI{
 		convertTrialFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
@@ -1820,6 +1909,7 @@ func TestSubscriptionsConvertTrial_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		convertTrialFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, &recurly.Error{
@@ -1840,6 +1930,7 @@ func TestSubscriptionsConvertTrial_SDKError(t *testing.T) {
 }
 
 func TestSubscriptionsConvertTrial_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockSubscriptionAPI{
 		convertTrialFn: func(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return sampleSubscriptionDetail(), nil

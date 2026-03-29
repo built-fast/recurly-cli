@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/spf13/viper"
 )
 
 // executeCommandMu serializes executeCommand calls to avoid data races on
@@ -27,6 +28,11 @@ func executeCommand(app *App, args ...string) (string, string, error) {
 func executeCommandWithStdin(app *App, stdin *bytes.Buffer, args ...string) (string, string, error) {
 	executeCommandMu.Lock()
 	defer executeCommandMu.Unlock()
+
+	// Reset viper before each command to prevent global state leaking
+	// between tests (e.g., --jq triggers viper.Set("output","json") in
+	// PersistentPreRunE, which persists in the global singleton).
+	viper.Reset()
 
 	cmd := NewRootCmd()
 	if app != nil {
@@ -49,6 +55,7 @@ func executeCommandWithStdin(app *App, stdin *bytes.Buffer, args ...string) (str
 }
 
 func TestRootNoArgs_ShowsHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -67,6 +74,7 @@ func TestRootNoArgs_ShowsHelp(t *testing.T) {
 }
 
 func TestRootHelp_ShowsHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -79,6 +87,7 @@ func TestRootHelp_ShowsHelp(t *testing.T) {
 }
 
 func TestRootVersion_PrintsVersionString(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "--version")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -90,6 +99,7 @@ func TestRootVersion_PrintsVersionString(t *testing.T) {
 }
 
 func TestRootUnknownCommand_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "nonexistent-command")
 	if err == nil {
 		t.Fatal("expected error for unknown command, got nil")
@@ -100,6 +110,7 @@ func TestRootUnknownCommand_ReturnsError(t *testing.T) {
 }
 
 func TestRootInvalidRegion_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "--region", "asia", "configure")
 	if err == nil {
 		t.Fatal("expected error for invalid region")
@@ -113,6 +124,7 @@ func TestRootInvalidRegion_ReturnsError(t *testing.T) {
 }
 
 func TestRootValidRegion_CaseInsensitive(t *testing.T) {
+	t.Parallel()
 	// Passing --region=EU should not cause an error (help output for configure)
 	out, _, err := executeCommand(nil, "--region", "EU", "--help")
 	if err != nil {
@@ -124,6 +136,7 @@ func TestRootValidRegion_CaseInsensitive(t *testing.T) {
 }
 
 func TestRootJQFlag_InvalidExpression(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "--jq", "invalid[[[", "configure")
 	if err == nil {
 		t.Fatal("expected error for invalid jq expression")
@@ -134,6 +147,7 @@ func TestRootJQFlag_InvalidExpression(t *testing.T) {
 }
 
 func TestRootJQFlag_MutuallyExclusiveWithTable(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "--jq", ".name", "--output", "table", "configure")
 	if err == nil {
 		t.Fatal("expected error for --jq with --output table")
@@ -144,6 +158,7 @@ func TestRootJQFlag_MutuallyExclusiveWithTable(t *testing.T) {
 }
 
 func TestRootJQFlag_AllowedWithJSON(t *testing.T) {
+	t.Parallel()
 	// --jq with --output json should not produce a mutual exclusivity error
 	_, stderr, err := executeCommand(nil, "--jq", ".", "--output", "json", "configure")
 	if err != nil && strings.Contains(stderr, "mutually exclusive") {
@@ -152,6 +167,7 @@ func TestRootJQFlag_AllowedWithJSON(t *testing.T) {
 }
 
 func TestRootJQFlag_AllowedWithJSONPretty(t *testing.T) {
+	t.Parallel()
 	// --jq with --output json-pretty should not produce a mutual exclusivity error
 	_, stderr, err := executeCommand(nil, "--jq", ".", "--output", "json-pretty", "configure")
 	if err != nil && strings.Contains(stderr, "mutually exclusive") {
@@ -160,6 +176,7 @@ func TestRootJQFlag_AllowedWithJSONPretty(t *testing.T) {
 }
 
 func TestRootJQFlag_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

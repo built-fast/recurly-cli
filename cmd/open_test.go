@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/viper"
 )
 
 func TestBuildDashboardURL_NoResource(t *testing.T) {
+	t.Parallel()
 	url := buildDashboardURL("mysite", "", "")
 	expected := "https://mysite.recurly.com"
 	if url != expected {
@@ -18,6 +18,7 @@ func TestBuildDashboardURL_NoResource(t *testing.T) {
 }
 
 func TestBuildDashboardURL_ResourceOnly(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		resource string
 		expected string
@@ -32,6 +33,7 @@ func TestBuildDashboardURL_ResourceOnly(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.resource, func(t *testing.T) {
+			t.Parallel()
 			url := buildDashboardURL("mysite", tt.resource, "")
 			if url != tt.expected {
 				t.Errorf("expected %q, got %q", tt.expected, url)
@@ -41,6 +43,7 @@ func TestBuildDashboardURL_ResourceOnly(t *testing.T) {
 }
 
 func TestBuildDashboardURL_ResourceWithIdentifier(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		resource   string
 		identifier string
@@ -56,6 +59,7 @@ func TestBuildDashboardURL_ResourceWithIdentifier(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.resource, func(t *testing.T) {
+			t.Parallel()
 			url := buildDashboardURL("mysite", tt.resource, tt.identifier)
 			if url != tt.expected {
 				t.Errorf("expected %q, got %q", tt.expected, url)
@@ -65,10 +69,8 @@ func TestBuildDashboardURL_ResourceWithIdentifier(t *testing.T) {
 }
 
 func TestOpenCmd_NoArgs_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -79,10 +81,8 @@ func TestOpenCmd_NoArgs_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_ResourceOnly_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "accounts")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "accounts")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -93,10 +93,8 @@ func TestOpenCmd_ResourceOnly_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_AccountWithCode_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "accounts", "acct123")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "accounts", "acct123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -107,10 +105,8 @@ func TestOpenCmd_AccountWithCode_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_PlanWithCode_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "plans", "gold")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "plans", "gold")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -121,10 +117,8 @@ func TestOpenCmd_PlanWithCode_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_ItemWithCode_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "items", "widget")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "items", "widget")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -135,10 +129,8 @@ func TestOpenCmd_ItemWithCode_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_CouponWithCode_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "coupons", "SAVE10")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "coupons", "SAVE10")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -149,10 +141,8 @@ func TestOpenCmd_CouponWithCode_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_InvoiceWithNumber_PrintsURL(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	out, _, err := executeCommand(nil, "open", "--url", "invoices", "1001")
+	t.Parallel()
+	out, _, err := executeCommand(nil, "open", "--url", "--site", "testsite", "invoices", "1001")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -163,16 +153,14 @@ func TestOpenCmd_InvoiceWithNumber_PrintsURL(t *testing.T) {
 }
 
 func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
+	t.Parallel()
 	app := newTestSubscriptionApp(&mockSubscriptionAPI{
 		getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return &recurly.Subscription{Uuid: "sub-uuid-123"}, nil
 		},
 	})
 
-	out, _, err := executeCommand(app, "open", "--url", "subscriptions", "sxyz")
+	out, _, err := executeCommand(app, "open", "--url", "--site", "testsite", "subscriptions", "sxyz")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -183,16 +171,14 @@ func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
 }
 
 func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
+	t.Parallel()
 	app := newTestTransactionApp(&mockTransactionAPI{
 		getTransactionFn: func(id string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return &recurly.Transaction{Uuid: "txn-uuid-456"}, nil
 		},
 	})
 
-	out, _, err := executeCommand(app, "open", "--url", "transactions", "tabc")
+	out, _, err := executeCommand(app, "open", "--url", "--site", "testsite", "transactions", "tabc")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -203,9 +189,7 @@ func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
 }
 
 func TestOpenCmd_SiteFlagOverridesConfig(t *testing.T) {
-	viper.Set("site", "configsite")
-	defer viper.Set("site", "")
-
+	t.Parallel()
 	out, _, err := executeCommand(nil, "open", "--url", "--site", "override")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -217,8 +201,7 @@ func TestOpenCmd_SiteFlagOverridesConfig(t *testing.T) {
 }
 
 func TestOpenCmd_NoSiteConfigured_ReturnsError(t *testing.T) {
-	viper.Set("site", "")
-
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "open", "--url")
 	if err == nil {
 		t.Fatal("expected error when no site configured")
@@ -229,10 +212,8 @@ func TestOpenCmd_NoSiteConfigured_ReturnsError(t *testing.T) {
 }
 
 func TestOpenCmd_InvalidResource_ReturnsError(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	_, stderr, err := executeCommand(nil, "open", "--url", "widgets")
+	t.Parallel()
+	_, stderr, err := executeCommand(nil, "open", "--url", "--site", "testsite", "widgets")
 	if err == nil {
 		t.Fatal("expected error for invalid resource type")
 	}
@@ -247,19 +228,15 @@ func TestOpenCmd_InvalidResource_ReturnsError(t *testing.T) {
 }
 
 func TestOpenCmd_TooManyArgs_ReturnsError(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
-	_, _, err := executeCommand(nil, "open", "accounts", "code", "extra")
+	t.Parallel()
+	_, _, err := executeCommand(nil, "open", "--site", "testsite", "accounts", "code", "extra")
 	if err == nil {
 		t.Fatal("expected error for too many args")
 	}
 }
 
 func TestOpenCmd_OpenssBrowser(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
+	// Cannot use t.Parallel() — modifies global openBrowserFunc
 	var openedURL string
 	orig := openBrowserFunc
 	openBrowserFunc = func(url string) error {
@@ -268,7 +245,7 @@ func TestOpenCmd_OpenssBrowser(t *testing.T) {
 	}
 	defer func() { openBrowserFunc = orig }()
 
-	_, _, err := executeCommand(nil, "open", "accounts", "acct123")
+	_, _, err := executeCommand(nil, "open", "--site", "testsite", "accounts", "acct123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -279,16 +256,14 @@ func TestOpenCmd_OpenssBrowser(t *testing.T) {
 }
 
 func TestOpenCmd_BrowserError_ReturnsError(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
+	// Cannot use t.Parallel() — modifies global openBrowserFunc
 	orig := openBrowserFunc
 	openBrowserFunc = func(url string) error {
 		return fmt.Errorf("browser not found")
 	}
 	defer func() { openBrowserFunc = orig }()
 
-	_, _, err := executeCommand(nil, "open")
+	_, _, err := executeCommand(nil, "open", "--site", "testsite")
 	if err == nil {
 		t.Fatal("expected error when browser fails")
 	}
@@ -298,16 +273,14 @@ func TestOpenCmd_BrowserError_ReturnsError(t *testing.T) {
 }
 
 func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
-	viper.Set("site", "testsite")
-	defer viper.Set("site", "")
-
+	t.Parallel()
 	app := newTestSubscriptionApp(&mockSubscriptionAPI{
 		getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
 			return nil, fmt.Errorf("not found")
 		},
 	})
 
-	_, stderr, err := executeCommand(app, "open", "--url", "subscriptions", "bad-id")
+	_, stderr, err := executeCommand(app, "open", "--url", "--site", "testsite", "subscriptions", "bad-id")
 	if err == nil {
 		t.Fatal("expected error when subscription fetch fails")
 	}
@@ -317,6 +290,7 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 }
 
 func TestOpenCmd_Help_ShowsUsage(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "open", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -329,6 +303,7 @@ func TestOpenCmd_Help_ShowsUsage(t *testing.T) {
 }
 
 func TestResourceNeedsUUID(t *testing.T) {
+	t.Parallel()
 	if !resourceNeedsUUID("subscriptions") {
 		t.Error("expected subscriptions to need UUID")
 	}
@@ -343,6 +318,7 @@ func TestResourceNeedsUUID(t *testing.T) {
 }
 
 func TestIsValidResource(t *testing.T) {
+	t.Parallel()
 	for _, r := range validResourceTypes {
 		if !isValidResource(r) {
 			t.Errorf("expected %q to be valid", r)

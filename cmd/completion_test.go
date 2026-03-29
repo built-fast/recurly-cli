@@ -6,6 +6,7 @@ import (
 )
 
 func TestCompletionBash_OutputsScript(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion", "bash")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -16,6 +17,7 @@ func TestCompletionBash_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionZsh_OutputsScript(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion", "zsh")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -26,6 +28,7 @@ func TestCompletionZsh_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionFish_OutputsScript(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion", "fish")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -36,6 +39,7 @@ func TestCompletionFish_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionPowershell_OutputsScript(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion", "powershell")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -46,6 +50,7 @@ func TestCompletionPowershell_OutputsScript(t *testing.T) {
 }
 
 func TestCompletionBash_IncludesCompletionFunction(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion", "bash")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -56,6 +61,7 @@ func TestCompletionBash_IncludesCompletionFunction(t *testing.T) {
 }
 
 func TestCompletionNoArgs_ShowsHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "completion")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -66,6 +72,7 @@ func TestCompletionNoArgs_ShowsHelp(t *testing.T) {
 }
 
 func TestCompletion_HasUsageExamples(t *testing.T) {
+	t.Parallel()
 	shells := []string{"bash", "zsh", "fish", "powershell"}
 	for _, shell := range shells {
 		out, _, err := executeCommand(nil, "completion", shell, "--help")

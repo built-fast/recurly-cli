@@ -48,6 +48,7 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 // --- invoices list ---
 
 func TestInvoicesList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -58,6 +59,7 @@ func TestInvoicesList_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesList_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
@@ -88,6 +90,7 @@ func TestInvoicesList_TableOutput(t *testing.T) {
 }
 
 func TestInvoicesList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
@@ -114,6 +117,7 @@ func TestInvoicesList_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
@@ -136,6 +140,7 @@ func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesList_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
@@ -143,10 +148,7 @@ func TestInvoicesList_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "list", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "invoices", "list", "--output", "json", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -158,6 +160,7 @@ func TestInvoicesList_JQFilter(t *testing.T) {
 }
 
 func TestInvoicesList_Filters(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListInvoicesParams
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
@@ -207,6 +210,7 @@ func TestInvoicesList_Filters(t *testing.T) {
 }
 
 func TestInvoicesList_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return nil, &recurly.Error{
@@ -229,6 +233,7 @@ func TestInvoicesList_APIError(t *testing.T) {
 // --- invoices get ---
 
 func TestInvoicesGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -239,6 +244,7 @@ func TestInvoicesGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "invoices", "get")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
@@ -249,6 +255,7 @@ func TestInvoicesGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -262,6 +269,7 @@ func TestInvoicesGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -281,6 +289,7 @@ func TestInvoicesGet_PositionalArg(t *testing.T) {
 }
 
 func TestInvoicesGet_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -325,6 +334,7 @@ func TestInvoicesGet_TableOutput(t *testing.T) {
 }
 
 func TestInvoicesGet_TableOutput_NoLineItemsByDefault(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -343,6 +353,7 @@ func TestInvoicesGet_TableOutput_NoLineItemsByDefault(t *testing.T) {
 }
 
 func TestInvoicesGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -365,6 +376,7 @@ func TestInvoicesGet_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesGet_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -387,6 +399,7 @@ func TestInvoicesGet_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesGet_NotFound(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return nil, &recurly.Error{
@@ -407,6 +420,7 @@ func TestInvoicesGet_NotFound(t *testing.T) {
 }
 
 func TestInvoicesGet_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return nil, &recurly.Error{
@@ -426,6 +440,7 @@ func TestInvoicesGet_SDKError(t *testing.T) {
 // --- invoices get --line-items ---
 
 func TestInvoicesGet_LineItems_Shown(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -457,6 +472,7 @@ func TestInvoicesGet_LineItems_Shown(t *testing.T) {
 }
 
 func TestInvoicesGet_LineItems_WithCount(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListInvoiceLineItemsParams
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -480,6 +496,7 @@ func TestInvoicesGet_LineItems_WithCount(t *testing.T) {
 }
 
 func TestInvoicesGet_LineItems_HasMoreMessage(t *testing.T) {
+	t.Parallel()
 	// Use a lister that reports hasMore=true after first fetch
 	lister := &mockLineItemListerWithMore{
 		lineItems: sampleLineItems(),
@@ -508,6 +525,7 @@ func TestInvoicesGet_LineItems_HasMoreMessage(t *testing.T) {
 }
 
 func TestInvoicesGet_LineItems_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -538,6 +556,7 @@ func TestInvoicesGet_LineItems_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesGet_LineItems_NotShownWithoutFlag(t *testing.T) {
+	t.Parallel()
 	lineItemsCalled := false
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -561,6 +580,7 @@ func TestInvoicesGet_LineItems_NotShownWithoutFlag(t *testing.T) {
 }
 
 func TestInvoicesGet_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		getInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return sampleInvoice(), nil
@@ -568,10 +588,7 @@ func TestInvoicesGet_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--jq", ".id")
+	out, _, err := executeCommand(app, "invoices", "get", "inv-abc123", "--output", "json", "--jq", ".id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -624,6 +641,7 @@ func (m *mockLineItemListerWithMore) Next() string {
 // --- invoices void ---
 
 func TestInvoicesVoid_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -634,6 +652,7 @@ func TestInvoicesVoid_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesVoid_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "invoices", "void")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
@@ -644,6 +663,7 @@ func TestInvoicesVoid_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesVoid_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "void", "inv-abc123")
 	if err != nil {
@@ -658,6 +678,7 @@ func TestInvoicesVoid_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestInvoicesVoid_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -686,6 +707,7 @@ func TestInvoicesVoid_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestInvoicesVoid_YesFlag_SkipsConfirmation(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -708,6 +730,7 @@ func TestInvoicesVoid_YesFlag_SkipsConfirmation(t *testing.T) {
 }
 
 func TestInvoicesVoid_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -732,6 +755,7 @@ func TestInvoicesVoid_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesVoid_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -756,6 +780,7 @@ func TestInvoicesVoid_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesVoid_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -765,10 +790,7 @@ func TestInvoicesVoid_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "void", "inv-abc123", "--yes", "--output", "json", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -780,6 +802,7 @@ func TestInvoicesVoid_JQFilter(t *testing.T) {
 }
 
 func TestInvoicesVoid_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		voidInvoiceFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return nil, &recurly.Error{
@@ -802,6 +825,7 @@ func TestInvoicesVoid_APIError(t *testing.T) {
 // --- invoices collect ---
 
 func TestInvoicesCollect_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -812,6 +836,7 @@ func TestInvoicesCollect_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesCollect_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "invoices", "collect")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
@@ -822,6 +847,7 @@ func TestInvoicesCollect_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesCollect_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "collect", "inv-abc123")
 	if err != nil {
@@ -836,6 +862,7 @@ func TestInvoicesCollect_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestInvoicesCollect_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -864,6 +891,7 @@ func TestInvoicesCollect_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestInvoicesCollect_YesFlag_SkipsConfirmation(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -886,6 +914,7 @@ func TestInvoicesCollect_YesFlag_SkipsConfirmation(t *testing.T) {
 }
 
 func TestInvoicesCollect_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -910,6 +939,7 @@ func TestInvoicesCollect_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesCollect_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -934,6 +964,7 @@ func TestInvoicesCollect_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesCollect_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -943,10 +974,7 @@ func TestInvoicesCollect_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "collect", "inv-abc123", "--yes", "--output", "json", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -958,6 +986,7 @@ func TestInvoicesCollect_JQFilter(t *testing.T) {
 }
 
 func TestInvoicesCollect_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		collectInvoiceFn: func(invoiceId string, params *recurly.CollectInvoiceParams, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return nil, &recurly.Error{
@@ -980,6 +1009,7 @@ func TestInvoicesCollect_APIError(t *testing.T) {
 // --- Mark Failed tests ---
 
 func TestInvoicesMarkFailed_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -990,6 +1020,7 @@ func TestInvoicesMarkFailed_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "invoices", "mark-failed")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
@@ -1000,6 +1031,7 @@ func TestInvoicesMarkFailed_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "invoices", "mark-failed", "inv-abc123")
 	if err != nil {
@@ -1014,6 +1046,7 @@ func TestInvoicesMarkFailed_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
@@ -1042,6 +1075,7 @@ func TestInvoicesMarkFailed_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_YesFlag_SkipsConfirmation(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -1064,6 +1098,7 @@ func TestInvoicesMarkFailed_YesFlag_SkipsConfirmation(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -1088,6 +1123,7 @@ func TestInvoicesMarkFailed_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -1112,6 +1148,7 @@ func TestInvoicesMarkFailed_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			inv := sampleInvoice()
@@ -1121,10 +1158,7 @@ func TestInvoicesMarkFailed_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--jq", ".state")
+	out, _, err := executeCommand(app, "invoices", "mark-failed", "inv-abc123", "--yes", "--output", "json", "--jq", ".state")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1136,6 +1170,7 @@ func TestInvoicesMarkFailed_JQFilter(t *testing.T) {
 }
 
 func TestInvoicesMarkFailed_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		markInvoiceFailedFn: func(invoiceId string, opts ...recurly.Option) (*recurly.Invoice, error) {
 			return nil, &recurly.Error{
@@ -1158,6 +1193,7 @@ func TestInvoicesMarkFailed_APIError(t *testing.T) {
 // --- invoices line-items ---
 
 func TestInvoicesLineItems_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1168,6 +1204,7 @@ func TestInvoicesLineItems_ShowsInHelp(t *testing.T) {
 }
 
 func TestInvoicesLineItems_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "invoices", "line-items")
 	if err == nil {
 		t.Fatal("expected error when no invoice ID is provided")
@@ -1178,6 +1215,7 @@ func TestInvoicesLineItems_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesLineItems_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
@@ -1205,6 +1243,7 @@ func TestInvoicesLineItems_TableOutput(t *testing.T) {
 }
 
 func TestInvoicesLineItems_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
@@ -1224,6 +1263,7 @@ func TestInvoicesLineItems_PositionalArg(t *testing.T) {
 }
 
 func TestInvoicesLineItems_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
@@ -1250,6 +1290,7 @@ func TestInvoicesLineItems_JSONOutput(t *testing.T) {
 }
 
 func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
@@ -1272,6 +1313,7 @@ func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestInvoicesLineItems_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
@@ -1279,10 +1321,7 @@ func TestInvoicesLineItems_JQFilter(t *testing.T) {
 	}
 	app := newTestInvoiceApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "invoices", "line-items", "inv-abc123", "--output", "json", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1294,6 +1333,7 @@ func TestInvoicesLineItems_JQFilter(t *testing.T) {
 }
 
 func TestInvoicesLineItems_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			return nil, &recurly.Error{

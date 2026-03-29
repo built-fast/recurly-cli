@@ -41,6 +41,7 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 // --- billing-info get ---
 
 func TestAccountBillingInfoGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -51,12 +52,14 @@ func TestAccountBillingInfoGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "accounts", "billing-info", "get")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
 }
 
+// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 func TestAccountBillingInfoGet_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
@@ -71,6 +74,7 @@ func TestAccountBillingInfoGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	bi := sampleBillingInfo()
 
@@ -92,6 +96,7 @@ func TestAccountBillingInfoGet_PositionalArg(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_TableOutput(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		getBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -124,6 +129,7 @@ func TestAccountBillingInfoGet_TableOutput(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		getBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -132,10 +138,7 @@ func TestAccountBillingInfoGet_JSONOutput(t *testing.T) {
 	}
 	app := newTestAccountBillingInfoApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -153,6 +156,7 @@ func TestAccountBillingInfoGet_JSONOutput(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		getBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -161,10 +165,7 @@ func TestAccountBillingInfoGet_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestAccountBillingInfoApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -180,6 +181,7 @@ func TestAccountBillingInfoGet_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_JQFilter(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		getBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -188,11 +190,7 @@ func TestAccountBillingInfoGet_JQFilter(t *testing.T) {
 	}
 	app := newTestAccountBillingInfoApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".first_name")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "get", "code-acct1", "--output", "json", "--jq", ".first_name")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -203,6 +201,7 @@ func TestAccountBillingInfoGet_JQFilter(t *testing.T) {
 }
 
 func TestAccountBillingInfoGet_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountBillingInfoAPI{
 		getBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.BillingInfo, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -219,6 +218,7 @@ func TestAccountBillingInfoGet_SDKError(t *testing.T) {
 // --- billing-info update ---
 
 func TestAccountBillingInfoUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -229,12 +229,14 @@ func TestAccountBillingInfoUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "accounts", "billing-info", "update")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
 }
 
+// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 func TestAccountBillingInfoUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
@@ -249,6 +251,7 @@ func TestAccountBillingInfoUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	bi := sampleBillingInfo()
 
@@ -270,6 +273,7 @@ func TestAccountBillingInfoUpdate_PositionalArg(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_OnlyChangedFields(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.BillingInfoCreate
 	bi := sampleBillingInfo()
 
@@ -305,6 +309,7 @@ func TestAccountBillingInfoUpdate_OnlyChangedFields(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_BoolFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.BillingInfoCreate
 	bi := sampleBillingInfo()
 
@@ -330,6 +335,7 @@ func TestAccountBillingInfoUpdate_BoolFlags(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_AddressFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.BillingInfoCreate
 	bi := sampleBillingInfo()
 
@@ -377,6 +383,7 @@ func TestAccountBillingInfoUpdate_AddressFlags(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_NoAddressWhenNotSet(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.BillingInfoCreate
 	bi := sampleBillingInfo()
 
@@ -399,6 +406,7 @@ func TestAccountBillingInfoUpdate_NoAddressWhenNotSet(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_TableOutput(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -426,6 +434,7 @@ func TestAccountBillingInfoUpdate_TableOutput(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	bi := sampleBillingInfo()
 	mock := &mockAccountBillingInfoAPI{
 		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
@@ -434,10 +443,7 @@ func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
 	}
 	app := newTestAccountBillingInfoApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane")
+	out, _, err := executeCommand(app, "accounts", "billing-info", "update", "code-acct1", "--first-name", "Jane", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -452,6 +458,7 @@ func TestAccountBillingInfoUpdate_JSONOutput(t *testing.T) {
 }
 
 func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountBillingInfoAPI{
 		updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
 			return nil, &recurly.Error{Message: "validation error"}
@@ -468,6 +475,7 @@ func TestAccountBillingInfoUpdate_SDKError(t *testing.T) {
 // --- billing-info remove ---
 
 func TestAccountBillingInfoRemove_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "billing-info", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -478,12 +486,14 @@ func TestAccountBillingInfoRemove_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "accounts", "billing-info", "remove")
 	if err == nil {
 		t.Fatal("expected error when no account_id provided")
 	}
 }
 
+// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 func TestAccountBillingInfoRemove_NoAPIKey_ReturnsError(t *testing.T) {
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
@@ -501,6 +511,7 @@ func TestAccountBillingInfoRemove_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "billing-info", "remove", "acct-123")
 	if err != nil {
@@ -515,6 +526,7 @@ func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "accounts", "billing-info", "remove", "acct-123")
 	if err != nil {
@@ -526,6 +538,7 @@ func TestAccountBillingInfoRemove_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	mock := &mockAccountBillingInfoAPI{
 		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
@@ -552,6 +565,7 @@ func TestAccountBillingInfoRemove_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 	mock := &mockAccountBillingInfoAPI{
 		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
@@ -577,6 +591,7 @@ func TestAccountBillingInfoRemove_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestAccountBillingInfoRemove_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountBillingInfoAPI{
 		removeBillingInfoFn: func(accountId string, opts ...recurly.Option) (*recurly.Empty, error) {
 			return nil, &recurly.Error{Message: "not found"}

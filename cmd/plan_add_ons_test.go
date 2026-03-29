@@ -52,6 +52,7 @@ func (m *mockPlanAddOnAPI) RemovePlanAddOn(planId string, addOnId string, opts .
 }
 
 func TestPlanAddOnsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -62,6 +63,7 @@ func TestPlanAddOnsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -74,6 +76,7 @@ func TestPlanAddOnsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsList_RequiresPlanID(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
@@ -88,6 +91,7 @@ func TestPlanAddOnsList_RequiresPlanID(t *testing.T) {
 }
 
 func TestPlanAddOnsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -101,6 +105,7 @@ func TestPlanAddOnsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlanAddOnsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID string
 	var capturedParams *recurly.ListPlanAddOnsParams
 
@@ -136,6 +141,7 @@ func TestPlanAddOnsList_PaginationParams(t *testing.T) {
 }
 
 func TestPlanAddOnsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListPlanAddOnsParams
 
 	mock := &mockPlanAddOnAPI{
@@ -157,6 +163,7 @@ func TestPlanAddOnsList_FilterParams(t *testing.T) {
 }
 
 func TestPlanAddOnsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListPlanAddOnsParams
 
 	mock := &mockPlanAddOnAPI{
@@ -187,6 +194,7 @@ func TestPlanAddOnsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlanAddOnsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -213,6 +221,7 @@ func TestPlanAddOnsList_TableOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -221,10 +230,7 @@ func TestPlanAddOnsList_JSONOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -242,6 +248,7 @@ func TestPlanAddOnsList_JSONOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -250,10 +257,7 @@ func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -272,6 +276,7 @@ func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsList_JQFilter(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
@@ -280,11 +285,7 @@ func TestPlanAddOnsList_JQFilter(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".data[0].code")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--output", "json", "--jq", ".data[0].code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -295,6 +296,7 @@ func TestPlanAddOnsList_JQFilter(t *testing.T) {
 }
 
 func TestPlanAddOnsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -309,6 +311,7 @@ func TestPlanAddOnsList_SDKError(t *testing.T) {
 }
 
 func TestPlanAddOnsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
@@ -328,6 +331,7 @@ func TestPlanAddOnsList_EmptyResults(t *testing.T) {
 }
 
 func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
@@ -335,10 +339,7 @@ func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "list", "code-plan1", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -358,6 +359,7 @@ func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 // --- plan add-ons get ---
 
 func TestPlanAddOnsGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -368,6 +370,7 @@ func TestPlanAddOnsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_RequiresBothArgs(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "plans", "add-ons", "get")
 	if err == nil {
 		t.Fatal("expected error when no args provided")
@@ -380,6 +383,7 @@ func TestPlanAddOnsGet_RequiresBothArgs(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -393,6 +397,7 @@ func TestPlanAddOnsGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_PositionalArgs(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID, capturedAddOnID string
 	addOn := sampleAddOn()
 
@@ -418,6 +423,7 @@ func TestPlanAddOnsGet_PositionalArgs(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_TableOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		getPlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -453,6 +459,7 @@ func TestPlanAddOnsGet_TableOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		getPlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -461,10 +468,7 @@ func TestPlanAddOnsGet_JSONOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -482,6 +486,7 @@ func TestPlanAddOnsGet_JSONOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		getPlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -490,10 +495,7 @@ func TestPlanAddOnsGet_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -509,6 +511,7 @@ func TestPlanAddOnsGet_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_JQFilter(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		getPlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -517,11 +520,7 @@ func TestPlanAddOnsGet_JQFilter(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".code")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1")
+	out, _, err := executeCommand(app, "plans", "add-ons", "get", "plan1", "addon1", "--output", "json", "--jq", ".code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -532,6 +531,7 @@ func TestPlanAddOnsGet_JQFilter(t *testing.T) {
 }
 
 func TestPlanAddOnsGet_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		getPlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -548,6 +548,7 @@ func TestPlanAddOnsGet_SDKError(t *testing.T) {
 // --- plan add-ons create ---
 
 func TestPlanAddOnsCreate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -558,6 +559,7 @@ func TestPlanAddOnsCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsCreateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -575,6 +577,7 @@ func TestPlanAddOnsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_RequiresPlanID(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "plans", "add-ons", "create")
 	if err == nil {
 		t.Fatal("expected error when plan_id is missing")
@@ -582,6 +585,7 @@ func TestPlanAddOnsCreate_RequiresPlanID(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -595,6 +599,7 @@ func TestPlanAddOnsCreate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_CoreFlags(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID string
 	var capturedBody *recurly.AddOnCreate
 	addOn := sampleAddOn()
@@ -628,6 +633,7 @@ func TestPlanAddOnsCreate_CoreFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_AllOptionalFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnCreate
 	addOn := sampleAddOn()
 
@@ -690,6 +696,7 @@ func TestPlanAddOnsCreate_AllOptionalFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnCreate
 	addOn := sampleAddOn()
 
@@ -727,6 +734,7 @@ func TestPlanAddOnsCreate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_SingleCurrency(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnCreate
 	addOn := sampleAddOn()
 
@@ -761,6 +769,7 @@ func TestPlanAddOnsCreate_SingleCurrency(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -784,6 +793,7 @@ func TestPlanAddOnsCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnCreate
 	addOn := sampleAddOn()
 
@@ -839,6 +849,7 @@ func TestPlanAddOnsCreate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_TableOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -871,6 +882,7 @@ func TestPlanAddOnsCreate_TableOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -879,12 +891,10 @@ func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
+		"--output", "json",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -900,6 +910,7 @@ func TestPlanAddOnsCreate_JSONOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -908,12 +919,10 @@ func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
+		"--output", "json-pretty",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -930,6 +939,7 @@ func TestPlanAddOnsCreate_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -938,13 +948,11 @@ func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".code")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "create", "plan1",
 		"--code", "extra-users",
 		"--name", "Extra Users",
+		"--output", "json",
+		"--jq", ".code",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -956,6 +964,7 @@ func TestPlanAddOnsCreate_JQFilter(t *testing.T) {
 }
 
 func TestPlanAddOnsCreate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		createPlanAddOnFn: func(planId string, body *recurly.AddOnCreate, opts ...recurly.Option) (*recurly.AddOn, error) {
 			return nil, &recurly.Error{Message: "validation error"}
@@ -975,6 +984,7 @@ func TestPlanAddOnsCreate_SDKError(t *testing.T) {
 // --- plan add-ons update ---
 
 func TestPlanAddOnsUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -985,6 +995,7 @@ func TestPlanAddOnsUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1002,6 +1013,7 @@ func TestPlanAddOnsUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_RequiresBothArgs(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "plans", "add-ons", "update")
 	if err == nil {
 		t.Fatal("expected error when no args provided")
@@ -1014,6 +1026,7 @@ func TestPlanAddOnsUpdate_RequiresBothArgs(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -1027,6 +1040,7 @@ func TestPlanAddOnsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_PositionalArgs(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID, capturedAddOnID string
 	addOn := sampleAddOn()
 
@@ -1052,6 +1066,7 @@ func TestPlanAddOnsUpdate_PositionalArgs(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_AllOptionalFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnUpdate
 	addOn := sampleAddOn()
 
@@ -1116,6 +1131,7 @@ func TestPlanAddOnsUpdate_AllOptionalFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnUpdate
 	addOn := sampleAddOn()
 
@@ -1151,6 +1167,7 @@ func TestPlanAddOnsUpdate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1172,6 +1189,7 @@ func TestPlanAddOnsUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.AddOnUpdate
 	addOn := sampleAddOn()
 
@@ -1229,6 +1247,7 @@ func TestPlanAddOnsUpdate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_TableOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1260,6 +1279,7 @@ func TestPlanAddOnsUpdate_TableOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_JSONOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1268,11 +1288,9 @@ func TestPlanAddOnsUpdate_JSONOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
+		"--output", "json",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1288,6 +1306,7 @@ func TestPlanAddOnsUpdate_JSONOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1296,11 +1315,9 @@ func TestPlanAddOnsUpdate_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
+		"--output", "json-pretty",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1317,6 +1334,7 @@ func TestPlanAddOnsUpdate_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_JQFilter(t *testing.T) {
+	t.Parallel()
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1325,12 +1343,10 @@ func TestPlanAddOnsUpdate_JQFilter(t *testing.T) {
 	}
 	app := newTestPlanAddOnApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".code")
-	defer viper.Reset()
-
 	out, _, err := executeCommand(app, "plans", "add-ons", "update", "plan1", "addon1",
 		"--name", "Extra Users",
+		"--output", "json",
+		"--jq", ".code",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1342,6 +1358,7 @@ func TestPlanAddOnsUpdate_JQFilter(t *testing.T) {
 }
 
 func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		updatePlanAddOnFn: func(planId string, addOnId string, body *recurly.AddOnUpdate, opts ...recurly.Option) (*recurly.AddOn, error) {
 			return nil, &recurly.Error{Message: "validation error"}
@@ -1360,6 +1377,7 @@ func TestPlanAddOnsUpdate_SDKError(t *testing.T) {
 // --- Delete tests ---
 
 func TestPlanAddOnsDelete_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1370,6 +1388,7 @@ func TestPlanAddOnsDelete_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlanAddOnsDeleteHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "add-ons", "delete", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1380,6 +1399,7 @@ func TestPlanAddOnsDeleteHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_MissingArgs_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "plans", "add-ons", "delete")
 	if err == nil {
 		t.Fatal("expected error for missing arguments")
@@ -1392,6 +1412,7 @@ func TestPlanAddOnsDelete_MissingArgs_ReturnsError(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
 	if err != nil {
@@ -1406,6 +1427,7 @@ func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "add-ons", "delete", "plan-123", "addon-456")
 	if err != nil {
@@ -1417,6 +1439,7 @@ func TestPlanAddOnsDelete_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_ConfirmYes_Succeeds(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID, capturedAddOnID string
 	mock := &mockPlanAddOnAPI{
 		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1449,6 +1472,7 @@ func TestPlanAddOnsDelete_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_YesFlag_SkipsPrompt(t *testing.T) {
+	t.Parallel()
 	var capturedPlanID, capturedAddOnID string
 	mock := &mockPlanAddOnAPI{
 		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
@@ -1480,6 +1504,7 @@ func TestPlanAddOnsDelete_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_DetailView(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
 			a := sampleAddOn()
@@ -1500,6 +1525,7 @@ func TestPlanAddOnsDelete_DetailView(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
 			a := sampleAddOn()
@@ -1522,6 +1548,7 @@ func TestPlanAddOnsDelete_JSONOutput(t *testing.T) {
 }
 
 func TestPlanAddOnsDelete_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAddOnAPI{
 		removePlanAddOnFn: func(planId string, addOnId string, opts ...recurly.Option) (*recurly.AddOn, error) {
 			return nil, &recurly.Error{Message: "not found"}

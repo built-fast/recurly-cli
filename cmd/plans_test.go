@@ -44,6 +44,7 @@ func (m *mockPlanAPI) RemovePlan(planId string, opts ...recurly.Option) (*recurl
 // --- plans list ---
 
 func TestPlansList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -54,6 +55,7 @@ func TestPlansList_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -66,6 +68,7 @@ func TestPlansListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -79,6 +82,7 @@ func TestPlansList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlansList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListPlansParams
 
 	mock := &mockPlanAPI{
@@ -109,6 +113,7 @@ func TestPlansList_PaginationParams(t *testing.T) {
 }
 
 func TestPlansList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListPlansParams
 
 	mock := &mockPlanAPI{
@@ -130,6 +135,7 @@ func TestPlansList_FilterParams(t *testing.T) {
 }
 
 func TestPlansList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListPlansParams
 
 	mock := &mockPlanAPI{
@@ -160,6 +166,7 @@ func TestPlansList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlansList_TableOutput(t *testing.T) {
+	t.Parallel()
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
@@ -187,6 +194,7 @@ func TestPlansList_TableOutput(t *testing.T) {
 }
 
 func TestPlansList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
@@ -223,6 +231,7 @@ func TestPlansList_JSONOutput(t *testing.T) {
 }
 
 func TestPlansList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
@@ -255,6 +264,7 @@ func TestPlansList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestPlansList_JQFilter(t *testing.T) {
+	t.Parallel()
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
@@ -275,6 +285,7 @@ func TestPlansList_JQFilter(t *testing.T) {
 }
 
 func TestPlansList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -289,6 +300,7 @@ func TestPlansList_SDKError(t *testing.T) {
 }
 
 func TestPlansList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
@@ -308,6 +320,7 @@ func TestPlansList_EmptyResults(t *testing.T) {
 }
 
 func TestPlansList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
@@ -339,6 +352,7 @@ func TestPlansList_EmptyResults_JSON(t *testing.T) {
 // --- plans get ---
 
 func TestPlansGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -349,6 +363,7 @@ func TestPlansGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "plans", "get")
 	if err == nil {
 		t.Fatal("expected error when no plan ID is provided")
@@ -359,6 +374,7 @@ func TestPlansGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestPlansGet_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -372,6 +388,7 @@ func TestPlansGet_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlansGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -391,7 +408,7 @@ func TestPlansGet_PositionalArg(t *testing.T) {
 }
 
 func TestPlansGet_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -431,7 +448,7 @@ func TestPlansGet_TableOutput(t *testing.T) {
 }
 
 func TestPlansGet_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -461,7 +478,7 @@ func TestPlansGet_JSONOutput(t *testing.T) {
 }
 
 func TestPlansGet_JQFilter(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -481,6 +498,7 @@ func TestPlansGet_JQFilter(t *testing.T) {
 }
 
 func TestPlansGet_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return nil, fmt.Errorf("connection refused")
@@ -495,6 +513,7 @@ func TestPlansGet_SDKError(t *testing.T) {
 }
 
 func TestPlansGet_NotFound(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return nil, &recurly.Error{
@@ -515,7 +534,7 @@ func TestPlansGet_NotFound(t *testing.T) {
 }
 
 func TestPlansGet_CurrenciesFormatting(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -540,6 +559,7 @@ func TestPlansGet_CurrenciesFormatting(t *testing.T) {
 // --- plans create ---
 
 func TestPlansCreate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -550,6 +570,7 @@ func TestPlansCreate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansCreateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "create", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -574,6 +595,7 @@ func TestPlansCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -587,6 +609,7 @@ func TestPlansCreate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlansCreate_CoreFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -632,6 +655,7 @@ func TestPlansCreate_CoreFlags(t *testing.T) {
 }
 
 func TestPlansCreate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -667,6 +691,7 @@ func TestPlansCreate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestPlansCreate_SingleCurrency(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -699,6 +724,7 @@ func TestPlansCreate_SingleCurrency(t *testing.T) {
 }
 
 func TestPlansCreate_AllFlagsPopulated(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -822,6 +848,7 @@ func TestPlansCreate_AllFlagsPopulated(t *testing.T) {
 }
 
 func TestPlansCreate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -844,6 +871,7 @@ func TestPlansCreate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestPlansCreate_SetupFeeFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -880,6 +908,7 @@ func TestPlansCreate_SetupFeeFlags(t *testing.T) {
 }
 
 func TestPlansCreate_SetupFeeCurrencyMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -903,6 +932,7 @@ func TestPlansCreate_SetupFeeCurrencyMismatch(t *testing.T) {
 }
 
 func TestPlansCreate_TrialFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -935,6 +965,7 @@ func TestPlansCreate_TrialFlags(t *testing.T) {
 }
 
 func TestPlansCreate_BillingFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -963,6 +994,7 @@ func TestPlansCreate_BillingFlags(t *testing.T) {
 }
 
 func TestPlansCreate_TaxFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1007,6 +1039,7 @@ func TestPlansCreate_TaxFlags(t *testing.T) {
 }
 
 func TestPlansCreate_AccountingFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1067,6 +1100,7 @@ func TestPlansCreate_AccountingFlags(t *testing.T) {
 }
 
 func TestPlansCreate_HostedPagesFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1107,6 +1141,7 @@ func TestPlansCreate_HostedPagesFlags(t *testing.T) {
 }
 
 func TestPlansCreate_OtherFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1135,6 +1170,7 @@ func TestPlansCreate_OtherFlags(t *testing.T) {
 }
 
 func TestPlansCreate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanCreate
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1182,7 +1218,7 @@ func TestPlansCreate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlansCreate_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1204,7 +1240,7 @@ func TestPlansCreate_TableOutput(t *testing.T) {
 }
 
 func TestPlansCreate_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1227,6 +1263,7 @@ func TestPlansCreate_JSONOutput(t *testing.T) {
 }
 
 func TestPlansCreate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		createPlanFn: func(body *recurly.PlanCreate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return nil, fmt.Errorf("validation error")
@@ -1241,7 +1278,7 @@ func TestPlansCreate_SDKError(t *testing.T) {
 }
 
 func TestPlansGet_EmptyCurrencies(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	mock := &mockPlanAPI{
 		getPlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1268,6 +1305,7 @@ func TestPlansGet_EmptyCurrencies(t *testing.T) {
 // --- plans update ---
 
 func TestPlansUpdate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1278,6 +1316,7 @@ func TestPlansUpdate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansUpdateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1302,6 +1341,7 @@ func TestPlansUpdateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansUpdateHelp_NoImmutableFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "update", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1314,6 +1354,7 @@ func TestPlansUpdateHelp_NoImmutableFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_MissingArg(t *testing.T) {
+	t.Parallel()
 	_, _, err := executeCommand(nil, "plans", "update")
 	if err == nil {
 		t.Fatal("expected error when plan_id argument is missing")
@@ -1321,6 +1362,7 @@ func TestPlansUpdate_MissingArg(t *testing.T) {
 }
 
 func TestPlansUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -1334,6 +1376,7 @@ func TestPlansUpdate_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestPlansUpdate_PlanIdArg(t *testing.T) {
+	t.Parallel()
 	var capturedPlanId string
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1353,6 +1396,7 @@ func TestPlansUpdate_PlanIdArg(t *testing.T) {
 }
 
 func TestPlansUpdate_CoreFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1386,6 +1430,7 @@ func TestPlansUpdate_CoreFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_MultiCurrencyFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1419,6 +1464,7 @@ func TestPlansUpdate_MultiCurrencyFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1439,6 +1485,7 @@ func TestPlansUpdate_CurrencyUnitAmountMismatch(t *testing.T) {
 }
 
 func TestPlansUpdate_SetupFeeFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1473,6 +1520,7 @@ func TestPlansUpdate_SetupFeeFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_SetupFeeCurrencyMismatch(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1494,6 +1542,7 @@ func TestPlansUpdate_SetupFeeCurrencyMismatch(t *testing.T) {
 }
 
 func TestPlansUpdate_TrialFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1524,6 +1573,7 @@ func TestPlansUpdate_TrialFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_BillingFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1550,6 +1600,7 @@ func TestPlansUpdate_BillingFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_TaxFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1592,6 +1643,7 @@ func TestPlansUpdate_TaxFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_AccountingFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1650,6 +1702,7 @@ func TestPlansUpdate_AccountingFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_HostedPagesFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1688,6 +1741,7 @@ func TestPlansUpdate_HostedPagesFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_OtherFlags(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1714,6 +1768,7 @@ func TestPlansUpdate_OtherFlags(t *testing.T) {
 }
 
 func TestPlansUpdate_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedBody *recurly.PlanUpdate
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1758,7 +1813,7 @@ func TestPlansUpdate_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestPlansUpdate_TableOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1779,7 +1834,7 @@ func TestPlansUpdate_TableOutput(t *testing.T) {
 }
 
 func TestPlansUpdate_JSONOutput(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil
@@ -1802,6 +1857,7 @@ func TestPlansUpdate_JSONOutput(t *testing.T) {
 }
 
 func TestPlansUpdate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		updatePlanFn: func(planId string, body *recurly.PlanUpdate, opts ...recurly.Option) (*recurly.Plan, error) {
 			return nil, fmt.Errorf("not found")
@@ -1818,6 +1874,7 @@ func TestPlansUpdate_SDKError(t *testing.T) {
 // --- plans deactivate ---
 
 func TestPlansDeactivate_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1828,6 +1885,7 @@ func TestPlansDeactivate_ShowsInHelp(t *testing.T) {
 }
 
 func TestPlansDeactivateHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "plans", "deactivate", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1838,6 +1896,7 @@ func TestPlansDeactivateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestPlansDeactivate_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "plans", "deactivate")
 	if err == nil {
 		t.Fatal("expected error when no plan ID is provided")
@@ -1848,6 +1907,7 @@ func TestPlansDeactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestPlansDeactivate_ConfirmNo_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("n\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "deactivate", "plan-123")
 	if err != nil {
@@ -1862,6 +1922,7 @@ func TestPlansDeactivate_ConfirmNo_Cancels(t *testing.T) {
 }
 
 func TestPlansDeactivate_ConfirmDefault_Cancels(t *testing.T) {
+	t.Parallel()
 	stdin := bytes.NewBufferString("\n")
 	_, stderr, err := executeCommandWithStdin(nil, stdin, "plans", "deactivate", "plan-123")
 	if err != nil {
@@ -1873,7 +1934,7 @@ func TestPlansDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 }
 
 func TestPlansDeactivate_ConfirmYes_Succeeds(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	var capturedID string
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1902,7 +1963,7 @@ func TestPlansDeactivate_ConfirmYes_Succeeds(t *testing.T) {
 }
 
 func TestPlansDeactivate_ConfirmYES_CaseInsensitive(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			p := samplePlanDetail()
@@ -1923,7 +1984,7 @@ func TestPlansDeactivate_ConfirmYES_CaseInsensitive(t *testing.T) {
 }
 
 func TestPlansDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	var capturedID string
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
@@ -1951,6 +2012,7 @@ func TestPlansDeactivate_YesFlag_SkipsPrompt(t *testing.T) {
 }
 
 func TestPlansDeactivate_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return nil, &recurly.Error{
@@ -1971,7 +2033,7 @@ func TestPlansDeactivate_SDKError(t *testing.T) {
 }
 
 func TestPlansDeactivate_JSON_Output(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			p := samplePlanDetail()
@@ -1996,7 +2058,7 @@ func TestPlansDeactivate_JSON_Output(t *testing.T) {
 }
 
 func TestPlansDeactivate_UsesDetailColumns(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockPlanAPI{
 		removePlanFn: func(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 			return samplePlanDetail(), nil

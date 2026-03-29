@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/viper"
 )
 
 // mockTransactionAPI implements TransactionAPI for testing.
@@ -26,6 +25,7 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 // --- transactions list ---
 
 func TestTransactionsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -36,6 +36,7 @@ func TestTransactionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestTransactionsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
@@ -66,6 +67,7 @@ func TestTransactionsList_TableOutput(t *testing.T) {
 }
 
 func TestTransactionsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
@@ -92,6 +94,7 @@ func TestTransactionsList_JSONOutput(t *testing.T) {
 }
 
 func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
@@ -114,6 +117,7 @@ func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestTransactionsList_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
@@ -121,10 +125,7 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 	}
 	app := newTestTransactionApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "transactions", "list", "--jq", ".data[0].id")
+	out, _, err := executeCommand(app, "transactions", "list", "--output", "json", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -138,6 +139,7 @@ func TestTransactionsList_JQFilter(t *testing.T) {
 // --- transactions get ---
 
 func TestTransactionsGet_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -148,6 +150,7 @@ func TestTransactionsGet_ShowsInHelp(t *testing.T) {
 }
 
 func TestTransactionsGet_MissingArg_ReturnsError(t *testing.T) {
+	t.Parallel()
 	_, stderr, err := executeCommand(nil, "transactions", "get")
 	if err == nil {
 		t.Fatal("expected error for missing arg")
@@ -158,6 +161,7 @@ func TestTransactionsGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestTransactionsGet_PositionalArg(t *testing.T) {
+	t.Parallel()
 	var capturedID string
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
@@ -177,6 +181,7 @@ func TestTransactionsGet_PositionalArg(t *testing.T) {
 }
 
 func TestTransactionsGet_TableOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return sampleTransaction(), nil
@@ -219,6 +224,7 @@ func TestTransactionsGet_TableOutput(t *testing.T) {
 }
 
 func TestTransactionsGet_JSONOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return sampleTransaction(), nil
@@ -241,6 +247,7 @@ func TestTransactionsGet_JSONOutput(t *testing.T) {
 }
 
 func TestTransactionsGet_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return sampleTransaction(), nil
@@ -263,6 +270,7 @@ func TestTransactionsGet_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestTransactionsGet_JQFilter(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return sampleTransaction(), nil
@@ -270,10 +278,7 @@ func TestTransactionsGet_JQFilter(t *testing.T) {
 	}
 	app := newTestTransactionApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--jq", ".id")
+	out, _, err := executeCommand(app, "transactions", "get", "txn-001", "--output", "json", "--jq", ".id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -285,6 +290,7 @@ func TestTransactionsGet_JQFilter(t *testing.T) {
 }
 
 func TestTransactionsGet_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		getTransactionFn: func(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 			return nil, &recurly.Error{
@@ -305,6 +311,7 @@ func TestTransactionsGet_APIError(t *testing.T) {
 }
 
 func TestTransactionsList_Filters(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListTransactionsParams
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
@@ -354,6 +361,7 @@ func TestTransactionsList_Filters(t *testing.T) {
 }
 
 func TestTransactionsList_APIError(t *testing.T) {
+	t.Parallel()
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return nil, &recurly.Error{

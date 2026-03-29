@@ -40,6 +40,7 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 // --- accounts subscriptions list ---
 
 func TestAccountSubscriptions_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -50,6 +51,7 @@ func TestAccountSubscriptions_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "subscriptions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -60,6 +62,7 @@ func TestAccountSubscriptionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountSubscriptionsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "subscriptions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -72,6 +75,7 @@ func TestAccountSubscriptionsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
@@ -86,6 +90,7 @@ func TestAccountSubscriptionsList_RequiresAccountID(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -99,6 +104,7 @@ func TestAccountSubscriptionsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_PassesAccountID(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 
 	mock := &mockAccountNestedAPI{
@@ -120,6 +126,7 @@ func TestAccountSubscriptionsList_PassesAccountID(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountSubscriptionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -150,6 +157,7 @@ func TestAccountSubscriptionsList_PaginationParams(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountSubscriptionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -171,6 +179,7 @@ func TestAccountSubscriptionsList_FilterParams(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountSubscriptionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -201,6 +210,7 @@ func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -227,6 +237,7 @@ func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -235,10 +246,7 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -256,6 +264,7 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -264,10 +273,7 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -281,6 +287,7 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
+	t.Parallel()
 	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
@@ -289,11 +296,7 @@ func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".data[0].id")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--output", "json", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -304,6 +307,7 @@ func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -318,6 +322,7 @@ func TestAccountSubscriptionsList_SDKError(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
@@ -336,6 +341,7 @@ func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
@@ -343,10 +349,7 @@ func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "subscriptions", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -366,6 +369,7 @@ func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 // --- accounts invoices list ---
 
 func TestAccountInvoices_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -376,6 +380,7 @@ func TestAccountInvoices_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountInvoicesList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "invoices", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -386,6 +391,7 @@ func TestAccountInvoicesList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountInvoicesListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "invoices", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -398,6 +404,7 @@ func TestAccountInvoicesListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountInvoicesList_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
@@ -412,6 +419,7 @@ func TestAccountInvoicesList_RequiresAccountID(t *testing.T) {
 }
 
 func TestAccountInvoicesList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -425,6 +433,7 @@ func TestAccountInvoicesList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountInvoicesList_PassesAccountID(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 
 	mock := &mockAccountNestedAPI{
@@ -446,6 +455,7 @@ func TestAccountInvoicesList_PassesAccountID(t *testing.T) {
 }
 
 func TestAccountInvoicesList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountInvoicesParams
 
 	mock := &mockAccountNestedAPI{
@@ -476,6 +486,7 @@ func TestAccountInvoicesList_PaginationParams(t *testing.T) {
 }
 
 func TestAccountInvoicesList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountInvoicesParams
 
 	mock := &mockAccountNestedAPI{
@@ -500,6 +511,7 @@ func TestAccountInvoicesList_FilterParams(t *testing.T) {
 }
 
 func TestAccountInvoicesList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountInvoicesParams
 
 	mock := &mockAccountNestedAPI{
@@ -533,6 +545,7 @@ func TestAccountInvoicesList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestAccountInvoicesList_TableOutput(t *testing.T) {
+	t.Parallel()
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
@@ -559,6 +572,7 @@ func TestAccountInvoicesList_TableOutput(t *testing.T) {
 }
 
 func TestAccountInvoicesList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
@@ -567,10 +581,7 @@ func TestAccountInvoicesList_JSONOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -588,6 +599,7 @@ func TestAccountInvoicesList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
@@ -596,10 +608,7 @@ func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -613,6 +622,7 @@ func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestAccountInvoicesList_JQFilter(t *testing.T) {
+	t.Parallel()
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
@@ -621,11 +631,7 @@ func TestAccountInvoicesList_JQFilter(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".data[0].number")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--output", "json", "--jq", ".data[0].number")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -636,6 +642,7 @@ func TestAccountInvoicesList_JQFilter(t *testing.T) {
 }
 
 func TestAccountInvoicesList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -650,6 +657,7 @@ func TestAccountInvoicesList_SDKError(t *testing.T) {
 }
 
 func TestAccountInvoicesList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
@@ -668,6 +676,7 @@ func TestAccountInvoicesList_EmptyResults(t *testing.T) {
 }
 
 func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
@@ -675,10 +684,7 @@ func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "invoices", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -698,6 +704,7 @@ func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 // --- accounts transactions list ---
 
 func TestAccountTransactions_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -708,6 +715,7 @@ func TestAccountTransactions_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountTransactionsList_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "transactions", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -718,6 +726,7 @@ func TestAccountTransactionsList_ShowsInHelp(t *testing.T) {
 }
 
 func TestAccountTransactionsListHelp_ShowsFlags(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "accounts", "transactions", "list", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -730,6 +739,7 @@ func TestAccountTransactionsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountTransactionsList_RequiresAccountID(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
@@ -744,6 +754,7 @@ func TestAccountTransactionsList_RequiresAccountID(t *testing.T) {
 }
 
 func TestAccountTransactionsList_NoAPIKey_ReturnsError(t *testing.T) {
+	// Cannot use t.Parallel() — uses t.Setenv which is incompatible
 	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -757,6 +768,7 @@ func TestAccountTransactionsList_NoAPIKey_ReturnsError(t *testing.T) {
 }
 
 func TestAccountTransactionsList_PassesAccountID(t *testing.T) {
+	t.Parallel()
 	var capturedAccountID string
 
 	mock := &mockAccountNestedAPI{
@@ -778,6 +790,7 @@ func TestAccountTransactionsList_PassesAccountID(t *testing.T) {
 }
 
 func TestAccountTransactionsList_PaginationParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountTransactionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -808,6 +821,7 @@ func TestAccountTransactionsList_PaginationParams(t *testing.T) {
 }
 
 func TestAccountTransactionsList_FilterParams(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountTransactionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -832,6 +846,7 @@ func TestAccountTransactionsList_FilterParams(t *testing.T) {
 }
 
 func TestAccountTransactionsList_UnsetFlagsNotSent(t *testing.T) {
+	t.Parallel()
 	var capturedParams *recurly.ListAccountTransactionsParams
 
 	mock := &mockAccountNestedAPI{
@@ -865,6 +880,7 @@ func TestAccountTransactionsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestAccountTransactionsList_TableOutput(t *testing.T) {
+	t.Parallel()
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
@@ -891,6 +907,7 @@ func TestAccountTransactionsList_TableOutput(t *testing.T) {
 }
 
 func TestAccountTransactionsList_JSONOutput(t *testing.T) {
+	t.Parallel()
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
@@ -899,10 +916,7 @@ func TestAccountTransactionsList_JSONOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -920,6 +934,7 @@ func TestAccountTransactionsList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
+	t.Parallel()
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
@@ -928,10 +943,7 @@ func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json-pretty")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--output", "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -945,6 +957,7 @@ func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestAccountTransactionsList_JQFilter(t *testing.T) {
+	t.Parallel()
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
@@ -953,11 +966,7 @@ func TestAccountTransactionsList_JQFilter(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	viper.Set("jq", ".data[0].id")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--output", "json", "--jq", ".data[0].id")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -968,6 +977,7 @@ func TestAccountTransactionsList_JQFilter(t *testing.T) {
 }
 
 func TestAccountTransactionsList_SDKError(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return nil, &recurly.Error{Message: "not found"}
@@ -982,6 +992,7 @@ func TestAccountTransactionsList_SDKError(t *testing.T) {
 }
 
 func TestAccountTransactionsList_EmptyResults(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
@@ -1000,6 +1011,7 @@ func TestAccountTransactionsList_EmptyResults(t *testing.T) {
 }
 
 func TestAccountTransactionsList_EmptyResults_JSON(t *testing.T) {
+	t.Parallel()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
@@ -1007,10 +1019,7 @@ func TestAccountTransactionsList_EmptyResults_JSON(t *testing.T) {
 	}
 	app := newTestAccountNestedApp(mock)
 
-	viper.Set("output", "json")
-	defer viper.Reset()
-
-	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456")
+	out, _, err := executeCommand(app, "accounts", "transactions", "list", "acct-456", "--output", "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -13,6 +13,7 @@ import (
 // --- JSON input ---
 
 func TestFromFile_JSONInput(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "account.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"code": "acct-json", "email": "json@test.com"}`), 0o644); err != nil {
@@ -46,6 +47,7 @@ func TestFromFile_JSONInput(t *testing.T) {
 // --- YAML input ---
 
 func TestFromFile_YAMLInput(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	yamlFile := filepath.Join(dir, "account.yaml")
 	if err := os.WriteFile(yamlFile, []byte("code: acct-yaml\nemail: yaml@test.com\n"), 0o644); err != nil {
@@ -79,6 +81,7 @@ func TestFromFile_YAMLInput(t *testing.T) {
 // --- YML extension ---
 
 func TestFromFile_YMLExtension(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	ymlFile := filepath.Join(dir, "account.yml")
 	if err := os.WriteFile(ymlFile, []byte("code: acct-yml\n"), 0o644); err != nil {
@@ -109,6 +112,7 @@ func TestFromFile_YMLExtension(t *testing.T) {
 // --- Stdin input (JSON auto-detected) ---
 
 func TestFromFile_StdinJSON(t *testing.T) {
+	t.Parallel()
 	var captured *recurly.AccountCreate
 	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
@@ -134,6 +138,7 @@ func TestFromFile_StdinJSON(t *testing.T) {
 // --- Stdin input (YAML auto-detected) ---
 
 func TestFromFile_StdinYAML(t *testing.T) {
+	t.Parallel()
 	var captured *recurly.AccountCreate
 	mock := &mockAccountAPI{
 		createAccountFn: func(body *recurly.AccountCreate, opts ...recurly.Option) (*recurly.Account, error) {
@@ -159,6 +164,7 @@ func TestFromFile_StdinYAML(t *testing.T) {
 // --- Flag override: CLI flags take precedence ---
 
 func TestFromFile_FlagOverride(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "account.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"code": "file-code", "email": "file@test.com"}`), 0o644); err != nil {
@@ -193,6 +199,7 @@ func TestFromFile_FlagOverride(t *testing.T) {
 // --- Underscore to hyphen key mapping ---
 
 func TestFromFile_UnderscoreKeys(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "account.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"first_name": "Jane", "last_name": "Doe"}`), 0o644); err != nil {
@@ -226,6 +233,7 @@ func TestFromFile_UnderscoreKeys(t *testing.T) {
 // --- Nested objects (e.g., address on billing-info) ---
 
 func TestFromFile_NestedObjects(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "billing.json")
 	if err := os.WriteFile(jsonFile, []byte(`{
@@ -274,6 +282,7 @@ func TestFromFile_NestedObjects(t *testing.T) {
 // --- Error: invalid file path ---
 
 func TestFromFile_InvalidPath(t *testing.T) {
+	t.Parallel()
 	app := newTestAccountApp(&mockAccountAPI{})
 
 	_, stderr, err := executeCommand(app, "accounts", "create", "--from-file", "/nonexistent/file.json")
@@ -288,6 +297,7 @@ func TestFromFile_InvalidPath(t *testing.T) {
 // --- Error: unparseable content ---
 
 func TestFromFile_UnparseableJSON(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "bad.json")
 	if err := os.WriteFile(jsonFile, []byte(`{not valid json`), 0o644); err != nil {
@@ -308,6 +318,7 @@ func TestFromFile_UnparseableJSON(t *testing.T) {
 // --- Error: unknown keys ---
 
 func TestFromFile_UnknownKey(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "bad-keys.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"code": "x", "nonexistent_field": "y"}`), 0o644); err != nil {
@@ -328,6 +339,7 @@ func TestFromFile_UnknownKey(t *testing.T) {
 // --- Error: unsupported file extension ---
 
 func TestFromFile_UnsupportedExtension(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	txtFile := filepath.Join(dir, "data.txt")
 	if err := os.WriteFile(txtFile, []byte(`code: x`), 0o644); err != nil {
@@ -348,6 +360,7 @@ func TestFromFile_UnsupportedExtension(t *testing.T) {
 // --- Error: empty stdin ---
 
 func TestFromFile_EmptyStdin(t *testing.T) {
+	t.Parallel()
 	app := newTestAccountApp(&mockAccountAPI{})
 
 	stdin := bytes.NewBufferString("")
@@ -363,6 +376,7 @@ func TestFromFile_EmptyStdin(t *testing.T) {
 // --- Short flag -F ---
 
 func TestFromFile_ShortFlag(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "account.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"code": "short-flag"}`), 0o644); err != nil {
@@ -393,6 +407,7 @@ func TestFromFile_ShortFlag(t *testing.T) {
 // --- Boolean values from file ---
 
 func TestFromFile_BooleanValue(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	jsonFile := filepath.Join(dir, "account.json")
 	if err := os.WriteFile(jsonFile, []byte(`{"code": "bool-test", "tax_exempt": true}`), 0o644); err != nil {

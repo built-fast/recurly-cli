@@ -10,10 +10,10 @@ import (
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func TestParseWatchInterval_Valid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input    string
 		expected time.Duration
@@ -36,6 +36,7 @@ func TestParseWatchInterval_Valid(t *testing.T) {
 }
 
 func TestParseWatchInterval_Invalid(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input   string
 		wantMsg string
@@ -58,7 +59,7 @@ func TestParseWatchInterval_Invalid(t *testing.T) {
 }
 
 func TestWithWatch_NoFlag_RunsNormally(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -79,7 +80,7 @@ func TestWithWatch_NoFlag_RunsNormally(t *testing.T) {
 }
 
 func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
-	viper.Reset()
+	// Cannot use t.Parallel() — modifies global stdoutIsPiped
 	origPiped := stdoutIsPiped
 	stdoutIsPiped = func() bool { return false }
 	defer func() { stdoutIsPiped = origPiped }()
@@ -101,7 +102,7 @@ func TestWithWatch_JSONNonPiped_ReturnsError(t *testing.T) {
 }
 
 func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) {
-	viper.Reset()
+	// Cannot use t.Parallel() — modifies global stdoutIsPiped
 	origPiped := stdoutIsPiped
 	stdoutIsPiped = func() bool { return false }
 	defer func() { stdoutIsPiped = origPiped }()
@@ -123,7 +124,7 @@ func TestWithWatch_JSONPrettyNonPiped_ReturnsError(t *testing.T) {
 }
 
 func TestWithWatch_InvalidInterval_ReturnsError(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -141,7 +142,7 @@ func TestWithWatch_InvalidInterval_ReturnsError(t *testing.T) {
 }
 
 func TestWithWatch_TooShortInterval_ReturnsError(t *testing.T) {
-	viper.Reset()
+	t.Parallel()
 	mock := &mockItemAPI{
 		getItemFn: func(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 			return sampleItemDetail(), nil
@@ -159,6 +160,7 @@ func TestWithWatch_TooShortInterval_ReturnsError(t *testing.T) {
 }
 
 func TestWithWatch_ShowsInHelp(t *testing.T) {
+	t.Parallel()
 	out, _, err := executeCommand(nil, "items", "get", "--help")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -172,6 +174,7 @@ func TestWithWatch_ShowsInHelp(t *testing.T) {
 }
 
 func TestWithWatch_DefaultInterval(t *testing.T) {
+	t.Parallel()
 	// Verify --watch without value uses 5s default via NoOptDefVal
 	cmd := &cobra.Command{
 		Use: "test",
@@ -191,6 +194,7 @@ func TestWithWatch_DefaultInterval(t *testing.T) {
 }
 
 func TestWatchLoop_ContextCancel(t *testing.T) {
+	t.Parallel()
 	var callCount int
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -222,6 +226,7 @@ func TestWatchLoop_ContextCancel(t *testing.T) {
 }
 
 func TestWatchLoop_PipedMode_NoScreenClear(t *testing.T) {
+	t.Parallel()
 	var callCount int
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -262,6 +267,7 @@ func TestWatchLoop_PipedMode_NoScreenClear(t *testing.T) {
 }
 
 func TestWatchLoop_ErrorContinues(t *testing.T) {
+	t.Parallel()
 	var callCount int
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -296,6 +302,7 @@ func TestWatchLoop_ErrorContinues(t *testing.T) {
 }
 
 func TestWatchLoop_ScreenClear(t *testing.T) {
+	t.Parallel()
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
 
@@ -319,6 +326,7 @@ func TestWatchLoop_ScreenClear(t *testing.T) {
 }
 
 func TestIsJSONFormat(t *testing.T) {
+	t.Parallel()
 	if !isJSONFormat("json") {
 		t.Error("expected json to be JSON format")
 	}
