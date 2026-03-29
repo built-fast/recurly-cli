@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -41,42 +40,6 @@ func (m *mockPlanAPI) UpdatePlan(planId string, body *recurly.PlanUpdate, opts .
 
 func (m *mockPlanAPI) RemovePlan(planId string, opts ...recurly.Option) (*recurly.Plan, error) {
 	return m.removePlanFn(planId, opts...)
-}
-
-// mockPlanLister implements recurly.PlanLister for testing.
-type mockPlanLister struct {
-	plans   []recurly.Plan
-	fetched bool
-}
-
-func (m *mockPlanLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockPlanLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockPlanLister) Count() (*int64, error) {
-	n := int64(len(m.plans))
-	return &n, nil
-}
-
-func (m *mockPlanLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockPlanLister) Data() []recurly.Plan {
-	return m.plans
-}
-
-func (m *mockPlanLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockPlanLister) Next() string {
-	return ""
 }
 
 // samplePlan returns a test plan with predictable fields.
@@ -166,7 +129,7 @@ func TestPlansList_PaginationParams(t *testing.T) {
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			capturedParams = params
-			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -196,7 +159,7 @@ func TestPlansList_FilterParams(t *testing.T) {
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			capturedParams = params
-			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -217,7 +180,7 @@ func TestPlansList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
 			capturedParams = params
-			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -245,7 +208,7 @@ func TestPlansList_TableOutput(t *testing.T) {
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{plan}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -272,7 +235,7 @@ func TestPlansList_JSONOutput(t *testing.T) {
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{plan}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -308,7 +271,7 @@ func TestPlansList_JSONPrettyOutput(t *testing.T) {
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{plan}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -340,7 +303,7 @@ func TestPlansList_JQFilter(t *testing.T) {
 	plan := samplePlan()
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{plan}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{plan}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -373,7 +336,7 @@ func TestPlansList_SDKError(t *testing.T) {
 func TestPlansList_EmptyResults(t *testing.T) {
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}
@@ -392,7 +355,7 @@ func TestPlansList_EmptyResults(t *testing.T) {
 func TestPlansList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockPlanAPI{
 		listPlansFn: func(params *recurly.ListPlansParams, opts ...recurly.Option) (recurly.PlanLister, error) {
-			return &mockPlanLister{plans: []recurly.Plan{}}, nil
+			return &mockLister[recurly.Plan]{items: []recurly.Plan{}}, nil
 		},
 	}
 	app := &App{NewPlanAPI: func(_ *cobra.Command) (PlanAPI, error) { return mock, nil }}

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -46,42 +45,6 @@ func (m *mockAccountAPI) DeactivateAccount(accountId string, opts ...recurly.Opt
 
 func (m *mockAccountAPI) ReactivateAccount(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 	return m.reactivateAccountFn(accountId, opts...)
-}
-
-// mockAccountLister implements recurly.AccountLister for testing.
-type mockAccountLister struct {
-	accounts []recurly.Account
-	fetched  bool
-}
-
-func (m *mockAccountLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockAccountLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockAccountLister) Count() (*int64, error) {
-	n := int64(len(m.accounts))
-	return &n, nil
-}
-
-func (m *mockAccountLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockAccountLister) Data() []recurly.Account {
-	return m.accounts
-}
-
-func (m *mockAccountLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockAccountLister) Next() string {
-	return ""
 }
 
 // sampleAccount returns a test account with predictable fields.
@@ -165,7 +128,7 @@ func TestAccountsList_PaginationParams(t *testing.T) {
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
 			capturedParams = params
-			return &mockAccountLister{accounts: []recurly.Account{}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -196,7 +159,7 @@ func TestAccountsList_FilterParams(t *testing.T) {
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
 			capturedParams = params
-			return &mockAccountLister{accounts: []recurly.Account{}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -236,7 +199,7 @@ func TestAccountsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
 			capturedParams = params
-			return &mockAccountLister{accounts: []recurly.Account{}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -270,7 +233,7 @@ func TestAccountsList_TableOutput(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -297,7 +260,7 @@ func TestAccountsList_JSONOutput(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -1103,7 +1066,7 @@ func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -1138,7 +1101,7 @@ func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -1176,7 +1139,7 @@ func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -1194,7 +1157,7 @@ func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}
@@ -1244,7 +1207,7 @@ func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
 	acct := sampleAccount()
 	mock := &mockAccountAPI{
 		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
-			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+			return &mockLister[recurly.Account]{items: []recurly.Account{*acct}}, nil
 		},
 	}
 	app := &App{NewAccountAPI: func(_ *cobra.Command) (AccountAPI, error) { return mock, nil }}

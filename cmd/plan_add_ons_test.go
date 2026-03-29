@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -54,42 +53,6 @@ func (m *mockPlanAddOnAPI) RemovePlanAddOn(planId string, addOnId string, opts .
 	return nil, nil
 }
 
-// mockAddOnLister implements recurly.AddOnLister for testing.
-type mockAddOnLister struct {
-	addOns  []recurly.AddOn
-	fetched bool
-}
-
-func (m *mockAddOnLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockAddOnLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockAddOnLister) Count() (*int64, error) {
-	n := int64(len(m.addOns))
-	return &n, nil
-}
-
-func (m *mockAddOnLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockAddOnLister) Data() []recurly.AddOn {
-	return m.addOns
-}
-
-func (m *mockAddOnLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockAddOnLister) Next() string {
-	return ""
-}
-
 func sampleAddOn() recurly.AddOn {
 	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
 	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)
@@ -137,7 +100,7 @@ func TestPlanAddOnsListHelp_ShowsFlags(t *testing.T) {
 func TestPlanAddOnsList_RequiresPlanID(t *testing.T) {
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -169,7 +132,7 @@ func TestPlanAddOnsList_PaginationParams(t *testing.T) {
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			capturedPlanID = planId
 			capturedParams = params
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -202,7 +165,7 @@ func TestPlanAddOnsList_FilterParams(t *testing.T) {
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			capturedParams = params
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -223,7 +186,7 @@ func TestPlanAddOnsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
 			capturedParams = params
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -251,7 +214,7 @@ func TestPlanAddOnsList_TableOutput(t *testing.T) {
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{addOn}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -277,7 +240,7 @@ func TestPlanAddOnsList_JSONOutput(t *testing.T) {
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{addOn}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -306,7 +269,7 @@ func TestPlanAddOnsList_JSONPrettyOutput(t *testing.T) {
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{addOn}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -336,7 +299,7 @@ func TestPlanAddOnsList_JQFilter(t *testing.T) {
 	addOn := sampleAddOn()
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{addOn}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{addOn}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -372,7 +335,7 @@ func TestPlanAddOnsList_SDKError(t *testing.T) {
 func TestPlanAddOnsList_EmptyResults(t *testing.T) {
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}
@@ -391,7 +354,7 @@ func TestPlanAddOnsList_EmptyResults(t *testing.T) {
 func TestPlanAddOnsList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockPlanAddOnAPI{
 		listPlanAddOnsFn: func(planId string, params *recurly.ListPlanAddOnsParams, opts ...recurly.Option) (recurly.AddOnLister, error) {
-			return &mockAddOnLister{addOns: []recurly.AddOn{}}, nil
+			return &mockLister[recurly.AddOn]{items: []recurly.AddOn{}}, nil
 		},
 	}
 	app := &App{NewPlanAddOnAPI: func(_ *cobra.Command) (PlanAddOnAPI, error) { return mock, nil }}

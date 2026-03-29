@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -46,42 +45,6 @@ func (m *mockItemAPI) DeactivateItem(itemId string, opts ...recurly.Option) (*re
 
 func (m *mockItemAPI) ReactivateItem(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 	return m.reactivateItemFn(itemId, opts...)
-}
-
-// mockItemLister implements recurly.ItemLister for testing.
-type mockItemLister struct {
-	items   []recurly.Item
-	fetched bool
-}
-
-func (m *mockItemLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockItemLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockItemLister) Count() (*int64, error) {
-	n := int64(len(m.items))
-	return &n, nil
-}
-
-func (m *mockItemLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockItemLister) Data() []recurly.Item {
-	return m.items
-}
-
-func (m *mockItemLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockItemLister) Next() string {
-	return ""
 }
 
 // sampleItem returns a test item with predictable fields.
@@ -382,7 +345,7 @@ func TestItemsList_PaginationParams(t *testing.T) {
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			capturedParams = params
-			return &mockItemLister{items: []recurly.Item{}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -412,7 +375,7 @@ func TestItemsList_FilterParams(t *testing.T) {
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			capturedParams = params
-			return &mockItemLister{items: []recurly.Item{}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -443,7 +406,7 @@ func TestItemsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
 			capturedParams = params
-			return &mockItemLister{items: []recurly.Item{}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -477,7 +440,7 @@ func TestItemsList_TableOutput(t *testing.T) {
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{item}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -504,7 +467,7 @@ func TestItemsList_JSONOutput(t *testing.T) {
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{item}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -540,7 +503,7 @@ func TestItemsList_JSONPrettyOutput(t *testing.T) {
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{item}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -572,7 +535,7 @@ func TestItemsList_JQFilter(t *testing.T) {
 	item := sampleItem()
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{item}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{item}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -605,7 +568,7 @@ func TestItemsList_SDKError(t *testing.T) {
 func TestItemsList_EmptyResults(t *testing.T) {
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}
@@ -623,7 +586,7 @@ func TestItemsList_EmptyResults(t *testing.T) {
 func TestItemsList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockItemAPI{
 		listItemsFn: func(params *recurly.ListItemsParams, opts ...recurly.Option) (recurly.ItemLister, error) {
-			return &mockItemLister{items: []recurly.Item{}}, nil
+			return &mockLister[recurly.Item]{items: []recurly.Item{}}, nil
 		},
 	}
 	app := &App{NewItemAPI: func(_ *cobra.Command) (ItemAPI, error) { return mock, nil }}

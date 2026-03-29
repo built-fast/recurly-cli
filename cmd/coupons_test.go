@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -57,78 +56,6 @@ func (m *mockCouponAPI) ListUniqueCouponCodes(couponId string, params *recurly.L
 	return m.listUniqueCouponCodesFn(couponId, params, opts...)
 }
 
-// mockCouponLister implements recurly.CouponLister for testing.
-type mockCouponLister struct {
-	coupons []recurly.Coupon
-	fetched bool
-}
-
-func (m *mockCouponLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockCouponLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockCouponLister) Count() (*int64, error) {
-	n := int64(len(m.coupons))
-	return &n, nil
-}
-
-func (m *mockCouponLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockCouponLister) Data() []recurly.Coupon {
-	return m.coupons
-}
-
-func (m *mockCouponLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockCouponLister) Next() string {
-	return ""
-}
-
-// mockUniqueCouponCodeLister implements recurly.UniqueCouponCodeLister for testing.
-type mockUniqueCouponCodeLister struct {
-	codes   []recurly.UniqueCouponCode
-	fetched bool
-}
-
-func (m *mockUniqueCouponCodeLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockUniqueCouponCodeLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockUniqueCouponCodeLister) Count() (*int64, error) {
-	n := int64(len(m.codes))
-	return &n, nil
-}
-
-func (m *mockUniqueCouponCodeLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockUniqueCouponCodeLister) Data() []recurly.UniqueCouponCode {
-	return m.codes
-}
-
-func (m *mockUniqueCouponCodeLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockUniqueCouponCodeLister) Next() string {
-	return ""
-}
-
 // sampleCoupon returns a test coupon with predictable fields for list tests.
 func sampleCoupon() recurly.Coupon {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
@@ -171,7 +98,7 @@ func TestCouponsList_Success(t *testing.T) {
 	coupon := sampleCoupon()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
-			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
+			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{coupon}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -196,7 +123,7 @@ func TestCouponsList_Success(t *testing.T) {
 func TestCouponsList_EmptyResults(t *testing.T) {
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
-			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
+			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -231,7 +158,7 @@ func TestCouponsList_FlagPassthrough(t *testing.T) {
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
 			capturedParams = params
-			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
+			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -261,7 +188,7 @@ func TestCouponsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
 			capturedParams = params
-			return &mockCouponLister{coupons: []recurly.Coupon{}}, nil
+			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -1194,7 +1121,7 @@ func TestCouponsListCodes_Success(t *testing.T) {
 	}
 	mock := &mockCouponAPI{
 		listUniqueCouponCodesFn: func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error) {
-			return &mockUniqueCouponCodeLister{codes: codes}, nil
+			return &mockLister[recurly.UniqueCouponCode]{items: codes}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -1223,7 +1150,7 @@ func TestCouponsListCodes_Pagination(t *testing.T) {
 		listUniqueCouponCodesFn: func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error) {
 			capturedID = couponId
 			capturedParams = params
-			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
+			return &mockLister[recurly.UniqueCouponCode]{items: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -1254,7 +1181,7 @@ func TestCouponsListCodes_Pagination(t *testing.T) {
 func TestCouponsListCodes_EmptyResults(t *testing.T) {
 	mock := &mockCouponAPI{
 		listUniqueCouponCodesFn: func(couponId string, params *recurly.ListUniqueCouponCodesParams, opts ...recurly.Option) (recurly.UniqueCouponCodeLister, error) {
-			return &mockUniqueCouponCodeLister{codes: []recurly.UniqueCouponCode{}}, nil
+			return &mockLister[recurly.UniqueCouponCode]{items: []recurly.UniqueCouponCode{}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}
@@ -1317,7 +1244,7 @@ func TestCouponsList_JSONOutput(t *testing.T) {
 	coupon := sampleCoupon()
 	mock := &mockCouponAPI{
 		listCouponsFn: func(params *recurly.ListCouponsParams, opts ...recurly.Option) (recurly.CouponLister, error) {
-			return &mockCouponLister{coupons: []recurly.Coupon{coupon}}, nil
+			return &mockLister[recurly.Coupon]{items: []recurly.Coupon{coupon}}, nil
 		},
 	}
 	app := &App{NewCouponAPI: func(_ *cobra.Command) (CouponAPI, error) { return mock, nil }}

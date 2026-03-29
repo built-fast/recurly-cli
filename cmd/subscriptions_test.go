@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -66,42 +65,6 @@ func (m *mockSubscriptionAPI) TerminateSubscription(subscriptionId string, param
 
 func (m *mockSubscriptionAPI) ConvertTrial(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 	return m.convertTrialFn(subscriptionId, opts...)
-}
-
-// mockSubscriptionLister implements recurly.SubscriptionLister for testing.
-type mockSubscriptionLister struct {
-	subscriptions []recurly.Subscription
-	fetched       bool
-}
-
-func (m *mockSubscriptionLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockSubscriptionLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockSubscriptionLister) Count() (*int64, error) {
-	n := int64(len(m.subscriptions))
-	return &n, nil
-}
-
-func (m *mockSubscriptionLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockSubscriptionLister) Data() []recurly.Subscription {
-	return m.subscriptions
-}
-
-func (m *mockSubscriptionLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockSubscriptionLister) Next() string {
-	return ""
 }
 
 // sampleSubscription returns a test subscription with predictable fields for list output.
@@ -219,7 +182,7 @@ func TestSubscriptionsList_PaginationParams(t *testing.T) {
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -250,7 +213,7 @@ func TestSubscriptionsList_FilterParams(t *testing.T) {
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -281,7 +244,7 @@ func TestSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -309,7 +272,7 @@ func TestSubscriptionsList_TableOutput(t *testing.T) {
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -335,7 +298,7 @@ func TestSubscriptionsList_JSONOutput(t *testing.T) {
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -371,7 +334,7 @@ func TestSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 	sub := sampleSubscription()
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}
@@ -415,7 +378,7 @@ func TestSubscriptionsList_SDKError(t *testing.T) {
 func TestSubscriptionsList_EmptyResults(t *testing.T) {
 	mock := &mockSubscriptionAPI{
 		listSubscriptionsFn: func(params *recurly.ListSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewSubscriptionAPI: func(_ *cobra.Command) (SubscriptionAPI, error) { return mock, nil }}

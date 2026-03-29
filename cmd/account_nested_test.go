@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -38,116 +37,6 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 		return m.listAccountTransactionsFn(accountId, params, opts...)
 	}
 	return nil, nil
-}
-
-// --- Mock listers ---
-
-// mockAccountSubscriptionLister implements recurly.SubscriptionLister for testing.
-type mockAccountSubscriptionLister struct {
-	subscriptions []recurly.Subscription
-	fetched       bool
-}
-
-func (m *mockAccountSubscriptionLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockAccountSubscriptionLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockAccountSubscriptionLister) Count() (*int64, error) {
-	n := int64(len(m.subscriptions))
-	return &n, nil
-}
-
-func (m *mockAccountSubscriptionLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockAccountSubscriptionLister) Data() []recurly.Subscription {
-	return m.subscriptions
-}
-
-func (m *mockAccountSubscriptionLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockAccountSubscriptionLister) Next() string {
-	return ""
-}
-
-// mockAccountInvoiceLister implements recurly.InvoiceLister for testing.
-type mockAccountInvoiceLister struct {
-	invoices []recurly.Invoice
-	fetched  bool
-}
-
-func (m *mockAccountInvoiceLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockAccountInvoiceLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockAccountInvoiceLister) Count() (*int64, error) {
-	n := int64(len(m.invoices))
-	return &n, nil
-}
-
-func (m *mockAccountInvoiceLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockAccountInvoiceLister) Data() []recurly.Invoice {
-	return m.invoices
-}
-
-func (m *mockAccountInvoiceLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockAccountInvoiceLister) Next() string {
-	return ""
-}
-
-// mockAccountTransactionLister implements recurly.TransactionLister for testing.
-type mockAccountTransactionLister struct {
-	transactions []recurly.Transaction
-	fetched      bool
-}
-
-func (m *mockAccountTransactionLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockAccountTransactionLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockAccountTransactionLister) Count() (*int64, error) {
-	n := int64(len(m.transactions))
-	return &n, nil
-}
-
-func (m *mockAccountTransactionLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockAccountTransactionLister) Data() []recurly.Transaction {
-	return m.transactions
-}
-
-func (m *mockAccountTransactionLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockAccountTransactionLister) Next() string {
-	return ""
 }
 
 // --- Sample data ---
@@ -236,7 +125,7 @@ func TestAccountSubscriptionsListHelp_ShowsFlags(t *testing.T) {
 func TestAccountSubscriptionsList_RequiresAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -266,7 +155,7 @@ func TestAccountSubscriptionsList_PassesAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedAccountID = accountId
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -287,7 +176,7 @@ func TestAccountSubscriptionsList_PaginationParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -317,7 +206,7 @@ func TestAccountSubscriptionsList_FilterParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -338,7 +227,7 @@ func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			capturedParams = params
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -366,7 +255,7 @@ func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
 	sub := sampleAccountSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -392,7 +281,7 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 	sub := sampleAccountSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -421,7 +310,7 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 	sub := sampleAccountSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -446,7 +335,7 @@ func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
 	sub := sampleAccountSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{sub}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -482,7 +371,7 @@ func TestAccountSubscriptionsList_SDKError(t *testing.T) {
 func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -500,7 +389,7 @@ func TestAccountSubscriptionsList_EmptyResults(t *testing.T) {
 func TestAccountSubscriptionsList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
-			return &mockAccountSubscriptionLister{subscriptions: []recurly.Subscription{}}, nil
+			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -562,7 +451,7 @@ func TestAccountInvoicesListHelp_ShowsFlags(t *testing.T) {
 func TestAccountInvoicesList_RequiresAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -592,7 +481,7 @@ func TestAccountInvoicesList_PassesAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			capturedAccountID = accountId
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -613,7 +502,7 @@ func TestAccountInvoicesList_PaginationParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			capturedParams = params
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -643,7 +532,7 @@ func TestAccountInvoicesList_FilterParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			capturedParams = params
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -667,7 +556,7 @@ func TestAccountInvoicesList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			capturedParams = params
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -698,7 +587,7 @@ func TestAccountInvoicesList_TableOutput(t *testing.T) {
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{inv}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -724,7 +613,7 @@ func TestAccountInvoicesList_JSONOutput(t *testing.T) {
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{inv}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -753,7 +642,7 @@ func TestAccountInvoicesList_JSONPrettyOutput(t *testing.T) {
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{inv}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -778,7 +667,7 @@ func TestAccountInvoicesList_JQFilter(t *testing.T) {
 	inv := sampleAccountInvoice()
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{inv}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{inv}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -814,7 +703,7 @@ func TestAccountInvoicesList_SDKError(t *testing.T) {
 func TestAccountInvoicesList_EmptyResults(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -832,7 +721,7 @@ func TestAccountInvoicesList_EmptyResults(t *testing.T) {
 func TestAccountInvoicesList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountInvoicesFn: func(accountId string, params *recurly.ListAccountInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockAccountInvoiceLister{invoices: []recurly.Invoice{}}, nil
+			return &mockLister[recurly.Invoice]{items: []recurly.Invoice{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -894,7 +783,7 @@ func TestAccountTransactionsListHelp_ShowsFlags(t *testing.T) {
 func TestAccountTransactionsList_RequiresAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -924,7 +813,7 @@ func TestAccountTransactionsList_PassesAccountID(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			capturedAccountID = accountId
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -945,7 +834,7 @@ func TestAccountTransactionsList_PaginationParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			capturedParams = params
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -975,7 +864,7 @@ func TestAccountTransactionsList_FilterParams(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			capturedParams = params
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -999,7 +888,7 @@ func TestAccountTransactionsList_UnsetFlagsNotSent(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			capturedParams = params
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1030,7 +919,7 @@ func TestAccountTransactionsList_TableOutput(t *testing.T) {
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{txn}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1056,7 +945,7 @@ func TestAccountTransactionsList_JSONOutput(t *testing.T) {
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{txn}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1085,7 +974,7 @@ func TestAccountTransactionsList_JSONPrettyOutput(t *testing.T) {
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{txn}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1110,7 +999,7 @@ func TestAccountTransactionsList_JQFilter(t *testing.T) {
 	txn := sampleAccountTransaction()
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{txn}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{txn}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1146,7 +1035,7 @@ func TestAccountTransactionsList_SDKError(t *testing.T) {
 func TestAccountTransactionsList_EmptyResults(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}
@@ -1164,7 +1053,7 @@ func TestAccountTransactionsList_EmptyResults(t *testing.T) {
 func TestAccountTransactionsList_EmptyResults_JSON(t *testing.T) {
 	mock := &mockAccountNestedAPI{
 		listAccountTransactionsFn: func(accountId string, params *recurly.ListAccountTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockAccountTransactionLister{transactions: []recurly.Transaction{}}, nil
+			return &mockLister[recurly.Transaction]{items: []recurly.Transaction{}}, nil
 		},
 	}
 	app := &App{NewAccountNestedAPI: func(_ *cobra.Command) (AccountNestedAPI, error) { return mock, nil }}

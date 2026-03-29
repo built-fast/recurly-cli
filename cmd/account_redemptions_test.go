@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -11,42 +10,6 @@ import (
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/cobra"
 )
-
-// mockCouponRedemptionLister implements recurly.CouponRedemptionLister for testing.
-type mockCouponRedemptionLister struct {
-	redemptions []recurly.CouponRedemption
-	fetched     bool
-}
-
-func (m *mockCouponRedemptionLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockCouponRedemptionLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockCouponRedemptionLister) Count() (*int64, error) {
-	n := int64(len(m.redemptions))
-	return &n, nil
-}
-
-func (m *mockCouponRedemptionLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockCouponRedemptionLister) Data() []recurly.CouponRedemption {
-	return m.redemptions
-}
-
-func (m *mockCouponRedemptionLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockCouponRedemptionLister) Next() string {
-	return ""
-}
 
 // sampleRedemption returns a test CouponRedemption for list tests (value type).
 func sampleRedemption() recurly.CouponRedemption {
@@ -98,7 +61,7 @@ func TestAccountRedemptionsList_Success(t *testing.T) {
 			if accountId != "acct-1" {
 				t.Errorf("expected accountId=acct-1, got %q", accountId)
 			}
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{r}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
@@ -123,7 +86,7 @@ func TestAccountRedemptionsList_Success(t *testing.T) {
 func TestAccountRedemptionsList_EmptyResults(t *testing.T) {
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
@@ -158,7 +121,7 @@ func TestAccountRedemptionsList_FlagPassthrough(t *testing.T) {
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
 			capturedParams = params
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
@@ -195,7 +158,7 @@ func TestAccountRedemptionsListActive_Success(t *testing.T) {
 			if accountId != "acct-1" {
 				t.Errorf("expected accountId=acct-1, got %q", accountId)
 			}
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{r}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
@@ -215,7 +178,7 @@ func TestAccountRedemptionsListActive_Success(t *testing.T) {
 func TestAccountRedemptionsListActive_EmptyResults(t *testing.T) {
 	mock := &mockAccountRedemptionAPI{
 		listActiveCouponRedemptionsFn: func(accountId string, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}
@@ -548,7 +511,7 @@ func TestAccountRedemptionsList_JSONOutput(t *testing.T) {
 	r := sampleRedemption()
 	mock := &mockAccountRedemptionAPI{
 		listAccountCouponRedemptionsFn: func(accountId string, params *recurly.ListAccountCouponRedemptionsParams, opts ...recurly.Option) (recurly.CouponRedemptionLister, error) {
-			return &mockCouponRedemptionLister{redemptions: []recurly.CouponRedemption{r}}, nil
+			return &mockLister[recurly.CouponRedemption]{items: []recurly.CouponRedemption{r}}, nil
 		},
 	}
 	app := &App{NewAccountRedemptionAPI: func(_ *cobra.Command) (AccountRedemptionAPI, error) { return mock, nil }}

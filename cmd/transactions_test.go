@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -24,42 +23,6 @@ func (m *mockTransactionAPI) ListTransactions(params *recurly.ListTransactionsPa
 
 func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 	return m.getTransactionFn(transactionId, opts...)
-}
-
-// mockTransactionLister implements recurly.TransactionLister for testing.
-type mockTransactionLister struct {
-	transactions []recurly.Transaction
-	fetched      bool
-}
-
-func (m *mockTransactionLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockTransactionLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockTransactionLister) Count() (*int64, error) {
-	n := int64(len(m.transactions))
-	return &n, nil
-}
-
-func (m *mockTransactionLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockTransactionLister) Data() []recurly.Transaction {
-	return m.transactions
-}
-
-func (m *mockTransactionLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockTransactionLister) Next() string {
-	return ""
 }
 
 func sampleTransaction() *recurly.Transaction {
@@ -133,7 +96,7 @@ func TestTransactionsList_ShowsInHelp(t *testing.T) {
 func TestTransactionsList_TableOutput(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
 		},
 	}
 	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
@@ -163,7 +126,7 @@ func TestTransactionsList_TableOutput(t *testing.T) {
 func TestTransactionsList_JSONOutput(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
 		},
 	}
 	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
@@ -189,7 +152,7 @@ func TestTransactionsList_JSONOutput(t *testing.T) {
 func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
 		},
 	}
 	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
@@ -211,7 +174,7 @@ func TestTransactionsList_JSONPrettyOutput(t *testing.T) {
 func TestTransactionsList_JQFilter(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
-			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
 		},
 	}
 	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}
@@ -404,7 +367,7 @@ func TestTransactionsList_Filters(t *testing.T) {
 	mock := &mockTransactionAPI{
 		listTransactionsFn: func(params *recurly.ListTransactionsParams, opts ...recurly.Option) (recurly.TransactionLister, error) {
 			capturedParams = params
-			return &mockTransactionLister{transactions: sampleTransactions()}, nil
+			return &mockLister[recurly.Transaction]{items: sampleTransactions()}, nil
 		},
 	}
 	app := &App{NewTransactionAPI: func(_ *cobra.Command) (TransactionAPI, error) { return mock, nil }}

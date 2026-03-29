@@ -47,78 +47,6 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 	return m.listInvoiceLineItemsFn(invoiceId, params, opts...)
 }
 
-// mockLineItemLister implements recurly.LineItemLister for testing.
-type mockLineItemLister struct {
-	lineItems []recurly.LineItem
-	fetched   bool
-}
-
-func (m *mockLineItemLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockLineItemLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockLineItemLister) Count() (*int64, error) {
-	n := int64(len(m.lineItems))
-	return &n, nil
-}
-
-func (m *mockLineItemLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockLineItemLister) Data() []recurly.LineItem {
-	return m.lineItems
-}
-
-func (m *mockLineItemLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockLineItemLister) Next() string {
-	return ""
-}
-
-// mockInvoiceLister implements recurly.InvoiceLister for testing.
-type mockInvoiceLister struct {
-	invoices []recurly.Invoice
-	fetched  bool
-}
-
-func (m *mockInvoiceLister) Fetch() error {
-	m.fetched = true
-	return nil
-}
-
-func (m *mockInvoiceLister) FetchWithContext(_ context.Context) error {
-	return m.Fetch()
-}
-
-func (m *mockInvoiceLister) Count() (*int64, error) {
-	n := int64(len(m.invoices))
-	return &n, nil
-}
-
-func (m *mockInvoiceLister) CountWithContext(_ context.Context) (*int64, error) {
-	return m.Count()
-}
-
-func (m *mockInvoiceLister) Data() []recurly.Invoice {
-	return m.invoices
-}
-
-func (m *mockInvoiceLister) HasMore() bool {
-	return !m.fetched
-}
-
-func (m *mockInvoiceLister) Next() string {
-	return ""
-}
-
 func sampleInvoice() *recurly.Invoice {
 	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	updated := time.Date(2025, 1, 16, 8, 0, 0, 0, time.UTC)
@@ -222,7 +150,7 @@ func TestInvoicesList_ShowsInHelp(t *testing.T) {
 func TestInvoicesList_TableOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -252,7 +180,7 @@ func TestInvoicesList_TableOutput(t *testing.T) {
 func TestInvoicesList_JSONOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -278,7 +206,7 @@ func TestInvoicesList_JSONOutput(t *testing.T) {
 func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -300,7 +228,7 @@ func TestInvoicesList_JSONPrettyOutput(t *testing.T) {
 func TestInvoicesList_JQFilter(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
-			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -324,7 +252,7 @@ func TestInvoicesList_Filters(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoicesFn: func(params *recurly.ListInvoicesParams, opts ...recurly.Option) (recurly.InvoiceLister, error) {
 			capturedParams = params
-			return &mockInvoiceLister{invoices: sampleInvoices()}, nil
+			return &mockLister[recurly.Invoice]{items: sampleInvoices()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -593,7 +521,7 @@ func TestInvoicesGet_LineItems_Shown(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -626,7 +554,7 @@ func TestInvoicesGet_LineItems_WithCount(t *testing.T) {
 		},
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			capturedParams = params
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -675,7 +603,7 @@ func TestInvoicesGet_LineItems_JSONOutput(t *testing.T) {
 			return sampleInvoice(), nil
 		},
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -707,7 +635,7 @@ func TestInvoicesGet_LineItems_NotShownWithoutFlag(t *testing.T) {
 		},
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			lineItemsCalled = true
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -1342,7 +1270,7 @@ func TestInvoicesLineItems_MissingArg_ReturnsError(t *testing.T) {
 func TestInvoicesLineItems_TableOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -1371,7 +1299,7 @@ func TestInvoicesLineItems_PositionalArg(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 			capturedID = invoiceId
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -1388,7 +1316,7 @@ func TestInvoicesLineItems_PositionalArg(t *testing.T) {
 func TestInvoicesLineItems_JSONOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -1414,7 +1342,7 @@ func TestInvoicesLineItems_JSONOutput(t *testing.T) {
 func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
@@ -1436,7 +1364,7 @@ func TestInvoicesLineItems_JSONPrettyOutput(t *testing.T) {
 func TestInvoicesLineItems_JQFilter(t *testing.T) {
 	mock := &mockInvoiceAPI{
 		listInvoiceLineItemsFn: func(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
-			return &mockLineItemLister{lineItems: sampleLineItems()}, nil
+			return &mockLister[recurly.LineItem]{items: sampleLineItems()}, nil
 		},
 	}
 	app := &App{NewInvoiceAPI: func(_ *cobra.Command) (InvoiceAPI, error) { return mock, nil }}
