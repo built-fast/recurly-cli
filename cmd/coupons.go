@@ -28,6 +28,7 @@ func newCouponsCmd() *cobra.Command {
 	cmd.AddCommand(newCouponsDeactivateCmd())
 	cmd.AddCommand(newCouponsRestoreCmd())
 	cmd.AddCommand(newCouponsGenerateCodesCmd())
+	cmd.AddCommand(newCouponsListCodesCmd())
 	return cmd
 }
 
@@ -865,6 +866,96 @@ func newCouponsGenerateCodesCmd() *cobra.Command {
 
 	cmd.Flags().IntVar(&numberOfCodes, "number-of-codes", 0, "Number of unique codes to generate (required, minimum 1)")
 	_ = cmd.MarkFlagRequired("number-of-codes")
+
+	return cmd
+}
+
+func newCouponsListCodesCmd() *cobra.Command {
+	var (
+		limit    int
+		all      bool
+		order    string
+		sort     string
+		redeemed string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "list-codes <coupon_id>",
+		Short: "List unique coupon codes for a bulk coupon",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newCouponAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			params := &recurly.ListUniqueCouponCodesParams{}
+
+			if limit > 0 {
+				params.Limit = recurly.Int(limit)
+			}
+			if cmd.Flags().Changed("order") {
+				params.Order = recurly.String(order)
+			}
+			if cmd.Flags().Changed("sort") {
+				params.Sort = recurly.String(sort)
+			}
+			if cmd.Flags().Changed("redeemed") {
+				params.Redeemed = recurly.String(redeemed)
+			}
+
+			lister, err := c.ListUniqueCouponCodes(args[0], params)
+			if err != nil {
+				return err
+			}
+
+			result, err := pagination.Collect[recurly.UniqueCouponCode](lister, limit, all)
+			if err != nil {
+				return err
+			}
+
+			columns := []output.Column{
+				{Header: "Code", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).Code }},
+				{Header: "State", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).State }},
+				{Header: "Bulk Coupon Code", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).BulkCouponCode }},
+				{Header: "Redeemed At", Extract: func(v any) string {
+					c := v.(recurly.UniqueCouponCode)
+					if c.RedeemedAt != nil {
+						return c.RedeemedAt.Format(time.RFC3339)
+					}
+					return ""
+				}},
+				{Header: "Created At", Extract: func(v any) string {
+					c := v.(recurly.UniqueCouponCode)
+					if c.CreatedAt != nil {
+						return c.CreatedAt.Format(time.RFC3339)
+					}
+					return ""
+				}},
+			}
+
+			items := make([]any, len(result.Items))
+			for i, code := range result.Items {
+				items[i] = code
+			}
+
+			formatted, err := output.FormatList(format, columns, items, result.HasMore)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().IntVar(&limit, "limit", 0, "Maximum number of results to return (default 20)")
+	cmd.Flags().BoolVar(&all, "all", false, "Fetch all pages of results")
+	cmd.Flags().StringVar(&order, "order", "", "Sort order (asc or desc)")
+	cmd.Flags().StringVar(&sort, "sort", "", "Sort field (e.g. created_at, updated_at)")
+	cmd.Flags().StringVar(&redeemed, "redeemed", "", "Filter by redemption status (true or false)")
 
 	return cmd
 }
