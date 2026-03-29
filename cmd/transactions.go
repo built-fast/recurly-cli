@@ -85,27 +85,18 @@ func newTransactionsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.Transaction).Id }},
-				{Header: "Type", Extract: func(v any) string { return v.(recurly.Transaction).Type }},
-				{Header: "Account", Extract: func(v any) string { return v.(recurly.Transaction).Account.Code }},
-				{Header: "Status", Extract: func(v any) string { return v.(recurly.Transaction).Status }},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Transaction).Currency }},
-				{Header: "Amount", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Transaction).Amount)
-				}},
-				{Header: "Success", Extract: func(v any) string {
-					return fmt.Sprintf("%t", v.(recurly.Transaction).Success)
-				}},
-				{Header: "Origin", Extract: func(v any) string { return v.(recurly.Transaction).Origin }},
-				{Header: "Created At", Extract: func(v any) string {
-					txn := v.(recurly.Transaction)
-					if txn.CreatedAt != nil {
-						return txn.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type T = recurly.Transaction
+			columns := output.ToColumns([]output.TypedColumn[T]{
+				output.StringColumn[T]("ID", func(t T) string { return t.Id }),
+				output.StringColumn[T]("Type", func(t T) string { return t.Type }),
+				output.StringColumn[T]("Account", func(t T) string { return t.Account.Code }),
+				output.StringColumn[T]("Status", func(t T) string { return t.Status }),
+				output.StringColumn[T]("Currency", func(t T) string { return t.Currency }),
+				output.FloatColumn[T]("Amount", func(t T) float64 { return t.Amount }),
+				output.BoolColumn[T]("Success", func(t T) bool { return t.Success }),
+				output.StringColumn[T]("Origin", func(t T) string { return t.Origin }),
+				output.TimeColumn[T]("Created At", func(t T) *time.Time { return t.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, txn := range result.Items {

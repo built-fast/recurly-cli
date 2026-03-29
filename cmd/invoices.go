@@ -89,27 +89,18 @@ func newInvoicesListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.Invoice).Id }},
-				{Header: "Number", Extract: func(v any) string { return v.(recurly.Invoice).Number }},
-				{Header: "Type", Extract: func(v any) string { return v.(recurly.Invoice).Type }},
-				{Header: "Account", Extract: func(v any) string { return v.(recurly.Invoice).Account.Code }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Invoice).State }},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Invoice).Currency }},
-				{Header: "Total", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Invoice).Total)
-				}},
-				{Header: "Balance", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Invoice).Balance)
-				}},
-				{Header: "Created At", Extract: func(v any) string {
-					inv := v.(recurly.Invoice)
-					if inv.CreatedAt != nil {
-						return inv.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type I = recurly.Invoice
+			columns := output.ToColumns([]output.TypedColumn[I]{
+				output.StringColumn[I]("ID", func(i I) string { return i.Id }),
+				output.StringColumn[I]("Number", func(i I) string { return i.Number }),
+				output.StringColumn[I]("Type", func(i I) string { return i.Type }),
+				output.StringColumn[I]("Account", func(i I) string { return i.Account.Code }),
+				output.StringColumn[I]("State", func(i I) string { return i.State }),
+				output.StringColumn[I]("Currency", func(i I) string { return i.Currency }),
+				output.FloatColumn[I]("Total", func(i I) float64 { return i.Total }),
+				output.FloatColumn[I]("Balance", func(i I) float64 { return i.Balance }),
+				output.TimeColumn[I]("Created At", func(i I) *time.Time { return i.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, inv := range result.Items {

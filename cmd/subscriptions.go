@@ -171,23 +171,16 @@ func newSubscriptionsListCmd() *cobra.Command {
 				result.Items = filtered
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.Subscription).Id }},
-				{Header: "Account Code", Extract: func(v any) string { return v.(recurly.Subscription).Account.Code }},
-				{Header: "Plan Code", Extract: func(v any) string { return v.(recurly.Subscription).Plan.Code }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Subscription).State }},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Subscription).Currency }},
-				{Header: "Unit Amount", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Subscription).UnitAmount)
-				}},
-				{Header: "Current Period Ends At", Extract: func(v any) string {
-					s := v.(recurly.Subscription)
-					if s.CurrentPeriodEndsAt != nil {
-						return s.CurrentPeriodEndsAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type S = recurly.Subscription
+			columns := output.ToColumns([]output.TypedColumn[S]{
+				output.StringColumn[S]("ID", func(s S) string { return s.Id }),
+				output.StringColumn[S]("Account Code", func(s S) string { return s.Account.Code }),
+				output.StringColumn[S]("Plan Code", func(s S) string { return s.Plan.Code }),
+				output.StringColumn[S]("State", func(s S) string { return s.State }),
+				output.StringColumn[S]("Currency", func(s S) string { return s.Currency }),
+				output.FloatColumn[S]("Unit Amount", func(s S) float64 { return s.UnitAmount }),
+				output.TimeColumn[S]("Current Period Ends At", func(s S) *time.Time { return s.CurrentPeriodEndsAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, s := range result.Items {

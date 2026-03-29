@@ -372,19 +372,14 @@ func newItemsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.Item).Code }},
-				{Header: "Name", Extract: func(v any) string { return v.(recurly.Item).Name }},
-				{Header: "External SKU", Extract: func(v any) string { return v.(recurly.Item).ExternalSku }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Item).State }},
-				{Header: "Created At", Extract: func(v any) string {
-					item := v.(recurly.Item)
-					if item.CreatedAt != nil {
-						return item.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type It = recurly.Item
+			columns := output.ToColumns([]output.TypedColumn[It]{
+				output.StringColumn[It]("Code", func(i It) string { return i.Code }),
+				output.StringColumn[It]("Name", func(i It) string { return i.Name }),
+				output.StringColumn[It]("External SKU", func(i It) string { return i.ExternalSku }),
+				output.StringColumn[It]("State", func(i It) string { return i.State }),
+				output.TimeColumn[It]("Created At", func(i It) *time.Time { return i.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, item := range result.Items {

@@ -713,33 +713,26 @@ func newPlansListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.Plan).Code }},
-				{Header: "Name", Extract: func(v any) string { return v.(recurly.Plan).Name }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Plan).State }},
-				{Header: "Interval", Extract: func(v any) string {
-					p := v.(recurly.Plan)
+			type P = recurly.Plan
+			columns := output.ToColumns([]output.TypedColumn[P]{
+				output.StringColumn[P]("Code", func(p P) string { return p.Code }),
+				output.StringColumn[P]("Name", func(p P) string { return p.Name }),
+				output.StringColumn[P]("State", func(p P) string { return p.State }),
+				{Header: "Interval", Extract: func(p P) string {
 					if p.IntervalUnit != "" {
 						return fmt.Sprintf("%d %s", p.IntervalLength, p.IntervalUnit)
 					}
 					return ""
 				}},
-				{Header: "Price", Extract: func(v any) string {
-					p := v.(recurly.Plan)
+				{Header: "Price", Extract: func(p P) string {
 					if len(p.Currencies) > 0 {
 						c := p.Currencies[0]
 						return fmt.Sprintf("%.2f %s", c.UnitAmount, c.Currency)
 					}
 					return ""
 				}},
-				{Header: "Created At", Extract: func(v any) string {
-					p := v.(recurly.Plan)
-					if p.CreatedAt != nil {
-						return p.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+				output.TimeColumn[P]("Created At", func(p P) *time.Time { return p.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, p := range result.Items {

@@ -86,19 +86,14 @@ func newCouponsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.Coupon).Code }},
-				{Header: "Name", Extract: func(v any) string { return v.(recurly.Coupon).Name }},
-				{Header: "Discount Type", Extract: func(v any) string { return v.(recurly.Coupon).Discount.Type }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Coupon).State }},
-				{Header: "Created At", Extract: func(v any) string {
-					c := v.(recurly.Coupon)
-					if c.CreatedAt != nil {
-						return c.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type C = recurly.Coupon
+			columns := output.ToColumns([]output.TypedColumn[C]{
+				output.StringColumn[C]("Code", func(c C) string { return c.Code }),
+				output.StringColumn[C]("Name", func(c C) string { return c.Name }),
+				output.StringColumn[C]("Discount Type", func(c C) string { return c.Discount.Type }),
+				output.StringColumn[C]("State", func(c C) string { return c.State }),
+				output.TimeColumn[C]("Created At", func(c C) *time.Time { return c.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, coupon := range result.Items {
@@ -885,25 +880,14 @@ func newCouponsListCodesCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).Code }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).State }},
-				{Header: "Bulk Coupon Code", Extract: func(v any) string { return v.(recurly.UniqueCouponCode).BulkCouponCode }},
-				{Header: "Redeemed At", Extract: func(v any) string {
-					c := v.(recurly.UniqueCouponCode)
-					if c.RedeemedAt != nil {
-						return c.RedeemedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-				{Header: "Created At", Extract: func(v any) string {
-					c := v.(recurly.UniqueCouponCode)
-					if c.CreatedAt != nil {
-						return c.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type U = recurly.UniqueCouponCode
+			columns := output.ToColumns([]output.TypedColumn[U]{
+				output.StringColumn[U]("Code", func(u U) string { return u.Code }),
+				output.StringColumn[U]("State", func(u U) string { return u.State }),
+				output.StringColumn[U]("Bulk Coupon Code", func(u U) string { return u.BulkCouponCode }),
+				output.TimeColumn[U]("Redeemed At", func(u U) *time.Time { return u.RedeemedAt }),
+				output.TimeColumn[U]("Created At", func(u U) *time.Time { return u.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, code := range result.Items {

@@ -70,20 +70,15 @@ func newPlanAddOnsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.AddOn).Id }},
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.AddOn).Code }},
-				{Header: "Name", Extract: func(v any) string { return v.(recurly.AddOn).Name }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.AddOn).State }},
-				{Header: "Add-On Type", Extract: func(v any) string { return v.(recurly.AddOn).AddOnType }},
-				{Header: "Created At", Extract: func(v any) string {
-					a := v.(recurly.AddOn)
-					if a.CreatedAt != nil {
-						return a.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type A = recurly.AddOn
+			columns := output.ToColumns([]output.TypedColumn[A]{
+				output.StringColumn[A]("ID", func(a A) string { return a.Id }),
+				output.StringColumn[A]("Code", func(a A) string { return a.Code }),
+				output.StringColumn[A]("Name", func(a A) string { return a.Name }),
+				output.StringColumn[A]("State", func(a A) string { return a.State }),
+				output.StringColumn[A]("Add-On Type", func(a A) string { return a.AddOnType }),
+				output.TimeColumn[A]("Created At", func(a A) *time.Time { return a.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, a := range result.Items {

@@ -65,23 +65,16 @@ func newAccountSubscriptionsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.Subscription).Id }},
-				{Header: "Account Code", Extract: func(v any) string { return v.(recurly.Subscription).Account.Code }},
-				{Header: "Plan Code", Extract: func(v any) string { return v.(recurly.Subscription).Plan.Code }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Subscription).State }},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Subscription).Currency }},
-				{Header: "Unit Amount", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Subscription).UnitAmount)
-				}},
-				{Header: "Current Period Ends At", Extract: func(v any) string {
-					s := v.(recurly.Subscription)
-					if s.CurrentPeriodEndsAt != nil {
-						return s.CurrentPeriodEndsAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type S = recurly.Subscription
+			columns := output.ToColumns([]output.TypedColumn[S]{
+				output.StringColumn[S]("ID", func(s S) string { return s.Id }),
+				output.StringColumn[S]("Account Code", func(s S) string { return s.Account.Code }),
+				output.StringColumn[S]("Plan Code", func(s S) string { return s.Plan.Code }),
+				output.StringColumn[S]("State", func(s S) string { return s.State }),
+				output.StringColumn[S]("Currency", func(s S) string { return s.Currency }),
+				output.FloatColumn[S]("Unit Amount", func(s S) float64 { return s.UnitAmount }),
+				output.TimeColumn[S]("Current Period Ends At", func(s S) *time.Time { return s.CurrentPeriodEndsAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, s := range result.Items {
@@ -166,22 +159,15 @@ func newAccountInvoicesListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID (Number)", Extract: func(v any) string { return v.(recurly.Invoice).Number }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Invoice).State }},
-				{Header: "Type", Extract: func(v any) string { return v.(recurly.Invoice).Type }},
-				{Header: "Total", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Invoice).Total)
-				}},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Invoice).Currency }},
-				{Header: "Created At", Extract: func(v any) string {
-					inv := v.(recurly.Invoice)
-					if inv.CreatedAt != nil {
-						return inv.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type I = recurly.Invoice
+			columns := output.ToColumns([]output.TypedColumn[I]{
+				output.StringColumn[I]("ID (Number)", func(i I) string { return i.Number }),
+				output.StringColumn[I]("State", func(i I) string { return i.State }),
+				output.StringColumn[I]("Type", func(i I) string { return i.Type }),
+				output.FloatColumn[I]("Total", func(i I) float64 { return i.Total }),
+				output.StringColumn[I]("Currency", func(i I) string { return i.Currency }),
+				output.TimeColumn[I]("Created At", func(i I) *time.Time { return i.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, inv := range result.Items {
@@ -267,25 +253,16 @@ func newAccountTransactionsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "ID", Extract: func(v any) string { return v.(recurly.Transaction).Id }},
-				{Header: "Type", Extract: func(v any) string { return v.(recurly.Transaction).Type }},
-				{Header: "Amount", Extract: func(v any) string {
-					return fmt.Sprintf("%.2f", v.(recurly.Transaction).Amount)
-				}},
-				{Header: "Currency", Extract: func(v any) string { return v.(recurly.Transaction).Currency }},
-				{Header: "Status", Extract: func(v any) string { return v.(recurly.Transaction).Status }},
-				{Header: "Success", Extract: func(v any) string {
-					return fmt.Sprintf("%t", v.(recurly.Transaction).Success)
-				}},
-				{Header: "Created At", Extract: func(v any) string {
-					txn := v.(recurly.Transaction)
-					if txn.CreatedAt != nil {
-						return txn.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			type T = recurly.Transaction
+			columns := output.ToColumns([]output.TypedColumn[T]{
+				output.StringColumn[T]("ID", func(t T) string { return t.Id }),
+				output.StringColumn[T]("Type", func(t T) string { return t.Type }),
+				output.FloatColumn[T]("Amount", func(t T) float64 { return t.Amount }),
+				output.StringColumn[T]("Currency", func(t T) string { return t.Currency }),
+				output.StringColumn[T]("Status", func(t T) string { return t.Status }),
+				output.BoolColumn[T]("Success", func(t T) bool { return t.Success }),
+				output.TimeColumn[T]("Created At", func(t T) *time.Time { return t.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, txn := range result.Items {
