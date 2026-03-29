@@ -7,18 +7,6 @@ import (
 	"strings"
 )
 
-var selectedFields []string
-
-// SetFields stores the user-selected field names for output filtering.
-func SetFields(fields []string) {
-	selectedFields = fields
-}
-
-// HasFields reports whether field selection is active.
-func HasFields() bool {
-	return len(selectedFields) > 0
-}
-
 // normalizeFieldName converts a field name to a canonical form for matching.
 // "First Name" → "first_name", "first-name" → "first_name", "Code" → "code".
 func normalizeFieldName(name string) string {

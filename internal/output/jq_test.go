@@ -461,15 +461,3 @@ func TestFormatOne_WithJQ_Pretty(t *testing.T) {
 	}
 }
 
-func TestSetJQ_HasJQ(t *testing.T) {
-	SetJQ(nil)
-	if HasJQ() {
-		t.Error("expected HasJQ() == false after SetJQ(nil)")
-	}
-
-	SetJQ(compileJQ(t, "."))
-	defer SetJQ(nil)
-	if !HasJQ() {
-		t.Error("expected HasJQ() == true after SetJQ(code)")
-	}
-}

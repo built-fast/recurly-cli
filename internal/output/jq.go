@@ -9,18 +9,6 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-var jqCode *gojq.Code
-
-// SetJQ stores compiled jq bytecode for use by the output layer.
-func SetJQ(code *gojq.Code) {
-	jqCode = code
-}
-
-// HasJQ reports whether a jq filter is active.
-func HasJQ() bool {
-	return jqCode != nil
-}
-
 // applyJQ runs the compiled jq expression against v and returns the formatted
 // output. The format parameter controls how object/array results are rendered:
 // "json-pretty" uses indented JSON, anything else uses compact JSON.
