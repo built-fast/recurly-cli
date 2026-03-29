@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/built-fast/recurly-cli/skills"
 )
 
 func TestSkillCmd(t *testing.T) {
@@ -20,15 +22,14 @@ func TestSkillCmd(t *testing.T) {
 		t.Fatalf("skill command failed: %v", err)
 	}
 
-	output := buf.String()
-	if !strings.Contains(output, "# Recurly CLI Skill") {
-		t.Error("expected SKILL.md header in output")
+	// Verify byte-for-byte match with embedded content
+	expected, err := skills.SkillMD()
+	if err != nil {
+		t.Fatalf("reading embedded SKILL.md: %v", err)
 	}
-	if !strings.Contains(output, "## Authentication") {
-		t.Error("expected Authentication section in output")
-	}
-	if !strings.Contains(output, "## Command Reference") {
-		t.Error("expected Command Reference section in output")
+
+	if !bytes.Equal(buf.Bytes(), expected) {
+		t.Errorf("output does not match embedded SKILL.md byte-for-byte (got %d bytes, want %d bytes)", buf.Len(), len(expected))
 	}
 }
 
