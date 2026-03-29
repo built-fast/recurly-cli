@@ -27,6 +27,7 @@ func newCouponsCmd() *cobra.Command {
 	cmd.AddCommand(newCouponsUpdateCmd())
 	cmd.AddCommand(newCouponsDeactivateCmd())
 	cmd.AddCommand(newCouponsRestoreCmd())
+	cmd.AddCommand(newCouponsGenerateCodesCmd())
 	return cmd
 }
 
@@ -801,6 +802,69 @@ func newCouponsRestoreCmd() *cobra.Command {
 	cmd.Flags().StringVar(&hostedDescription, "hosted-description", "", "Hosted page description")
 	cmd.Flags().StringVar(&invoiceDescription, "invoice-description", "", "Invoice description")
 	cmd.Flags().StringVar(&redeemByDate, "redeem-by-date", "", "Coupon expiration date (YYYY-MM-DD)")
+
+	return cmd
+}
+
+func newCouponsGenerateCodesCmd() *cobra.Command {
+	var numberOfCodes int
+
+	cmd := &cobra.Command{
+		Use:   "generate-codes <coupon_id>",
+		Short: "Generate unique coupon codes for a bulk coupon",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if numberOfCodes < 1 {
+				return fmt.Errorf("--number-of-codes must be at least 1")
+			}
+
+			c, err := newCouponAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			body := &recurly.CouponBulkCreate{
+				NumberOfUniqueCodes: recurly.Int(numberOfCodes),
+			}
+
+			result, err := c.GenerateUniqueCouponCodes(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := []output.Column{
+				{Header: "Limit", Extract: func(v any) string {
+					return strconv.Itoa(v.(*recurly.UniqueCouponCodeParams).Limit)
+				}},
+				{Header: "Order", Extract: func(v any) string {
+					return v.(*recurly.UniqueCouponCodeParams).Order
+				}},
+				{Header: "Sort", Extract: func(v any) string {
+					return v.(*recurly.UniqueCouponCodeParams).Sort
+				}},
+				{Header: "Begin Time", Extract: func(v any) string {
+					p := v.(*recurly.UniqueCouponCodeParams)
+					if p.BeginTime != nil {
+						return p.BeginTime.Format(time.RFC3339)
+					}
+					return ""
+				}},
+			}
+
+			formatted, err := output.FormatOne(format, columns, result)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().IntVar(&numberOfCodes, "number-of-codes", 0, "Number of unique codes to generate (required, minimum 1)")
+	_ = cmd.MarkFlagRequired("number-of-codes")
 
 	return cmd
 }
