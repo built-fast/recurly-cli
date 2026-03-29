@@ -99,21 +99,15 @@ func newAccountsListCmd() *cobra.Command {
 				return err
 			}
 
-			columns := []output.Column{
-				{Header: "Code", Extract: func(v any) string { return v.(recurly.Account).Code }},
-				{Header: "Email", Extract: func(v any) string { return v.(recurly.Account).Email }},
-				{Header: "First Name", Extract: func(v any) string { return v.(recurly.Account).FirstName }},
-				{Header: "Last Name", Extract: func(v any) string { return v.(recurly.Account).LastName }},
-				{Header: "Company", Extract: func(v any) string { return v.(recurly.Account).Company }},
-				{Header: "State", Extract: func(v any) string { return v.(recurly.Account).State }},
-				{Header: "Created At", Extract: func(v any) string {
-					a := v.(recurly.Account)
-					if a.CreatedAt != nil {
-						return a.CreatedAt.Format(time.RFC3339)
-					}
-					return ""
-				}},
-			}
+			columns := output.ToColumns([]output.TypedColumn[recurly.Account]{
+				output.StringColumn[recurly.Account]("Code", func(a recurly.Account) string { return a.Code }),
+				output.StringColumn[recurly.Account]("Email", func(a recurly.Account) string { return a.Email }),
+				output.StringColumn[recurly.Account]("First Name", func(a recurly.Account) string { return a.FirstName }),
+				output.StringColumn[recurly.Account]("Last Name", func(a recurly.Account) string { return a.LastName }),
+				output.StringColumn[recurly.Account]("Company", func(a recurly.Account) string { return a.Company }),
+				output.StringColumn[recurly.Account]("State", func(a recurly.Account) string { return a.State }),
+				output.TimeColumn[recurly.Account]("Created At", func(a recurly.Account) *time.Time { return a.CreatedAt }),
+			})
 
 			items := make([]any, len(result.Items))
 			for i, a := range result.Items {
@@ -228,28 +222,16 @@ func newAccountsCreateCmd() *cobra.Command {
 }
 
 func accountDetailColumns() []output.Column {
-	return []output.Column{
-		{Header: "Code", Extract: func(v any) string { return v.(*recurly.Account).Code }},
-		{Header: "Email", Extract: func(v any) string { return v.(*recurly.Account).Email }},
-		{Header: "First Name", Extract: func(v any) string { return v.(*recurly.Account).FirstName }},
-		{Header: "Last Name", Extract: func(v any) string { return v.(*recurly.Account).LastName }},
-		{Header: "Company", Extract: func(v any) string { return v.(*recurly.Account).Company }},
-		{Header: "State", Extract: func(v any) string { return v.(*recurly.Account).State }},
-		{Header: "Created At", Extract: func(v any) string {
-			a := v.(*recurly.Account)
-			if a.CreatedAt != nil {
-				return a.CreatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-		{Header: "Updated At", Extract: func(v any) string {
-			a := v.(*recurly.Account)
-			if a.UpdatedAt != nil {
-				return a.UpdatedAt.Format(time.RFC3339)
-			}
-			return ""
-		}},
-	}
+	return output.ToColumns([]output.TypedColumn[*recurly.Account]{
+		output.StringColumn[*recurly.Account]("Code", func(a *recurly.Account) string { return a.Code }),
+		output.StringColumn[*recurly.Account]("Email", func(a *recurly.Account) string { return a.Email }),
+		output.StringColumn[*recurly.Account]("First Name", func(a *recurly.Account) string { return a.FirstName }),
+		output.StringColumn[*recurly.Account]("Last Name", func(a *recurly.Account) string { return a.LastName }),
+		output.StringColumn[*recurly.Account]("Company", func(a *recurly.Account) string { return a.Company }),
+		output.StringColumn[*recurly.Account]("State", func(a *recurly.Account) string { return a.State }),
+		output.TimeColumn[*recurly.Account]("Created At", func(a *recurly.Account) *time.Time { return a.CreatedAt }),
+		output.TimeColumn[*recurly.Account]("Updated At", func(a *recurly.Account) *time.Time { return a.UpdatedAt }),
+	})
 }
 
 func newAccountsUpdateCmd() *cobra.Command {
