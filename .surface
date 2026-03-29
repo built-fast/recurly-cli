@@ -92,6 +92,8 @@ CMD recurly subscriptions reactivate
 CMD recurly subscriptions resume
 CMD recurly subscriptions terminate
 CMD recurly subscriptions update
+CMD recurly transactions
+CMD recurly transactions list
 FLAG recurly --api-key string
 FLAG recurly --jq string
 FLAG recurly --output string
@@ -366,3 +368,11 @@ FLAG recurly subscriptions update --remaining-billing-cycles int
 FLAG recurly subscriptions update --renewal-billing-cycles int
 FLAG recurly subscriptions update --revenue-schedule-type string
 FLAG recurly subscriptions update --terms-and-conditions string
+FLAG recurly transactions list --all bool
+FLAG recurly transactions list --begin-time string
+FLAG recurly transactions list --end-time string
+FLAG recurly transactions list --limit int
+FLAG recurly transactions list --order string
+FLAG recurly transactions list --sort string
+FLAG recurly transactions list --success string
+FLAG recurly transactions list --type string
