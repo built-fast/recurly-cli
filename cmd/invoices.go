@@ -21,6 +21,7 @@ func newInvoicesCmd() *cobra.Command {
 	cmd.AddCommand(newInvoicesListCmd())
 	cmd.AddCommand(newInvoicesGetCmd())
 	cmd.AddCommand(newInvoicesVoidCmd())
+	cmd.AddCommand(newInvoicesCollectCmd())
 	return cmd
 }
 
@@ -269,6 +270,71 @@ func newInvoicesVoidCmd() *cobra.Command {
 			format := viper.GetString("output")
 
 			invoice, err := c.VoidInvoice(invoiceID)
+			if err != nil {
+				return err
+			}
+
+			// For JSON/jq output, format the whole invoice object
+			if format == "json" || format == "json-pretty" || output.HasJQ() {
+				formatted, err := output.FormatOne(format, nil, invoice)
+				if err != nil {
+					return err
+				}
+				_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+				return err
+			}
+
+			// Table output: detail view
+			columns := invoiceDetailColumns()
+			formatted, err := output.FormatOne(format, columns, invoice)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newInvoicesCollectCmd() *cobra.Command {
+	var yes bool
+
+	cmd := &cobra.Command{
+		Use:   "collect <invoice_id>",
+		Short: "Attempt collection on an invoice",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			invoiceID := args[0]
+
+			if !yes {
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to collect invoice %s? [y/N] ", invoiceID); err != nil {
+					return err
+				}
+				reader := bufio.NewReader(cmd.InOrStdin())
+				line, err := reader.ReadString('\n')
+				if err != nil && line == "" {
+					return fmt.Errorf("reading confirmation: %w", err)
+				}
+				input := strings.TrimSpace(strings.ToLower(line))
+				if input != "y" && input != "yes" {
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Collection cancelled.")
+					return err
+				}
+			}
+
+			c, err := newInvoiceAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+
+			invoice, err := c.CollectInvoice(invoiceID, &recurly.CollectInvoiceParams{})
 			if err != nil {
 				return err
 			}
