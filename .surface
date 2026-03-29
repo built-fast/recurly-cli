@@ -56,6 +56,8 @@ CMD recurly accounts transactions
 CMD recurly accounts transactions list
 CMD recurly accounts update
 CMD recurly configure
+CMD recurly coupons
+CMD recurly coupons list
 CMD recurly invoices
 CMD recurly invoices collect
 CMD recurly invoices get
@@ -160,6 +162,12 @@ FLAG recurly accounts update --last-name string
 FLAG recurly accounts update --preferred-locale string
 FLAG recurly accounts update --tax-exempt bool
 FLAG recurly accounts update --vat-number string
+FLAG recurly coupons list --all bool
+FLAG recurly coupons list --begin-time string
+FLAG recurly coupons list --end-time string
+FLAG recurly coupons list --limit int
+FLAG recurly coupons list --order string
+FLAG recurly coupons list --sort string
 FLAG recurly invoices collect --yes bool
 FLAG recurly invoices get --line-items int
 FLAG recurly invoices line-items --all bool
