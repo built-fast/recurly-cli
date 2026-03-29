@@ -10,6 +10,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/viper"
 )
 
 // mockAccountAPI implements AccountAPI for testing.
@@ -131,7 +132,9 @@ func TestAccountsListHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsList_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "list")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -374,7 +377,9 @@ func TestAccountsGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsGet_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "get", "abc123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -495,7 +500,9 @@ func TestAccountsCreateHelp_ShowsFlags(t *testing.T) {
 }
 
 func TestAccountsCreate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "create", "--code", "test")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -681,7 +688,9 @@ func TestAccountsUpdate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsUpdate_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "update", "abc123", "--email", "new@example.com")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -858,7 +867,9 @@ func TestAccountsDeactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsDeactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "deactivate", "abc123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")
@@ -1004,7 +1015,9 @@ func TestAccountsReactivate_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestAccountsReactivate_NoAPIKey_WithYes_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("accounts", "reactivate", "abc123", "--yes")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")

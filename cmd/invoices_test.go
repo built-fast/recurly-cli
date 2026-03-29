@@ -424,7 +424,9 @@ func TestInvoicesGet_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestInvoicesGet_NoAPIKey_ReturnsError(t *testing.T) {
+	viper.Reset()
 	t.Setenv("RECURLY_API_KEY", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	_, stderr, err := executeCommand("invoices", "get", "inv-abc123")
 	if err == nil {
 		t.Fatal("expected error when no API key is configured")

@@ -460,4 +460,3 @@ func TestFormatOne_WithJQ_Pretty(t *testing.T) {
 		t.Errorf("expected indented JSON with json-pretty, got %q", out)
 	}
 }
-
