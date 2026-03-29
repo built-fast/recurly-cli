@@ -5,41 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 )
-
-// sampleRedemption returns a test CouponRedemption for list tests (value type).
-func sampleRedemption() recurly.CouponRedemption {
-	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
-	return recurly.CouponRedemption{
-		Id:         "redemption-abc123",
-		State:      "active",
-		Currency:   "USD",
-		Discounted: 10.50,
-		Account:    recurly.AccountMini{Code: "acct-1"},
-		Coupon:     recurly.Coupon{Code: "SAVE10"},
-		CreatedAt:  &now,
-	}
-}
-
-// sampleRedemptionDetail returns a test CouponRedemption pointer for detail tests.
-func sampleRedemptionDetail() *recurly.CouponRedemption {
-	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
-	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)
-	return &recurly.CouponRedemption{
-		Id:             "redemption-abc123",
-		State:          "active",
-		Currency:       "USD",
-		Discounted:     10.50,
-		SubscriptionId: "sub-xyz",
-		Account:        recurly.AccountMini{Code: "acct-1"},
-		Coupon:         recurly.Coupon{Code: "SAVE10"},
-		CreatedAt:      &now,
-		UpdatedAt:      &updated,
-	}
-}
 
 // --- accounts redemptions list ---
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -44,21 +43,6 @@ func (m *mockAccountAPI) DeactivateAccount(accountId string, opts ...recurly.Opt
 
 func (m *mockAccountAPI) ReactivateAccount(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
 	return m.reactivateAccountFn(accountId, opts...)
-}
-
-// sampleAccount returns a test account with predictable fields.
-func sampleAccount() *recurly.Account {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return &recurly.Account{
-		Code:      "acct-123",
-		Email:     "test@example.com",
-		FirstName: "John",
-		LastName:  "Doe",
-		Company:   "Acme Inc",
-		State:     "active",
-		CreatedAt: &now,
-		UpdatedAt: &now,
-	}
 }
 
 // --- accounts list ---

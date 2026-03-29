@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -50,28 +49,6 @@ func (m *mockPlanAddOnAPI) RemovePlanAddOn(planId string, addOnId string, opts .
 		return m.removePlanAddOnFn(planId, addOnId, opts...)
 	}
 	return nil, nil
-}
-
-func sampleAddOn() recurly.AddOn {
-	now := time.Date(2025, 3, 10, 12, 0, 0, 0, time.UTC)
-	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)
-	return recurly.AddOn{
-		Id:              "a1234",
-		Code:            "extra-users",
-		Name:            "Extra Users",
-		State:           "active",
-		AddOnType:       "fixed",
-		DefaultQuantity: 1,
-		Optional:        true,
-		AccountingCode:  "extra-users-ac",
-		TaxCode:         "SW054000",
-		Currencies: []recurly.AddOnPricing{
-			{Currency: "USD", UnitAmount: 5.00},
-			{Currency: "EUR", UnitAmount: 4.50},
-		},
-		CreatedAt: &now,
-		UpdatedAt: &updated,
-	}
 }
 
 func TestPlanAddOnsList_ShowsInHelp(t *testing.T) {

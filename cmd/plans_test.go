@@ -41,50 +41,6 @@ func (m *mockPlanAPI) RemovePlan(planId string, opts ...recurly.Option) (*recurl
 	return m.removePlanFn(planId, opts...)
 }
 
-// samplePlan returns a test plan with predictable fields.
-func samplePlan() recurly.Plan {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Plan{
-		Code:           "gold",
-		Name:           "Gold Plan",
-		State:          "active",
-		IntervalLength: 1,
-		IntervalUnit:   "month",
-		Currencies: []recurly.PlanPricing{
-			{Currency: "USD", UnitAmount: 10.00},
-		},
-		CreatedAt: &now,
-	}
-}
-
-// samplePlanDetail returns a test plan pointer with all detail fields populated.
-func samplePlanDetail() *recurly.Plan {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
-	return &recurly.Plan{
-		Id:             "p1234",
-		Code:           "gold",
-		Name:           "Gold Plan",
-		State:          "active",
-		PricingModel:   "fixed",
-		IntervalUnit:   "month",
-		IntervalLength: 1,
-		Description:    "A premium plan",
-		Currencies: []recurly.PlanPricing{
-			{Currency: "USD", UnitAmount: 10.00, SetupFee: 5.00},
-			{Currency: "EUR", UnitAmount: 9.00, SetupFee: 4.50},
-		},
-		TrialUnit:          "day",
-		TrialLength:        14,
-		AutoRenew:          true,
-		TotalBillingCycles: 12,
-		TaxCode:            "digital",
-		TaxExempt:          false,
-		CreatedAt:          &now,
-		UpdatedAt:          &updated,
-	}
-}
-
 // --- plans list ---
 
 func TestPlansList_ShowsInHelp(t *testing.T) {

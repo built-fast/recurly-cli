@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -64,55 +63,6 @@ func (m *mockSubscriptionAPI) TerminateSubscription(subscriptionId string, param
 
 func (m *mockSubscriptionAPI) ConvertTrial(subscriptionId string, opts ...recurly.Option) (*recurly.Subscription, error) {
 	return m.convertTrialFn(subscriptionId, opts...)
-}
-
-// sampleSubscription returns a test subscription with predictable fields for list output.
-func sampleSubscription() recurly.Subscription {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	periodEnd := time.Date(2025, 2, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Subscription{
-		Id:                  "sub-123",
-		Uuid:                "uuid-abc",
-		Account:             recurly.AccountMini{Code: "acct-456"},
-		Plan:                recurly.PlanMini{Id: "plan-789", Code: "gold", Name: "Gold Plan"},
-		State:               "active",
-		Currency:            "USD",
-		UnitAmount:          19.99,
-		Quantity:            1,
-		Subtotal:            19.99,
-		CollectionMethod:    "automatic",
-		CurrentPeriodEndsAt: &periodEnd,
-		CreatedAt:           &now,
-	}
-}
-
-// sampleSubscriptionDetail returns a test subscription pointer with detail fields populated.
-func sampleSubscriptionDetail() *recurly.Subscription {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	periodStart := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	periodEnd := time.Date(2025, 2, 15, 10, 30, 0, 0, time.UTC)
-	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
-	return &recurly.Subscription{
-		Id:                     "sub-123",
-		Uuid:                   "uuid-abc",
-		Account:                recurly.AccountMini{Code: "acct-456"},
-		Plan:                   recurly.PlanMini{Id: "plan-789", Code: "gold", Name: "Gold Plan"},
-		State:                  "active",
-		Currency:               "USD",
-		UnitAmount:             19.99,
-		Quantity:               1,
-		Subtotal:               19.99,
-		Tax:                    1.60,
-		Total:                  21.59,
-		CollectionMethod:       "automatic",
-		AutoRenew:              true,
-		NetTerms:               0,
-		CurrentPeriodStartedAt: &periodStart,
-		CurrentPeriodEndsAt:    &periodEnd,
-		CreatedAt:              &now,
-		UpdatedAt:              &updated,
-		ActivatedAt:            &now,
-	}
 }
 
 // --- subscriptions list ---

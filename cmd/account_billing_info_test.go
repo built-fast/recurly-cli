@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -37,25 +36,6 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 		return m.removeBillingInfoFn(accountId, opts...)
 	}
 	return nil, nil
-}
-
-func sampleBillingInfo() *recurly.BillingInfo {
-	created := time.Date(2025, 2, 10, 12, 0, 0, 0, time.UTC)
-	updated := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)
-	return &recurly.BillingInfo{
-		Id:        "bill1234",
-		AccountId: "code-acct1",
-		FirstName: "John",
-		LastName:  "Doe",
-		Company:   "Acme Inc",
-		Valid:     true,
-		PaymentMethod: recurly.PaymentMethod{
-			CardType: "Visa",
-		},
-		PrimaryPaymentMethod: true,
-		CreatedAt:            &created,
-		UpdatedAt:            &updated,
-	}
 }
 
 // --- billing-info get ---

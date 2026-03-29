@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -22,62 +21,6 @@ func (m *mockTransactionAPI) ListTransactions(params *recurly.ListTransactionsPa
 
 func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurly.Option) (*recurly.Transaction, error) {
 	return m.getTransactionFn(transactionId, opts...)
-}
-
-func sampleTransaction() *recurly.Transaction {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return &recurly.Transaction{
-		Id:               "txn-001",
-		Uuid:             "uuid-001",
-		Type:             "purchase",
-		Origin:           "api",
-		Status:           "success",
-		Success:          true,
-		Amount:           99.99,
-		Currency:         "USD",
-		Account:          recurly.AccountMini{Id: "acct-id-1", Code: "acct-code-1"},
-		Invoice:          recurly.InvoiceMini{Id: "inv-id-1", Number: "1001"},
-		CollectionMethod: "automatic",
-		PaymentMethod: recurly.PaymentMethod{
-			Object:   "credit_card",
-			CardType: "Visa",
-			LastFour: "1234",
-		},
-		IpAddressV4:   "192.168.1.1",
-		StatusCode:    "approved",
-		StatusMessage: "Transaction approved",
-		Refunded:      false,
-		CreatedAt:     &now,
-		UpdatedAt:     &now,
-	}
-}
-
-func sampleTransactions() []recurly.Transaction {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return []recurly.Transaction{
-		{
-			Id:        "txn-001",
-			Type:      "purchase",
-			Account:   recurly.AccountMini{Code: "acct-code-1"},
-			Status:    "success",
-			Currency:  "USD",
-			Amount:    99.99,
-			Success:   true,
-			Origin:    "api",
-			CreatedAt: &now,
-		},
-		{
-			Id:        "txn-002",
-			Type:      "refund",
-			Account:   recurly.AccountMini{Code: "acct-code-2"},
-			Status:    "declined",
-			Currency:  "EUR",
-			Amount:    49.50,
-			Success:   false,
-			Origin:    "recurly_admin",
-			CreatedAt: &now,
-		},
-	}
 }
 
 // --- transactions list ---

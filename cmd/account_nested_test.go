@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -36,55 +35,6 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 		return m.listAccountTransactionsFn(accountId, params, opts...)
 	}
 	return nil, nil
-}
-
-// --- Sample data ---
-
-func sampleAccountSubscription() recurly.Subscription {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	periodEnd := time.Date(2025, 2, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Subscription{
-		Id:                  "sub-123",
-		Uuid:                "uuid-abc",
-		Account:             recurly.AccountMini{Code: "acct-456"},
-		Plan:                recurly.PlanMini{Id: "plan-789", Code: "gold", Name: "Gold Plan"},
-		State:               "active",
-		Currency:            "USD",
-		UnitAmount:          19.99,
-		Quantity:            1,
-		Subtotal:            19.99,
-		CollectionMethod:    "automatic",
-		CurrentPeriodEndsAt: &periodEnd,
-		CreatedAt:           &now,
-	}
-}
-
-func sampleAccountInvoice() recurly.Invoice {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Invoice{
-		Id:        "inv-123",
-		Number:    "1001",
-		State:     "paid",
-		Type:      "charge",
-		Currency:  "USD",
-		Total:     49.99,
-		Account:   recurly.AccountMini{Code: "acct-456"},
-		CreatedAt: &now,
-	}
-}
-
-func sampleAccountTransaction() recurly.Transaction {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Transaction{
-		Id:        "txn-123",
-		Type:      "purchase",
-		Amount:    29.99,
-		Currency:  "USD",
-		Status:    "success",
-		Success:   true,
-		Account:   recurly.AccountMini{Code: "acct-456"},
-		CreatedAt: &now,
-	}
 }
 
 // --- accounts subscriptions list ---
@@ -251,7 +201,7 @@ func TestAccountSubscriptionsList_UnsetFlagsNotSent(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
-	sub := sampleAccountSubscription()
+	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
@@ -277,7 +227,7 @@ func TestAccountSubscriptionsList_TableOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
-	sub := sampleAccountSubscription()
+	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
@@ -306,7 +256,7 @@ func TestAccountSubscriptionsList_JSONOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
-	sub := sampleAccountSubscription()
+	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil
@@ -331,7 +281,7 @@ func TestAccountSubscriptionsList_JSONPrettyOutput(t *testing.T) {
 }
 
 func TestAccountSubscriptionsList_JQFilter(t *testing.T) {
-	sub := sampleAccountSubscription()
+	sub := sampleSubscription()
 	mock := &mockAccountNestedAPI{
 		listAccountSubscriptionsFn: func(accountId string, params *recurly.ListAccountSubscriptionsParams, opts ...recurly.Option) (recurly.SubscriptionLister, error) {
 			return &mockLister[recurly.Subscription]{items: []recurly.Subscription{sub}}, nil

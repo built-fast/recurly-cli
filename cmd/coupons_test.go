@@ -55,42 +55,6 @@ func (m *mockCouponAPI) ListUniqueCouponCodes(couponId string, params *recurly.L
 	return m.listUniqueCouponCodesFn(couponId, params, opts...)
 }
 
-// sampleCoupon returns a test coupon with predictable fields for list tests.
-func sampleCoupon() recurly.Coupon {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Coupon{
-		Id:        "coupon-abc123",
-		Code:      "SAVE25",
-		Name:      "Save 25%",
-		State:     "redeemable",
-		Discount:  recurly.CouponDiscount{Type: "percent", Percent: 25},
-		CreatedAt: &now,
-	}
-}
-
-// sampleCouponDetail returns a test coupon with all detail fields populated.
-func sampleCouponDetail() *recurly.Coupon {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
-	redeemBy := time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC)
-	return &recurly.Coupon{
-		Id:                       "coupon-abc123",
-		Code:                     "SAVE25",
-		Name:                     "Save 25%",
-		State:                    "redeemable",
-		Discount:                 recurly.CouponDiscount{Type: "percent", Percent: 25},
-		Duration:                 "forever",
-		CouponType:               "single_code",
-		MaxRedemptions:           100,
-		MaxRedemptionsPerAccount: 1,
-		RedeemBy:                 &redeemBy,
-		AppliesToAllPlans:        true,
-		AppliesToAllItems:        false,
-		CreatedAt:                &now,
-		UpdatedAt:                &updated,
-	}
-}
-
 // --- coupons list ---
 
 func TestCouponsList_Success(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -44,40 +43,6 @@ func (m *mockItemAPI) DeactivateItem(itemId string, opts ...recurly.Option) (*re
 
 func (m *mockItemAPI) ReactivateItem(itemId string, opts ...recurly.Option) (*recurly.Item, error) {
 	return m.reactivateItemFn(itemId, opts...)
-}
-
-// sampleItem returns a test item with predictable fields.
-func sampleItem() recurly.Item {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return recurly.Item{
-		Code:        "widget-1",
-		Name:        "Premium Widget",
-		ExternalSku: "SKU-001",
-		State:       "active",
-		CreatedAt:   &now,
-	}
-}
-
-// sampleItemDetail returns a test item with all detail fields populated.
-func sampleItemDetail() *recurly.Item {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	updated := time.Date(2025, 2, 20, 14, 0, 0, 0, time.UTC)
-	return &recurly.Item{
-		Code:                   "widget-1",
-		Name:                   "Premium Widget",
-		Description:            "A high-quality widget",
-		ExternalSku:            "SKU-001",
-		AccountingCode:         "ACC-100",
-		RevenueScheduleType:    "evenly",
-		TaxCode:                "digital",
-		TaxExempt:              false,
-		AvalaraTransactionType: 3,
-		AvalaraServiceType:     6,
-		HarmonizedSystemCode:   "8471.30",
-		State:                  "active",
-		CreatedAt:              &now,
-		UpdatedAt:              &updated,
-	}
 }
 
 // --- items get ---

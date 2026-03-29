@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
 	"github.com/spf13/viper"
@@ -44,94 +43,6 @@ func (m *mockInvoiceAPI) MarkInvoiceFailed(invoiceId string, opts ...recurly.Opt
 
 func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.ListInvoiceLineItemsParams, opts ...recurly.Option) (recurly.LineItemLister, error) {
 	return m.listInvoiceLineItemsFn(invoiceId, params, opts...)
-}
-
-func sampleInvoice() *recurly.Invoice {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	updated := time.Date(2025, 1, 16, 8, 0, 0, 0, time.UTC)
-	due := time.Date(2025, 2, 14, 10, 30, 0, 0, time.UTC)
-	closed := time.Date(2025, 1, 20, 12, 0, 0, 0, time.UTC)
-
-	return &recurly.Invoice{
-		Id:               "inv-abc123",
-		Uuid:             "uuid-abc123",
-		Number:           "1001",
-		Type:             "charge",
-		Origin:           "purchase",
-		State:            "paid",
-		Account:          recurly.AccountMini{Id: "acct-id-1", Code: "acct-code-1"},
-		CollectionMethod: "automatic",
-		Currency:         "USD",
-		Subtotal:         100.00,
-		Discount:         10.00,
-		Tax:              8.10,
-		Total:            98.10,
-		Paid:             98.10,
-		Balance:          0.00,
-		RefundableAmount: 98.10,
-		PoNumber:         "PO-12345",
-		NetTerms:         30,
-		NetTermsType:     "net",
-		CreatedAt:        &now,
-		UpdatedAt:        &updated,
-		DueAt:            &due,
-		ClosedAt:         &closed,
-	}
-}
-
-func sampleLineItems() []recurly.LineItem {
-	return []recurly.LineItem{
-		{
-			Id:          "li-001",
-			Type:        "charge",
-			Description: "Monthly subscription",
-			Currency:    "USD",
-			UnitAmount:  50.00,
-			Quantity:    1,
-			Subtotal:    50.00,
-			Tax:         4.05,
-			Amount:      54.05,
-		},
-		{
-			Id:          "li-002",
-			Type:        "charge",
-			Description: "Add-on feature",
-			Currency:    "USD",
-			UnitAmount:  50.00,
-			Quantity:    1,
-			Subtotal:    50.00,
-			Tax:         4.05,
-			Amount:      54.05,
-		},
-	}
-}
-
-func sampleInvoices() []recurly.Invoice {
-	now := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
-	return []recurly.Invoice{
-		{
-			Id:        "inv-001",
-			Number:    "1001",
-			Type:      "charge",
-			Account:   recurly.AccountMini{Code: "acct-code-1"},
-			State:     "paid",
-			Currency:  "USD",
-			Total:     100.00,
-			Balance:   0.00,
-			CreatedAt: &now,
-		},
-		{
-			Id:        "inv-002",
-			Number:    "1002",
-			Type:      "credit",
-			Account:   recurly.AccountMini{Code: "acct-code-2"},
-			State:     "pending",
-			Currency:  "EUR",
-			Total:     50.00,
-			Balance:   50.00,
-			CreatedAt: &now,
-		},
-	}
 }
 
 // --- invoices list ---
