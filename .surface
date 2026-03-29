@@ -124,6 +124,7 @@ CMD recurly transactions
 CMD recurly transactions get
 CMD recurly transactions list
 FLAG recurly --api-key string
+FLAG recurly --field string
 FLAG recurly --jq string
 FLAG recurly --output string
 FLAG recurly --region string

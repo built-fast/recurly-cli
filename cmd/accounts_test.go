@@ -1112,3 +1112,186 @@ func TestAccountsReactivate_SDKError(t *testing.T) {
 		t.Errorf("expected 'not found' error, got %q", stderr)
 	}
 }
+
+// --- --field flag ---
+
+func TestAccountsList_FieldFlag_TableOutput(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "list", "--field", "Code,Email")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out, "Code") {
+		t.Error("expected table to contain 'Code' header")
+	}
+	if !strings.Contains(out, "Email") {
+		t.Error("expected table to contain 'Email' header")
+	}
+	if !strings.Contains(out, "acct-123") {
+		t.Error("expected table to contain account code")
+	}
+	if !strings.Contains(out, "test@example.com") {
+		t.Error("expected table to contain email")
+	}
+	// Fields not selected should be absent
+	if strings.Contains(out, "First Name") {
+		t.Error("table should NOT contain 'First Name' when not selected")
+	}
+	if strings.Contains(out, "Company") {
+		t.Error("table should NOT contain 'Company' when not selected")
+	}
+}
+
+func TestAccountsList_FieldFlag_JSONOutput(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "list", "--output", "json", "--field", "Code,State")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var envelope struct {
+		Data []map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &envelope); err != nil {
+		t.Fatalf("invalid JSON: %v\noutput: %s", err, out)
+	}
+	if len(envelope.Data) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(envelope.Data))
+	}
+	item := envelope.Data[0]
+	if item["code"] != "acct-123" {
+		t.Errorf("expected code=acct-123, got %v", item["code"])
+	}
+	if item["state"] != "active" {
+		t.Errorf("expected state=active, got %v", item["state"])
+	}
+	if _, ok := item["email"]; ok {
+		t.Error("JSON should NOT include 'email' when not selected")
+	}
+	if _, ok := item["first_name"]; ok {
+		t.Error("JSON should NOT include 'first_name' when not selected")
+	}
+}
+
+func TestAccountsList_FieldFlag_ShortFlag(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "list", "-f", "Code")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "acct-123") {
+		t.Error("expected -f short flag to work")
+	}
+}
+
+func TestAccountsList_FieldFlag_InvalidField(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	_, stderr, err := executeCommand("accounts", "list", "--field", "Code,bogus_field")
+	if err == nil {
+		t.Fatal("expected error for invalid field")
+	}
+	if !strings.Contains(stderr, "bogus_field") {
+		t.Errorf("error should mention invalid field, got: %s", stderr)
+	}
+	if !strings.Contains(stderr, "available fields") {
+		t.Errorf("error should list available fields, got: %s", stderr)
+	}
+}
+
+func TestAccountsGet_FieldFlag_JSONOutput(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		getAccountFn: func(accountId string, opts ...recurly.Option) (*recurly.Account, error) {
+			return acct, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "get", "acct-123", "--output", "json", "--field", "Code,Email")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &decoded); err != nil {
+		t.Fatalf("invalid JSON: %v\noutput: %s", err, out)
+	}
+	if decoded["code"] != "acct-123" {
+		t.Errorf("expected code=acct-123, got %v", decoded["code"])
+	}
+	if decoded["email"] != "test@example.com" {
+		t.Errorf("expected email=test@example.com, got %v", decoded["email"])
+	}
+	if _, ok := decoded["state"]; ok {
+		t.Error("JSON should NOT include 'state' when not selected")
+	}
+}
+
+func TestAccountsList_FieldFlag_CaseInsensitive(t *testing.T) {
+	acct := sampleAccount()
+	mock := &mockAccountAPI{
+		listAccountsFn: func(params *recurly.ListAccountsParams, opts ...recurly.Option) (recurly.AccountLister, error) {
+			return &mockAccountLister{accounts: []recurly.Account{*acct}}, nil
+		},
+	}
+	cleanup := setMockAPI(mock)
+	defer cleanup()
+
+	out, _, err := executeCommand("accounts", "list", "--field", "code,email")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "acct-123") {
+		t.Error("lowercase field names should match")
+	}
+	if !strings.Contains(out, "test@example.com") {
+		t.Error("lowercase field names should match")
+	}
+}
+
+func TestAccountsList_FieldFlag_ShowsInHelp(t *testing.T) {
+	out, _, err := executeCommand("accounts", "list", "--help")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "--field") {
+		t.Error("expected help to show --field flag")
+	}
+	if !strings.Contains(out, "-f") {
+		t.Error("expected help to show -f short flag")
+	}
+}

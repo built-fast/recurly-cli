@@ -37,9 +37,29 @@ type listEnvelope struct {
 // FormatList formats a slice of items as a columnar table (with headers),
 // compact JSON, or indented JSON depending on format. JSON output is wrapped
 // in a Recurly-style list envelope with pagination metadata.
+//
+// When field selection is active (SetFields), columns are filtered for table
+// output and JSON keys are filtered for JSON/jq output. Field selection is
+// applied before jq.
 func FormatList(format string, columns []Column, items []any, hasMore bool) (string, error) {
 	if err := ValidateFormat(format); err != nil {
 		return "", err
+	}
+
+	if HasFields() {
+		if err := ValidateFields(columns, selectedFields); err != nil {
+			return "", err
+		}
+		columns = SelectColumns(columns, selectedFields)
+	}
+
+	// For non-table formats with field selection, filter JSON keys
+	if HasFields() && format != "table" && items != nil {
+		filtered, err := filterItemsJSON(items, columns)
+		if err != nil {
+			return "", err
+		}
+		items = filtered
 	}
 
 	if HasJQ() {
@@ -77,9 +97,27 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 
 // FormatOne formats a single item as a key-value table (label on left, value
 // on right), compact JSON, or indented JSON depending on format.
+//
+// When field selection is active (SetFields), columns are filtered for table
+// output and JSON keys are filtered for JSON/jq output. Field selection is
+// applied before jq.
 func FormatOne(format string, columns []Column, item any) (string, error) {
 	if err := ValidateFormat(format); err != nil {
 		return "", err
+	}
+
+	if HasFields() {
+		if err := ValidateFields(columns, selectedFields); err != nil {
+			return "", err
+		}
+		columns = SelectColumns(columns, selectedFields)
+		if format != "table" {
+			filtered, err := filterOneJSON(item, columns)
+			if err != nil {
+				return "", err
+			}
+			item = filtered
+		}
 	}
 
 	if HasJQ() {

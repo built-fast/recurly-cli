@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/built-fast/recurly-cli/internal/client"
 	"github.com/built-fast/recurly-cli/internal/config"
@@ -29,6 +30,16 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		output.SetFields(nil)
+		fieldStr, _ := cmd.Flags().GetString("field")
+		if fieldStr != "" {
+			fields := strings.Split(fieldStr, ",")
+			for i, f := range fields {
+				fields[i] = strings.TrimSpace(f)
+			}
+			output.SetFields(fields)
+		}
+
 		output.SetJQ(nil)
 		jqExpr, _ := cmd.Flags().GetString("jq")
 		if jqExpr != "" {
@@ -72,6 +83,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.PersistentFlags().String("jq", "", "Filter JSON output with a jq expression (built-in, no external jq required)")
 	rootCmd.PersistentFlags().String("region", "us", "Recurly region (us or eu)")
 	rootCmd.PersistentFlags().String("output", "table", "Output format (table, json, json-pretty)")
+	rootCmd.PersistentFlags().StringP("field", "f", "", "Comma-separated list of fields to display")
 
 	_ = viper.BindPFlag("api_key", rootCmd.PersistentFlags().Lookup("api-key"))
 	_ = viper.BindPFlag("region", rootCmd.PersistentFlags().Lookup("region"))
