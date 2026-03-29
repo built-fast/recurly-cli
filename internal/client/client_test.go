@@ -38,7 +38,7 @@ func TestValidateRegion_EmptyString(t *testing.T) {
 func alwaysFalse() bool { return false }
 
 func TestNewClient_NoAPIKey_ReturnsError(t *testing.T) {
-	_, err := NewClient(ClientConfig{IsJSON: alwaysFalse})
+	_, err := NewClient(ClientConfig{})
 	if err == nil {
 		t.Fatal("expected error when no API key configured")
 	}
@@ -89,7 +89,7 @@ func TestNewClient_EURegionCaseInsensitive(t *testing.T) {
 }
 
 func TestNewClient_InvalidRegion_ReturnsError(t *testing.T) {
-	_, err := NewClient(ClientConfig{APIKey: "test-key", Region: "asia", IsJSON: alwaysFalse})
+	_, err := NewClient(ClientConfig{APIKey: "test-key", Region: "asia"})
 	if err == nil {
 		t.Fatal("expected error for invalid region")
 	}
