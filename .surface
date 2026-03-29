@@ -128,6 +128,7 @@ FLAG recurly --field string
 FLAG recurly --jq string
 FLAG recurly --output string
 FLAG recurly --region string
+FLAG recurly accounts billing-info get --watch string
 FLAG recurly accounts billing-info remove --yes bool
 FLAG recurly accounts billing-info update --address-city string
 FLAG recurly accounts billing-info update --address-country string
@@ -155,6 +156,7 @@ FLAG recurly accounts create --preferred-locale string
 FLAG recurly accounts create --tax-exempt bool
 FLAG recurly accounts create --vat-number string
 FLAG recurly accounts deactivate --yes bool
+FLAG recurly accounts get --watch string
 FLAG recurly accounts invoices list --all bool
 FLAG recurly accounts invoices list --limit int
 FLAG recurly accounts invoices list --order string
@@ -262,6 +264,7 @@ FLAG recurly coupons create-percent --temporal-unit string
 FLAG recurly coupons create-percent --unique-code-template string
 FLAG recurly coupons deactivate --yes bool
 FLAG recurly coupons generate-codes --number-of-codes int
+FLAG recurly coupons get --watch string
 FLAG recurly coupons list --all bool
 FLAG recurly coupons list --begin-time string
 FLAG recurly coupons list --end-time string
@@ -288,6 +291,7 @@ FLAG recurly coupons update --name string
 FLAG recurly coupons update --redeem-by-date string
 FLAG recurly invoices collect --yes bool
 FLAG recurly invoices get --line-items int
+FLAG recurly invoices get --watch string
 FLAG recurly invoices line-items --all bool
 FLAG recurly invoices line-items --begin-time string
 FLAG recurly invoices line-items --end-time string
@@ -319,6 +323,7 @@ FLAG recurly items create --tax-code string
 FLAG recurly items create --tax-exempt bool
 FLAG recurly items create --unit-amount float64Slice
 FLAG recurly items deactivate --yes bool
+FLAG recurly items get --watch string
 FLAG recurly items list --all bool
 FLAG recurly items list --begin-time string
 FLAG recurly items list --end-time string
@@ -357,6 +362,7 @@ FLAG recurly plans add-ons create --unit-amount float64Slice
 FLAG recurly plans add-ons create --usage-calculation-type string
 FLAG recurly plans add-ons create --usage-type string
 FLAG recurly plans add-ons delete --yes bool
+FLAG recurly plans add-ons get --watch string
 FLAG recurly plans add-ons list --all bool
 FLAG recurly plans add-ons list --limit int
 FLAG recurly plans add-ons list --order string
@@ -414,6 +420,7 @@ FLAG recurly plans create --trial-unit string
 FLAG recurly plans create --unit-amount float64Slice
 FLAG recurly plans create --vertex-transaction-type string
 FLAG recurly plans deactivate --yes bool
+FLAG recurly plans get --watch string
 FLAG recurly plans list --all bool
 FLAG recurly plans list --limit int
 FLAG recurly plans list --order string
@@ -475,6 +482,7 @@ FLAG recurly subscriptions create --starts-at string
 FLAG recurly subscriptions create --total-billing-cycles int
 FLAG recurly subscriptions create --trial-ends-at string
 FLAG recurly subscriptions create --unit-amount float64
+FLAG recurly subscriptions get --watch string
 FLAG recurly subscriptions list --all bool
 FLAG recurly subscriptions list --begin-time string
 FLAG recurly subscriptions list --end-time string
@@ -504,6 +512,7 @@ FLAG recurly subscriptions update --remaining-billing-cycles int
 FLAG recurly subscriptions update --renewal-billing-cycles int
 FLAG recurly subscriptions update --revenue-schedule-type string
 FLAG recurly subscriptions update --terms-and-conditions string
+FLAG recurly transactions get --watch string
 FLAG recurly transactions list --all bool
 FLAG recurly transactions list --begin-time string
 FLAG recurly transactions list --end-time string

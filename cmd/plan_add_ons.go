@@ -18,7 +18,7 @@ func newPlanAddOnsCmd() *cobra.Command {
 		Short: "Manage plan add-ons",
 	}
 	cmd.AddCommand(newPlanAddOnsListCmd())
-	cmd.AddCommand(newPlanAddOnsGetCmd())
+	cmd.AddCommand(withWatch(newPlanAddOnsGetCmd()))
 	cmd.AddCommand(withFromFile(newPlanAddOnsCreateCmd()))
 	cmd.AddCommand(withFromFile(newPlanAddOnsUpdateCmd()))
 	cmd.AddCommand(newPlanAddOnsDeleteCmd())

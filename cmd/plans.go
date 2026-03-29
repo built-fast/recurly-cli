@@ -18,7 +18,7 @@ func newPlansCmd() *cobra.Command {
 		Short: "Manage plans",
 	}
 	cmd.AddCommand(newPlansListCmd())
-	cmd.AddCommand(newPlansGetCmd())
+	cmd.AddCommand(withWatch(newPlansGetCmd()))
 	cmd.AddCommand(withFromFile(newPlansCreateCmd()))
 	cmd.AddCommand(withFromFile(newPlansUpdateCmd()))
 	cmd.AddCommand(newPlansDeactivateCmd())

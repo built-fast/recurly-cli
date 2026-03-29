@@ -18,7 +18,7 @@ func newCouponsCmd() *cobra.Command {
 		Short: "Manage coupons",
 	}
 	cmd.AddCommand(newCouponsListCmd())
-	cmd.AddCommand(newCouponsGetCmd())
+	cmd.AddCommand(withWatch(newCouponsGetCmd()))
 	cmd.AddCommand(withFromFile(newCouponsCreatePercentCmd()))
 	cmd.AddCommand(withFromFile(newCouponsCreateFixedCmd()))
 	cmd.AddCommand(withFromFile(newCouponsCreateFreeTrialCmd()))

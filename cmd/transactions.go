@@ -17,7 +17,7 @@ func newTransactionsCmd() *cobra.Command {
 		Short: "Manage transactions",
 	}
 	cmd.AddCommand(newTransactionsListCmd())
-	cmd.AddCommand(newTransactionsGetCmd())
+	cmd.AddCommand(withWatch(newTransactionsGetCmd()))
 	return cmd
 }
 

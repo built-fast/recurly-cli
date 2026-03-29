@@ -18,7 +18,7 @@ func newSubscriptionsCmd() *cobra.Command {
 		Short: "Manage subscriptions",
 	}
 	cmd.AddCommand(newSubscriptionsListCmd())
-	cmd.AddCommand(newSubscriptionsGetCmd())
+	cmd.AddCommand(withWatch(newSubscriptionsGetCmd()))
 	cmd.AddCommand(withFromFile(newSubscriptionsCreateCmd()))
 	cmd.AddCommand(withFromFile(newSubscriptionsUpdateCmd()))
 	cmd.AddCommand(newSubscriptionsCancelCmd())

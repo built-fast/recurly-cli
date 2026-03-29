@@ -17,7 +17,7 @@ func newAccountsCmd() *cobra.Command {
 		Short: "Manage accounts",
 	}
 	cmd.AddCommand(newAccountsListCmd())
-	cmd.AddCommand(newAccountsGetCmd())
+	cmd.AddCommand(withWatch(newAccountsGetCmd()))
 	cmd.AddCommand(withFromFile(newAccountsCreateCmd()))
 	cmd.AddCommand(withFromFile(newAccountsUpdateCmd()))
 	cmd.AddCommand(newAccountsDeactivateCmd())

@@ -17,7 +17,7 @@ func newInvoicesCmd() *cobra.Command {
 		Short: "Manage invoices",
 	}
 	cmd.AddCommand(newInvoicesListCmd())
-	cmd.AddCommand(newInvoicesGetCmd())
+	cmd.AddCommand(withWatch(newInvoicesGetCmd()))
 	cmd.AddCommand(newInvoicesVoidCmd())
 	cmd.AddCommand(newInvoicesCollectCmd())
 	cmd.AddCommand(newInvoicesMarkFailedCmd())
