@@ -15,6 +15,19 @@ func isJSONOutput() bool {
 	return strings.Contains(viper.GetString("output"), "json")
 }
 
+// ClientConfig holds the configuration needed to create a Recurly API client.
+// It replaces direct reads from global state (e.g. viper) so that callers can
+// inject values explicitly.
+type ClientConfig struct {
+	// APIKey is the Recurly API key used for authentication.
+	APIKey string
+	// Region is the Recurly data-center region (e.g. "us" or "eu").
+	Region string
+	// IsJSON reports whether the current output format is JSON-based.
+	// It is used to decide retry/logging behaviour.
+	IsJSON func() bool
+}
+
 // acceptRewriteTransport wraps an http.RoundTripper and normalizes the Accept
 // header to application/json. This is needed when running against mock servers
 // (e.g. Prism) that don't understand the SDK's vendor Accept header.
