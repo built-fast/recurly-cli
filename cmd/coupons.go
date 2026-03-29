@@ -26,6 +26,7 @@ func newCouponsCmd() *cobra.Command {
 	cmd.AddCommand(newCouponsCreateFreeTrialCmd())
 	cmd.AddCommand(newCouponsUpdateCmd())
 	cmd.AddCommand(newCouponsDeactivateCmd())
+	cmd.AddCommand(newCouponsRestoreCmd())
 	return cmd
 }
 
@@ -731,6 +732,75 @@ func newCouponsDeactivateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&yes, "yes", false, "Skip confirmation prompt")
+
+	return cmd
+}
+
+func newCouponsRestoreCmd() *cobra.Command {
+	var (
+		name                     string
+		maxRedemptions           int
+		maxRedemptionsPerAccount int
+		hostedDescription        string
+		invoiceDescription       string
+		redeemByDate             string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "restore <coupon_id>",
+		Short: "Restore an inactive coupon",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := newCouponAPI()
+			if err != nil {
+				return err
+			}
+
+			format := viper.GetString("output")
+			body := &recurly.CouponUpdate{}
+
+			if cmd.Flags().Changed("name") {
+				body.Name = recurly.String(name)
+			}
+			if cmd.Flags().Changed("max-redemptions") {
+				body.MaxRedemptions = recurly.Int(maxRedemptions)
+			}
+			if cmd.Flags().Changed("max-redemptions-per-account") {
+				body.MaxRedemptionsPerAccount = recurly.Int(maxRedemptionsPerAccount)
+			}
+			if cmd.Flags().Changed("hosted-description") {
+				body.HostedDescription = recurly.String(hostedDescription)
+			}
+			if cmd.Flags().Changed("invoice-description") {
+				body.InvoiceDescription = recurly.String(invoiceDescription)
+			}
+			if cmd.Flags().Changed("redeem-by-date") {
+				body.RedeemByDate = recurly.String(redeemByDate)
+			}
+
+			coupon, err := c.RestoreCoupon(args[0], body)
+			if err != nil {
+				return err
+			}
+
+			columns := couponDetailColumns()
+
+			formatted, err := output.FormatOne(format, columns, coupon)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), formatted)
+			return err
+		},
+	}
+
+	cmd.Flags().StringVar(&name, "name", "", "Coupon name")
+	cmd.Flags().IntVar(&maxRedemptions, "max-redemptions", 0, "Maximum number of redemptions")
+	cmd.Flags().IntVar(&maxRedemptionsPerAccount, "max-redemptions-per-account", 0, "Maximum redemptions per account")
+	cmd.Flags().StringVar(&hostedDescription, "hosted-description", "", "Hosted page description")
+	cmd.Flags().StringVar(&invoiceDescription, "invoice-description", "", "Invoice description")
+	cmd.Flags().StringVar(&redeemByDate, "redeem-by-date", "", "Coupon expiration date (YYYY-MM-DD)")
 
 	return cmd
 }

@@ -10,6 +10,7 @@ ARG recurly accounts transactions list <account_id>
 ARG recurly accounts update <account_id>
 ARG recurly coupons deactivate <coupon_id>
 ARG recurly coupons get <coupon_id>
+ARG recurly coupons restore <coupon_id>
 ARG recurly coupons update <coupon_id>
 ARG recurly invoices collect <invoice_id>
 ARG recurly invoices get <invoice_id>
@@ -66,6 +67,7 @@ CMD recurly coupons create-percent
 CMD recurly coupons deactivate
 CMD recurly coupons get
 CMD recurly coupons list
+CMD recurly coupons restore
 CMD recurly coupons update
 CMD recurly invoices
 CMD recurly invoices collect
@@ -231,6 +233,12 @@ FLAG recurly coupons list --end-time string
 FLAG recurly coupons list --limit int
 FLAG recurly coupons list --order string
 FLAG recurly coupons list --sort string
+FLAG recurly coupons restore --hosted-description string
+FLAG recurly coupons restore --invoice-description string
+FLAG recurly coupons restore --max-redemptions int
+FLAG recurly coupons restore --max-redemptions-per-account int
+FLAG recurly coupons restore --name string
+FLAG recurly coupons restore --redeem-by-date string
 FLAG recurly coupons update --hosted-description string
 FLAG recurly coupons update --invoice-description string
 FLAG recurly coupons update --max-redemptions int
