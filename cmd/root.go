@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -111,6 +112,10 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newTransactionsCmd())
 	rootCmd.AddCommand(newCouponsCmd())
 	rootCmd.AddCommand(newOpenCmd())
+
+	// Store the default App on the root command's context so all subcommands
+	// can retrieve it. This must happen before PersistentPreRunE runs.
+	rootCmd.SetContext(NewAppContext(context.Background(), DefaultApp()))
 
 	return rootCmd
 }
