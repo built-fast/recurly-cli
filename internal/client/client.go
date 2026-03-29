@@ -10,6 +10,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// isJSONOutput reports whether the current output format is JSON-based.
+func isJSONOutput() bool {
+	return strings.Contains(viper.GetString("output"), "json")
+}
+
 // acceptRewriteTransport wraps an http.RoundTripper and normalizes the Accept
 // header to application/json. This is needed when running against mock servers
 // (e.g. Prism) that don't understand the SDK's vendor Accept header.
@@ -70,16 +75,20 @@ func NewClient() (*recurly.Client, error) {
 		return nil, err
 	}
 
+	// Build transport chain: retryTransport -> [acceptRewriteTransport] -> base
+	base := c.HTTPClient.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+
 	// When using a mock server, rewrite the vendor Accept header to
 	// application/json so Prism can serve the response.
 	if apiURL != "" {
-		base := c.HTTPClient.Transport
-		if base == nil {
-			base = http.DefaultTransport
-		}
-		c.HTTPClient = &http.Client{
-			Transport: &acceptRewriteTransport{base: base},
-		}
+		base = &acceptRewriteTransport{base: base}
+	}
+
+	c.HTTPClient = &http.Client{
+		Transport: newRetryTransport(base, os.Stderr, isJSONOutput),
 	}
 
 	return c, nil
