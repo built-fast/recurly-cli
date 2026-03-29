@@ -62,8 +62,5 @@ func isNetworkError(err error) bool {
 		return true
 	}
 	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) {
-		return true
-	}
-	return false
+	return errors.As(err, &dnsErr)
 }

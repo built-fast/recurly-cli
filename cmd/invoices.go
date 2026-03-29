@@ -194,8 +194,8 @@ func newInvoicesGetCmd() *cobra.Command {
 			}
 
 			if showLineItems && len(invoice.LineItems) > 0 {
-				fmt.Fprintln(cmd.OutOrStdout())
-				fmt.Fprintln(cmd.OutOrStdout(), "Line Items:")
+				_, _ = fmt.Fprintln(cmd.OutOrStdout())
+				_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Line Items:")
 
 				lineItemCols := lineItemColumns()
 				items := make([]any, len(invoice.LineItems))
@@ -207,10 +207,10 @@ func newInvoicesGetCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Fprintln(cmd.OutOrStdout(), tableOut)
+				_, _ = fmt.Fprintln(cmd.OutOrStdout(), tableOut)
 
 				if invoice.HasMoreLineItems {
-					fmt.Fprintf(cmd.OutOrStdout(),
+					_, _ = fmt.Fprintf(cmd.OutOrStdout(),
 						"Showing %d line items (more available). Use `recurly invoices line-items %s` to view all.\n",
 						len(invoice.LineItems), args[0])
 				}

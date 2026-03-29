@@ -42,7 +42,7 @@ func TestNewClient_NoAPIKey_ReturnsError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when no API key configured")
 	}
-	expected := "API key not configured. Run 'recurly configure' or set RECURLY_API_KEY."
+	expected := "API key not configured, run 'recurly configure' or set RECURLY_API_KEY"
 	if err.Error() != expected {
 		t.Errorf("expected error %q, got %q", expected, err.Error())
 	}

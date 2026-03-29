@@ -53,7 +53,7 @@ func ValidateRegion(region string) error {
 // Region precedence: --region flag > RECURLY_REGION env var > config file region > default "us".
 func NewClient(cfg ClientConfig) (*recurly.Client, error) {
 	if cfg.APIKey == "" {
-		return nil, fmt.Errorf("API key not configured. Run 'recurly configure' or set RECURLY_API_KEY.")
+		return nil, fmt.Errorf("API key not configured, run 'recurly configure' or set RECURLY_API_KEY")
 	}
 
 	regionStr := cfg.Region

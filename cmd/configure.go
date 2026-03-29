@@ -68,7 +68,7 @@ func runConfigure(p *configPrompter) error {
 		}
 	}
 
-	fmt.Fprintf(p.writer, "Configuration saved to %s\n", config.FilePath())
+	_, _ = fmt.Fprintf(p.writer, "Configuration saved to %s\n", config.FilePath())
 	return nil
 }
 
@@ -95,16 +95,16 @@ func readExistingConfig() existingConfig {
 
 func (p *configPrompter) promptAPIKey(existing string) (string, error) {
 	if existing != "" {
-		fmt.Fprintf(p.writer, "API Key [%s]: ", maskKey(existing))
+		_, _ = fmt.Fprintf(p.writer, "API Key [%s]: ", maskKey(existing))
 	} else {
-		fmt.Fprint(p.writer, "API Key: ")
+		_, _ = fmt.Fprint(p.writer, "API Key: ")
 	}
 
 	key, err := p.readPassword()
 	if err != nil {
 		return "", fmt.Errorf("reading API key: %w", err)
 	}
-	fmt.Fprintln(p.writer) // newline after masked input
+	_, _ = fmt.Fprintln(p.writer) // newline after masked input
 
 	key = strings.TrimSpace(key)
 	if key == "" {
@@ -123,7 +123,7 @@ func (p *configPrompter) promptRegion(existing string) (string, error) {
 	}
 
 	for {
-		fmt.Fprintf(p.writer, "Region (us/eu) [%s]: ", dflt)
+		_, _ = fmt.Fprintf(p.writer, "Region (us/eu) [%s]: ", dflt)
 
 		line, err := p.reader.ReadString('\n')
 		if err != nil && line == "" {
@@ -140,7 +140,7 @@ func (p *configPrompter) promptRegion(existing string) (string, error) {
 			return input, nil
 		}
 
-		fmt.Fprintf(p.writer, "Error: invalid region %q, must be us or eu\n", input)
+		_, _ = fmt.Fprintf(p.writer, "Error: invalid region %q, must be us or eu\n", input)
 	}
 }
 

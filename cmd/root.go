@@ -124,7 +124,7 @@ func NewRootCmd() *cobra.Command {
 func Execute() {
 	cmd := NewRootCmd()
 	if err := cmd.Execute(); err != nil {
-		fmt.Fprintln(cmd.ErrOrStderr(), client.FormatError(err))
+		_, _ = fmt.Fprintln(cmd.ErrOrStderr(), client.FormatError(err))
 		os.Exit(1)
 	}
 }
