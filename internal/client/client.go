@@ -7,13 +7,7 @@ import (
 	"strings"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
-	"github.com/spf13/viper"
 )
-
-// isJSONOutput reports whether the current output format is JSON-based.
-func isJSONOutput() bool {
-	return strings.Contains(viper.GetString("output"), "json")
-}
 
 // ClientConfig holds the configuration needed to create a Recurly API client.
 // It replaces direct reads from global state (e.g. viper) so that callers can
@@ -58,13 +52,12 @@ func ValidateRegion(region string) error {
 // NewClient creates a configured Recurly SDK client.
 // API key precedence: --api-key flag > RECURLY_API_KEY env var > config file api_key.
 // Region precedence: --region flag > RECURLY_REGION env var > config file region > default "us".
-func NewClient() (*recurly.Client, error) {
-	apiKey := viper.GetString("api_key")
-	if apiKey == "" {
+func NewClient(cfg ClientConfig) (*recurly.Client, error) {
+	if cfg.APIKey == "" {
 		return nil, fmt.Errorf("API key not configured. Run 'recurly configure' or set RECURLY_API_KEY.")
 	}
 
-	regionStr := viper.GetString("region")
+	regionStr := cfg.Region
 	if regionStr == "" {
 		regionStr = "us"
 	}
@@ -83,7 +76,7 @@ func NewClient() (*recurly.Client, error) {
 		opts.Region = recurly.EU
 	}
 
-	c, err := recurly.NewClientWithOptions(apiKey, opts)
+	c, err := recurly.NewClientWithOptions(cfg.APIKey, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +94,7 @@ func NewClient() (*recurly.Client, error) {
 	}
 
 	c.HTTPClient = &http.Client{
-		Transport: newRetryTransport(base, os.Stderr, isJSONOutput),
+		Transport: newRetryTransport(base, os.Stderr, cfg.IsJSON),
 	}
 
 	return c, nil
