@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 )
 
 // --- JSON input ---
@@ -241,7 +242,7 @@ func TestFromFile_NestedObjects(t *testing.T) {
 
 	var captured *recurly.BillingInfoCreate
 	origAPI := newAccountBillingInfoAPI
-	newAccountBillingInfoAPI = func() (AccountBillingInfoAPI, error) {
+	newAccountBillingInfoAPI = func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
 		return &mockBillingInfoAPI{
 			updateBillingInfoFn: func(accountId string, body *recurly.BillingInfoCreate, opts ...recurly.Option) (*recurly.BillingInfo, error) {
 				captured = body

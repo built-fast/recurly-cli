@@ -10,6 +10,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -86,7 +87,7 @@ func (m *mockAccountLister) Next() string {
 // setMockAPI installs a mock and returns a cleanup function.
 func setMockAPI(mock *mockAccountAPI) func() {
 	orig := newAccountAPI
-	newAccountAPI = func() (AccountAPI, error) {
+	newAccountAPI = func(_ *cobra.Command) (AccountAPI, error) {
 		return mock, nil
 	}
 	return func() { newAccountAPI = orig }

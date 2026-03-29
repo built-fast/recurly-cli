@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/built-fast/recurly-cli/internal/output"
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // PlanAPI abstracts the Recurly SDK methods used by plan commands,
@@ -17,6 +20,11 @@ type PlanAPI interface {
 
 // newPlanAPI is the factory function used by plan commands to get an API client.
 // Tests override this to inject mocks.
-var newPlanAPI = func() (PlanAPI, error) {
-	return client.NewClient()
+var newPlanAPI = func(cmd *cobra.Command) (PlanAPI, error) {
+	cfg := output.FromContext(cmd.Context())
+	return client.NewClient(client.ClientConfig{
+		APIKey: viper.GetString("api_key"),
+		Region: viper.GetString("region"),
+		IsJSON: func() bool { return isJSONFormat(cfg.Format) },
+	})
 }

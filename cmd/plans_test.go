@@ -10,6 +10,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -81,7 +82,7 @@ func (m *mockPlanLister) Next() string {
 // setMockPlanAPI installs a mock and returns a cleanup function.
 func setMockPlanAPI(mock *mockPlanAPI) func() {
 	orig := newPlanAPI
-	newPlanAPI = func() (PlanAPI, error) {
+	newPlanAPI = func(_ *cobra.Command) (PlanAPI, error) {
 		return mock, nil
 	}
 	return func() { newPlanAPI = orig }

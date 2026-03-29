@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -167,7 +168,7 @@ func TestOpenCmd_SubscriptionFetchesUUID(t *testing.T) {
 	defer viper.Set("site", "")
 
 	orig := newSubscriptionAPI
-	newSubscriptionAPI = func() (SubscriptionAPI, error) {
+	newSubscriptionAPI = func(_ *cobra.Command) (SubscriptionAPI, error) {
 		return &mockSubscriptionAPI{
 			getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
 				return &recurly.Subscription{Uuid: "sub-uuid-123"}, nil
@@ -191,7 +192,7 @@ func TestOpenCmd_TransactionFetchesUUID(t *testing.T) {
 	defer viper.Set("site", "")
 
 	orig := newTransactionAPI
-	newTransactionAPI = func() (TransactionAPI, error) {
+	newTransactionAPI = func(_ *cobra.Command) (TransactionAPI, error) {
 		return &mockTransactionAPI{
 			getTransactionFn: func(id string, opts ...recurly.Option) (*recurly.Transaction, error) {
 				return &recurly.Transaction{Uuid: "txn-uuid-456"}, nil
@@ -310,7 +311,7 @@ func TestOpenCmd_SubscriptionFetchError_ReturnsError(t *testing.T) {
 	defer viper.Set("site", "")
 
 	orig := newSubscriptionAPI
-	newSubscriptionAPI = func() (SubscriptionAPI, error) {
+	newSubscriptionAPI = func(_ *cobra.Command) (SubscriptionAPI, error) {
 		return &mockSubscriptionAPI{
 			getSubscriptionFn: func(id string, opts ...recurly.Option) (*recurly.Subscription, error) {
 				return nil, fmt.Errorf("not found")

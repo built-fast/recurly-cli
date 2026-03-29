@@ -146,7 +146,7 @@ func newSubscriptionsGetCmd() *cobra.Command {
 		Short: "Get subscription details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -189,7 +189,7 @@ func newSubscriptionsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List subscriptions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -317,7 +317,7 @@ func newSubscriptionsCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a subscription",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -469,7 +469,7 @@ func newSubscriptionsUpdateCmd() *cobra.Command {
 		Short: "Update a subscription",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -579,7 +579,7 @@ func newSubscriptionsCancelCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -637,7 +637,7 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -690,7 +690,7 @@ func newSubscriptionsPauseCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -746,7 +746,7 @@ func newSubscriptionsResumeCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -800,7 +800,7 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -860,7 +860,7 @@ func newSubscriptionsConvertTrialCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newSubscriptionAPI()
+			c, err := newSubscriptionAPI(cmd)
 			if err != nil {
 				return err
 			}

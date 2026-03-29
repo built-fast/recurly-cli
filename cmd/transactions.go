@@ -36,7 +36,7 @@ func newTransactionsListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List transactions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newTransactionAPI()
+			c, err := newTransactionAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -140,7 +140,7 @@ func newTransactionsGetCmd() *cobra.Command {
 		Short: "Get transaction details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newTransactionAPI()
+			c, err := newTransactionAPI(cmd)
 			if err != nil {
 				return err
 			}

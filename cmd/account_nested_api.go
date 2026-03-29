@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/built-fast/recurly-cli/internal/output"
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // AccountNestedAPI abstracts the Recurly SDK methods used by account nested listing commands,
@@ -15,6 +18,11 @@ type AccountNestedAPI interface {
 
 // newAccountNestedAPI is the factory function used by account nested listing commands to get an API client.
 // Tests override this to inject mocks.
-var newAccountNestedAPI = func() (AccountNestedAPI, error) {
-	return client.NewClient()
+var newAccountNestedAPI = func(cmd *cobra.Command) (AccountNestedAPI, error) {
+	cfg := output.FromContext(cmd.Context())
+	return client.NewClient(client.ClientConfig{
+		APIKey: viper.GetString("api_key"),
+		Region: viper.GetString("region"),
+		IsJSON: func() bool { return isJSONFormat(cfg.Format) },
+	})
 }

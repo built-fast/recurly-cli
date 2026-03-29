@@ -2,6 +2,7 @@ package cmd
 
 import (
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 )
 
 // mockAccountRedemptionAPI implements AccountRedemptionAPI for testing.
@@ -58,7 +59,7 @@ func (m *mockAccountRedemptionAPI) GetCouponRedemption(accountId string, couponR
 
 func setMockAccountRedemptionAPI(mock *mockAccountRedemptionAPI) func() {
 	orig := newAccountRedemptionAPI
-	newAccountRedemptionAPI = func() (AccountRedemptionAPI, error) {
+	newAccountRedemptionAPI = func(_ *cobra.Command) (AccountRedemptionAPI, error) {
 		return mock, nil
 	}
 	return func() { newAccountRedemptionAPI = orig }

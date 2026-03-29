@@ -10,6 +10,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -106,7 +107,7 @@ func (m *mockSubscriptionLister) Next() string {
 // setMockSubscriptionAPI installs a mock and returns a cleanup function.
 func setMockSubscriptionAPI(mock *mockSubscriptionAPI) func() {
 	orig := newSubscriptionAPI
-	newSubscriptionAPI = func() (SubscriptionAPI, error) {
+	newSubscriptionAPI = func(_ *cobra.Command) (SubscriptionAPI, error) {
 		return mock, nil
 	}
 	return func() { newSubscriptionAPI = orig }

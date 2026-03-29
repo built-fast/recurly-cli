@@ -8,6 +8,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -27,7 +28,7 @@ func (m *mockTransactionAPI) GetTransaction(transactionId string, opts ...recurl
 
 func setMockTransactionAPI(mock *mockTransactionAPI) func() {
 	orig := newTransactionAPI
-	newTransactionAPI = func() (TransactionAPI, error) {
+	newTransactionAPI = func(_ *cobra.Command) (TransactionAPI, error) {
 		return mock, nil
 	}
 	return func() { newTransactionAPI = orig }

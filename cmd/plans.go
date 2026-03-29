@@ -154,7 +154,7 @@ func newPlansCreateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAPI()
+			c, err := newPlanAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -446,7 +446,7 @@ func newPlansUpdateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAPI()
+			c, err := newPlanAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -663,7 +663,7 @@ func newPlansGetCmd() *cobra.Command {
 		Short: "Get plan details",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newPlanAPI()
+			c, err := newPlanAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -703,7 +703,7 @@ func newPlansListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List plans",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newPlanAPI()
+			c, err := newPlanAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -808,7 +808,7 @@ func newPlansDeactivateCmd() *cobra.Command {
 				}
 			}
 
-			c, err := newPlanAPI()
+			c, err := newPlanAPI(cmd)
 			if err != nil {
 				return err
 			}

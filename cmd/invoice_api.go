@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/built-fast/recurly-cli/internal/output"
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // InvoiceAPI abstracts the Recurly SDK methods used by invoice commands,
@@ -18,6 +21,11 @@ type InvoiceAPI interface {
 
 // newInvoiceAPI is the factory function used by invoice commands to get an API client.
 // Tests override this to inject mocks.
-var newInvoiceAPI = func() (InvoiceAPI, error) {
-	return client.NewClient()
+var newInvoiceAPI = func(cmd *cobra.Command) (InvoiceAPI, error) {
+	cfg := output.FromContext(cmd.Context())
+	return client.NewClient(client.ClientConfig{
+		APIKey: viper.GetString("api_key"),
+		Region: viper.GetString("region"),
+		IsJSON: func() bool { return isJSONFormat(cfg.Format) },
+	})
 }

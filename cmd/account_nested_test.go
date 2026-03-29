@@ -8,6 +8,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -41,7 +42,7 @@ func (m *mockAccountNestedAPI) ListAccountTransactions(accountId string, params 
 
 func setMockAccountNestedAPI(mock *mockAccountNestedAPI) func() {
 	orig := newAccountNestedAPI
-	newAccountNestedAPI = func() (AccountNestedAPI, error) {
+	newAccountNestedAPI = func(_ *cobra.Command) (AccountNestedAPI, error) {
 		return mock, nil
 	}
 	return func() { newAccountNestedAPI = orig }

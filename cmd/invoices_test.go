@@ -9,6 +9,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -48,7 +49,7 @@ func (m *mockInvoiceAPI) ListInvoiceLineItems(invoiceId string, params *recurly.
 
 func setMockInvoiceAPI(mock *mockInvoiceAPI) func() {
 	orig := newInvoiceAPI
-	newInvoiceAPI = func() (InvoiceAPI, error) {
+	newInvoiceAPI = func(_ *cobra.Command) (InvoiceAPI, error) {
 		return mock, nil
 	}
 	return func() { newInvoiceAPI = orig }

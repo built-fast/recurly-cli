@@ -10,6 +10,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -86,7 +87,7 @@ func (m *mockItemLister) Next() string {
 // setMockItemAPI installs a mock and returns a cleanup function.
 func setMockItemAPI(mock *mockItemAPI) func() {
 	orig := newItemAPI
-	newItemAPI = func() (ItemAPI, error) {
+	newItemAPI = func(_ *cobra.Command) (ItemAPI, error) {
 		return mock, nil
 	}
 	return func() { newItemAPI = orig }

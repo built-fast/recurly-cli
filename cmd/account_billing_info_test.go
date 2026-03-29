@@ -8,6 +8,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -41,7 +42,7 @@ func (m *mockAccountBillingInfoAPI) RemoveBillingInfo(accountId string, opts ...
 
 func setMockAccountBillingInfoAPI(mock *mockAccountBillingInfoAPI) func() {
 	orig := newAccountBillingInfoAPI
-	newAccountBillingInfoAPI = func() (AccountBillingInfoAPI, error) {
+	newAccountBillingInfoAPI = func(_ *cobra.Command) (AccountBillingInfoAPI, error) {
 		return mock, nil
 	}
 	return func() { newAccountBillingInfoAPI = orig }

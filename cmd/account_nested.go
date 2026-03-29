@@ -33,7 +33,7 @@ func newAccountSubscriptionsListCmd() *cobra.Command {
 		Short: "List subscriptions for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountNestedAPI()
+			c, err := newAccountNestedAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -131,7 +131,7 @@ func newAccountInvoicesListCmd() *cobra.Command {
 		Short: "List invoices for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountNestedAPI()
+			c, err := newAccountNestedAPI(cmd)
 			if err != nil {
 				return err
 			}
@@ -232,7 +232,7 @@ func newAccountTransactionsListCmd() *cobra.Command {
 		Short: "List transactions for an account",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := newAccountNestedAPI()
+			c, err := newAccountNestedAPI(cmd)
 			if err != nil {
 				return err
 			}

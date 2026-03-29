@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"github.com/built-fast/recurly-cli/internal/client"
+	"github.com/built-fast/recurly-cli/internal/output"
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // TransactionAPI abstracts the Recurly SDK methods used by transaction commands,
@@ -14,6 +17,11 @@ type TransactionAPI interface {
 
 // newTransactionAPI is the factory function used by transaction commands to get an API client.
 // Tests override this to inject mocks.
-var newTransactionAPI = func() (TransactionAPI, error) {
-	return client.NewClient()
+var newTransactionAPI = func(cmd *cobra.Command) (TransactionAPI, error) {
+	cfg := output.FromContext(cmd.Context())
+	return client.NewClient(client.ClientConfig{
+		APIKey: viper.GetString("api_key"),
+		Region: viper.GetString("region"),
+		IsJSON: func() bool { return isJSONFormat(cfg.Format) },
+	})
 }

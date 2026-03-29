@@ -9,6 +9,7 @@ import (
 	"time"
 
 	recurly "github.com/recurly/recurly-client-go/v5"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -131,7 +132,7 @@ func (m *mockUniqueCouponCodeLister) Next() string {
 // setMockCouponAPI installs a mock and returns a cleanup function.
 func setMockCouponAPI(mock *mockCouponAPI) func() {
 	orig := newCouponAPI
-	newCouponAPI = func() (CouponAPI, error) {
+	newCouponAPI = func(_ *cobra.Command) (CouponAPI, error) {
 		return mock, nil
 	}
 	return func() { newCouponAPI = orig }
