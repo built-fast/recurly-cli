@@ -86,15 +86,12 @@ func TestSelectColumns_CaseInsensitive(t *testing.T) {
 // --- Integration tests via FormatList / FormatOne ---
 
 func TestFieldSelection_ListTable(t *testing.T) {
-	SetFields([]string{"Name"})
-	defer SetFields(nil)
-
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("table", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "table", Fields: []string{"Name"}}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -114,14 +111,11 @@ func TestFieldSelection_ListTable(t *testing.T) {
 }
 
 func TestFieldSelection_ListJSON(t *testing.T) {
-	SetFields([]string{"Name"})
-	defer SetFields(nil)
-
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", Fields: []string{"Name"}}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,12 +139,9 @@ func TestFieldSelection_ListJSON(t *testing.T) {
 }
 
 func TestFieldSelection_OneTable(t *testing.T) {
-	SetFields([]string{"Email"})
-	defer SetFields(nil)
-
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("table", testColumns, item)
+	out, err := FormatOne(&Config{Format: "table", Fields: []string{"Email"}}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -172,12 +163,9 @@ func TestFieldSelection_OneTable(t *testing.T) {
 }
 
 func TestFieldSelection_OneJSON(t *testing.T) {
-	SetFields([]string{"Email"})
-	defer SetFields(nil)
-
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("json", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json", Fields: []string{"Email"}}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -195,12 +183,9 @@ func TestFieldSelection_OneJSON(t *testing.T) {
 }
 
 func TestFieldSelection_InvalidField_ReturnsError(t *testing.T) {
-	SetFields([]string{"bogus"})
-	defer SetFields(nil)
-
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
 
-	_, err := FormatList("table", testColumns, items, false)
+	_, err := FormatList(&Config{Format: "table", Fields: []string{"bogus"}}, testColumns, items, false)
 	if err == nil {
 		t.Fatal("expected error for invalid field")
 	}
@@ -213,10 +198,7 @@ func TestFieldSelection_InvalidField_ReturnsError(t *testing.T) {
 }
 
 func TestFieldSelection_InvalidField_FormatOne(t *testing.T) {
-	SetFields([]string{"nonexistent"})
-	defer SetFields(nil)
-
-	_, err := FormatOne("json", testColumns, testItem{Name: "Alice"})
+	_, err := FormatOne(&Config{Format: "json", Fields: []string{"nonexistent"}}, testColumns, testItem{Name: "Alice"})
 	if err == nil {
 		t.Fatal("expected error for invalid field")
 	}
@@ -227,9 +209,6 @@ func TestFieldSelection_InvalidField_FormatOne(t *testing.T) {
 
 func TestFieldSelection_WithJQ(t *testing.T) {
 	// Field selection applied first, then jq
-	SetFields([]string{"Name"})
-	defer SetFields(nil)
-
 	query, err := gojq.Parse(".data[].name")
 	if err != nil {
 		t.Fatalf("parse jq: %v", err)
@@ -238,17 +217,15 @@ func TestFieldSelection_WithJQ(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compile jq: %v", err)
 	}
-	SetJQ(code)
-	defer SetJQ(nil)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, false)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	out, fmtErr := FormatList(&Config{Format: "json", Fields: []string{"Name"}, JQ: code}, testColumns, items, false)
+	if fmtErr != nil {
+		t.Fatalf("unexpected error: %v", fmtErr)
 	}
 
 	// jq should extract names from field-filtered data
@@ -262,9 +239,6 @@ func TestFieldSelection_WithJQ(t *testing.T) {
 
 func TestFieldSelection_WithJQ_FilteredFieldNotAccessible(t *testing.T) {
 	// Select only Name, then try to access email via jq — should get null
-	SetFields([]string{"Name"})
-	defer SetFields(nil)
-
 	query, err := gojq.Parse(".data[].email")
 	if err != nil {
 		t.Fatalf("parse jq: %v", err)
@@ -273,16 +247,14 @@ func TestFieldSelection_WithJQ_FilteredFieldNotAccessible(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compile jq: %v", err)
 	}
-	SetJQ(code)
-	defer SetJQ(nil)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, false)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	out, fmtErr := FormatList(&Config{Format: "json", Fields: []string{"Name"}, JQ: code}, testColumns, items, false)
+	if fmtErr != nil {
+		t.Fatalf("unexpected error: %v", fmtErr)
 	}
 
 	// email was filtered out, so jq should produce null
@@ -295,14 +267,11 @@ func TestFieldSelection_WithJQ_FilteredFieldNotAccessible(t *testing.T) {
 }
 
 func TestFieldSelection_CaseInsensitive_Integration(t *testing.T) {
-	SetFields([]string{"name", "EMAIL"})
-	defer SetFields(nil)
-
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", Fields: []string{"name", "EMAIL"}}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -327,14 +296,11 @@ func TestFieldSelection_CaseInsensitive_Integration(t *testing.T) {
 
 func TestFieldSelection_ColumnOrder_Table(t *testing.T) {
 	// Verify that table columns appear in the order specified by --field
-	SetFields([]string{"Email", "Name"})
-	defer SetFields(nil)
-
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("table", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "table", Fields: []string{"Email", "Name"}}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

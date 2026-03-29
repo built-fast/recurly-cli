@@ -41,7 +41,7 @@ func TestFormatListJSON(t *testing.T) {
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json"}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestFormatListJSONHasMore(t *testing.T) {
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json", testColumns, items, true)
+	out, err := FormatList(&Config{Format: "json"}, testColumns, items, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestFormatListJSONPretty(t *testing.T) {
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
 
-	out, err := FormatList("json-pretty", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json-pretty"}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestFormatListTable(t *testing.T) {
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
 
-	out, err := FormatList("table", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "table"}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestFormatListTable(t *testing.T) {
 func TestFormatOneJSON(t *testing.T) {
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("json", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json"}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestFormatOneJSON(t *testing.T) {
 func TestFormatOneJSON_NoEnvelope(t *testing.T) {
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("json", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json"}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestFormatOneJSON_NoEnvelope(t *testing.T) {
 func TestFormatOneJSONPretty(t *testing.T) {
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("json-pretty", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json-pretty"}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestFormatOneJSONPretty(t *testing.T) {
 func TestFormatOneTable(t *testing.T) {
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
 
-	out, err := FormatOne("table", testColumns, item)
+	out, err := FormatOne(&Config{Format: "table"}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -232,14 +232,14 @@ func TestFormatOneTable(t *testing.T) {
 }
 
 func TestFormatListInvalidFormat(t *testing.T) {
-	_, err := FormatList("xml", testColumns, nil, false)
+	_, err := FormatList(&Config{Format: "xml"}, testColumns, nil, false)
 	if err == nil {
 		t.Fatal("expected error for invalid format")
 	}
 }
 
 func TestFormatOneInvalidFormat(t *testing.T) {
-	_, err := FormatOne("yaml", testColumns, testItem{})
+	_, err := FormatOne(&Config{Format: "yaml"}, testColumns, testItem{})
 	if err == nil {
 		t.Fatal("expected error for invalid format")
 	}

@@ -22,11 +22,10 @@ func compileJQ(t *testing.T, expr string) *gojq.Code {
 }
 
 func TestApplyJQ_FieldAccess(t *testing.T) {
-	SetJQ(compileJQ(t, ".email"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".email")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -36,14 +35,13 @@ func TestApplyJQ_FieldAccess(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayIteration(t *testing.T) {
-	SetJQ(compileJQ(t, ".[].name"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".[].name")
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := applyJQ(items, "json")
+	out, err := applyJQ(code, items, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -54,14 +52,13 @@ func TestApplyJQ_ArrayIteration(t *testing.T) {
 }
 
 func TestApplyJQ_SelectFilter(t *testing.T) {
-	SetJQ(compileJQ(t, `[.[] | select(.name == "Bob")] | length`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `[.[] | select(.name == "Bob")] | length`)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := applyJQ(items, "json")
+	out, err := applyJQ(code, items, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -71,14 +68,13 @@ func TestApplyJQ_SelectFilter(t *testing.T) {
 }
 
 func TestApplyJQ_Length(t *testing.T) {
-	SetJQ(compileJQ(t, "length"))
-	defer SetJQ(nil)
+	code := compileJQ(t, "length")
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := applyJQ(items, "json")
+	out, err := applyJQ(code, items, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -88,14 +84,13 @@ func TestApplyJQ_Length(t *testing.T) {
 }
 
 func TestApplyJQ_PipeChain(t *testing.T) {
-	SetJQ(compileJQ(t, `[.[] | .name] | sort`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `[.[] | .name] | sort`)
 
 	items := []any{
 		testItem{Name: "Bob", Email: "bob@example.com"},
 		testItem{Name: "Alice", Email: "alice@example.com"},
 	}
-	out, err := applyJQ(items, "json")
+	out, err := applyJQ(code, items, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -105,11 +100,10 @@ func TestApplyJQ_PipeChain(t *testing.T) {
 }
 
 func TestApplyJQ_Base64(t *testing.T) {
-	SetJQ(compileJQ(t, ".name | @base64"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".name | @base64")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -119,11 +113,10 @@ func TestApplyJQ_Base64(t *testing.T) {
 }
 
 func TestApplyJQ_CSV(t *testing.T) {
-	SetJQ(compileJQ(t, `[.name, .email] | @csv`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `[.name, .email] | @csv`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,11 +126,10 @@ func TestApplyJQ_CSV(t *testing.T) {
 }
 
 func TestApplyJQ_NullResult(t *testing.T) {
-	SetJQ(compileJQ(t, ".nonexistent"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".nonexistent")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -147,11 +139,10 @@ func TestApplyJQ_NullResult(t *testing.T) {
 }
 
 func TestApplyJQ_BoolResult_True(t *testing.T) {
-	SetJQ(compileJQ(t, ".has_more"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".has_more")
 
 	input := map[string]any{"has_more": true}
-	out, err := applyJQ(input, "json")
+	out, err := applyJQ(code, input, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -161,11 +152,10 @@ func TestApplyJQ_BoolResult_True(t *testing.T) {
 }
 
 func TestApplyJQ_BoolResult_False(t *testing.T) {
-	SetJQ(compileJQ(t, ".has_more"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".has_more")
 
 	input := map[string]any{"has_more": false}
-	out, err := applyJQ(input, "json")
+	out, err := applyJQ(code, input, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -175,11 +165,10 @@ func TestApplyJQ_BoolResult_False(t *testing.T) {
 }
 
 func TestApplyJQ_NumericResult_Int(t *testing.T) {
-	SetJQ(compileJQ(t, ".data | length"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".data | length")
 
 	input := map[string]any{"data": []any{1, 2, 3}}
-	out, err := applyJQ(input, "json")
+	out, err := applyJQ(code, input, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -189,11 +178,10 @@ func TestApplyJQ_NumericResult_Int(t *testing.T) {
 }
 
 func TestApplyJQ_NumericResult_Float(t *testing.T) {
-	SetJQ(compileJQ(t, ".price"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".price")
 
 	input := map[string]any{"price": 1.5}
-	out, err := applyJQ(input, "json")
+	out, err := applyJQ(code, input, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -203,11 +191,10 @@ func TestApplyJQ_NumericResult_Float(t *testing.T) {
 }
 
 func TestApplyJQ_ObjectResult_Compact(t *testing.T) {
-	SetJQ(compileJQ(t, `{name: .name}`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -225,11 +212,10 @@ func TestApplyJQ_ObjectResult_Compact(t *testing.T) {
 }
 
 func TestApplyJQ_ObjectResult_Pretty(t *testing.T) {
-	SetJQ(compileJQ(t, `{name: .name}`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json-pretty")
+	out, err := applyJQ(code, item, "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -243,14 +229,13 @@ func TestApplyJQ_ObjectResult_Pretty(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayResult_Compact(t *testing.T) {
-	SetJQ(compileJQ(t, `[.[] | .name]`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `[.[] | .name]`)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := applyJQ(items, "json")
+	out, err := applyJQ(code, items, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -263,14 +248,13 @@ func TestApplyJQ_ArrayResult_Compact(t *testing.T) {
 }
 
 func TestApplyJQ_ArrayResult_Pretty(t *testing.T) {
-	SetJQ(compileJQ(t, `[.[] | .name]`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `[.[] | .name]`)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := applyJQ(items, "json-pretty")
+	out, err := applyJQ(code, items, "json-pretty")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -280,11 +264,10 @@ func TestApplyJQ_ArrayResult_Pretty(t *testing.T) {
 }
 
 func TestApplyJQ_EmptyResult(t *testing.T) {
-	SetJQ(compileJQ(t, `select(.name == "Nobody")`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `select(.name == "Nobody")`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := applyJQ(item, "json")
+	out, err := applyJQ(code, item, "json")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -294,11 +277,10 @@ func TestApplyJQ_EmptyResult(t *testing.T) {
 }
 
 func TestApplyJQ_RuntimeError(t *testing.T) {
-	SetJQ(compileJQ(t, ".name / 0"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".name / 0")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	_, err := applyJQ(item, "json")
+	_, err := applyJQ(code, item, "json")
 	if err == nil {
 		t.Fatal("expected runtime error")
 	}
@@ -310,15 +292,14 @@ func TestApplyJQ_RuntimeError(t *testing.T) {
 // --- FormatList with jq ---
 
 func TestFormatList_WithJQ_SelectFilter(t *testing.T) {
-	SetJQ(compileJQ(t, `.data | map(select(.state == "active"))`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `.data | map(select(.state == "active"))`)
 
 	items := []any{
 		map[string]any{"code": "a1", "state": "active"},
 		map[string]any{"code": "b2", "state": "expired"},
 		map[string]any{"code": "c3", "state": "active"},
 	}
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -337,15 +318,14 @@ func TestFormatList_WithJQ_SelectFilter(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_DataLength(t *testing.T) {
-	SetJQ(compileJQ(t, `.data | length`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `.data | length`)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 		testItem{Name: "Carol", Email: "carol@example.com"},
 	}
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -355,14 +335,13 @@ func TestFormatList_WithJQ_DataLength(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_PipeChainProjection(t *testing.T) {
-	SetJQ(compileJQ(t, `.data[] | {name, email}`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `.data[] | {name, email}`)
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -386,14 +365,13 @@ func TestFormatList_WithJQ_PipeChainProjection(t *testing.T) {
 
 func TestFormatList_WithJQ_EnvelopeInput(t *testing.T) {
 	// jq input for FormatList is the full envelope, so .data[].name works
-	SetJQ(compileJQ(t, ".data[].name"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".data[].name")
 
 	items := []any{
 		testItem{Name: "Alice", Email: "alice@example.com"},
 		testItem{Name: "Bob", Email: "bob@example.com"},
 	}
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -405,11 +383,10 @@ func TestFormatList_WithJQ_EnvelopeInput(t *testing.T) {
 
 func TestFormatList_WithJQ_EnvelopeFields(t *testing.T) {
 	// Verify the envelope object field is accessible
-	SetJQ(compileJQ(t, ".object"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".object")
 
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
-	out, err := FormatList("json", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -419,11 +396,10 @@ func TestFormatList_WithJQ_EnvelopeFields(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_HasMore(t *testing.T) {
-	SetJQ(compileJQ(t, ".has_more"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".has_more")
 
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
-	out, err := FormatList("json", testColumns, items, true)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, items, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -433,10 +409,9 @@ func TestFormatList_WithJQ_HasMore(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_NilItems(t *testing.T) {
-	SetJQ(compileJQ(t, ".data | length"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".data | length")
 
-	out, err := FormatList("json", testColumns, nil, false)
+	out, err := FormatList(&Config{Format: "json", JQ: code}, testColumns, nil, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -446,11 +421,10 @@ func TestFormatList_WithJQ_NilItems(t *testing.T) {
 }
 
 func TestFormatList_WithJQ_Pretty(t *testing.T) {
-	SetJQ(compileJQ(t, `.data[0] | {name: .name}`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `.data[0] | {name: .name}`)
 
 	items := []any{testItem{Name: "Alice", Email: "alice@example.com"}}
-	out, err := FormatList("json-pretty", testColumns, items, false)
+	out, err := FormatList(&Config{Format: "json-pretty", JQ: code}, testColumns, items, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -462,11 +436,10 @@ func TestFormatList_WithJQ_Pretty(t *testing.T) {
 // --- FormatOne with jq ---
 
 func TestFormatOne_WithJQ(t *testing.T) {
-	SetJQ(compileJQ(t, ".email"))
-	defer SetJQ(nil)
+	code := compileJQ(t, ".email")
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := FormatOne("json", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json", JQ: code}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -476,11 +449,10 @@ func TestFormatOne_WithJQ(t *testing.T) {
 }
 
 func TestFormatOne_WithJQ_Pretty(t *testing.T) {
-	SetJQ(compileJQ(t, `{name: .name}`))
-	defer SetJQ(nil)
+	code := compileJQ(t, `{name: .name}`)
 
 	item := testItem{Name: "Alice", Email: "alice@example.com"}
-	out, err := FormatOne("json-pretty", testColumns, item)
+	out, err := FormatOne(&Config{Format: "json-pretty", JQ: code}, testColumns, item)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

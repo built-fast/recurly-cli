@@ -35,26 +35,26 @@ type listEnvelope struct {
 }
 
 // FormatList formats a slice of items as a columnar table (with headers),
-// compact JSON, or indented JSON depending on format. JSON output is wrapped
-// in a Recurly-style list envelope with pagination metadata.
+// compact JSON, or indented JSON depending on cfg.Format. JSON output is
+// wrapped in a Recurly-style list envelope with pagination metadata.
 //
-// When field selection is active (SetFields), columns are filtered for table
-// output and JSON keys are filtered for JSON/jq output. Field selection is
-// applied before jq.
-func FormatList(format string, columns []Column, items []any, hasMore bool) (string, error) {
-	if err := ValidateFormat(format); err != nil {
+// When field selection is active (cfg.HasFields), columns are filtered for
+// table output and JSON keys are filtered for JSON/jq output. Field selection
+// is applied before jq.
+func FormatList(cfg *Config, columns []Column, items []any, hasMore bool) (string, error) {
+	if err := ValidateFormat(cfg.Format); err != nil {
 		return "", err
 	}
 
-	if HasFields() {
-		if err := ValidateFields(columns, selectedFields); err != nil {
+	if cfg.HasFields() {
+		if err := ValidateFields(columns, cfg.Fields); err != nil {
 			return "", err
 		}
-		columns = SelectColumns(columns, selectedFields)
+		columns = SelectColumns(columns, cfg.Fields)
 	}
 
 	// For non-table formats with field selection, filter JSON keys
-	if HasFields() && format != "table" && items != nil {
+	if cfg.HasFields() && cfg.Format != "table" && items != nil {
 		filtered, err := filterItemsJSON(items, columns)
 		if err != nil {
 			return "", err
@@ -62,7 +62,7 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 		items = filtered
 	}
 
-	if HasJQ() {
+	if cfg.HasJQ() {
 		data := items
 		if data == nil {
 			data = []any{}
@@ -72,10 +72,10 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 			HasMore: hasMore,
 			Data:    data,
 		}
-		return applyJQ(envelope, format)
+		return applyJQ(cfg.JQ, envelope, cfg.Format)
 	}
 
-	switch format {
+	switch cfg.Format {
 	case "json", "json-pretty":
 		data := items
 		if data == nil {
@@ -86,7 +86,7 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 			HasMore: hasMore,
 			Data:    data,
 		}
-		if format == "json-pretty" {
+		if cfg.Format == "json-pretty" {
 			return marshalJSONPretty(envelope)
 		}
 		return marshalJSON(envelope)
@@ -96,22 +96,22 @@ func FormatList(format string, columns []Column, items []any, hasMore bool) (str
 }
 
 // FormatOne formats a single item as a key-value table (label on left, value
-// on right), compact JSON, or indented JSON depending on format.
+// on right), compact JSON, or indented JSON depending on cfg.Format.
 //
-// When field selection is active (SetFields), columns are filtered for table
-// output and JSON keys are filtered for JSON/jq output. Field selection is
-// applied before jq.
-func FormatOne(format string, columns []Column, item any) (string, error) {
-	if err := ValidateFormat(format); err != nil {
+// When field selection is active (cfg.HasFields), columns are filtered for
+// table output and JSON keys are filtered for JSON/jq output. Field selection
+// is applied before jq.
+func FormatOne(cfg *Config, columns []Column, item any) (string, error) {
+	if err := ValidateFormat(cfg.Format); err != nil {
 		return "", err
 	}
 
-	if HasFields() {
-		if err := ValidateFields(columns, selectedFields); err != nil {
+	if cfg.HasFields() {
+		if err := ValidateFields(columns, cfg.Fields); err != nil {
 			return "", err
 		}
-		columns = SelectColumns(columns, selectedFields)
-		if format != "table" {
+		columns = SelectColumns(columns, cfg.Fields)
+		if cfg.Format != "table" {
 			filtered, err := filterOneJSON(item, columns)
 			if err != nil {
 				return "", err
@@ -120,11 +120,11 @@ func FormatOne(format string, columns []Column, item any) (string, error) {
 		}
 	}
 
-	if HasJQ() {
-		return applyJQ(item, format)
+	if cfg.HasJQ() {
+		return applyJQ(cfg.JQ, item, cfg.Format)
 	}
 
-	switch format {
+	switch cfg.Format {
 	case "json":
 		return marshalJSON(item)
 	case "json-pretty":

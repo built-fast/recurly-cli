@@ -24,7 +24,7 @@ func HasJQ() bool {
 // applyJQ runs the compiled jq expression against v and returns the formatted
 // output. The format parameter controls how object/array results are rendered:
 // "json-pretty" uses indented JSON, anything else uses compact JSON.
-func applyJQ(v any, format string) (string, error) {
+func applyJQ(code *gojq.Code, v any, format string) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return "", fmt.Errorf("jq: marshaling input: %w", err)
@@ -35,7 +35,7 @@ func applyJQ(v any, format string) (string, error) {
 		return "", fmt.Errorf("jq: unmarshaling input: %w", err)
 	}
 
-	iter := jqCode.Run(input)
+	iter := code.Run(input)
 	var lines []string
 	for {
 		result, ok := iter.Next()
