@@ -19,13 +19,13 @@ func newCouponsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newCouponsListCmd())
 	cmd.AddCommand(withWatch(newCouponsGetCmd()))
-	cmd.AddCommand(withFromFile(newCouponsCreatePercentCmd()))
-	cmd.AddCommand(withFromFile(newCouponsCreateFixedCmd()))
-	cmd.AddCommand(withFromFile(newCouponsCreateFreeTrialCmd()))
+	cmd.AddCommand(withFromFile(withInteractive(newCouponsCreatePercentCmd())))
+	cmd.AddCommand(withFromFile(withInteractive(newCouponsCreateFixedCmd())))
+	cmd.AddCommand(withFromFile(withInteractive(newCouponsCreateFreeTrialCmd())))
 	cmd.AddCommand(withFromFile(newCouponsUpdateCmd()))
 	cmd.AddCommand(newCouponsDeactivateCmd())
 	cmd.AddCommand(newCouponsRestoreCmd())
-	cmd.AddCommand(newCouponsGenerateCodesCmd())
+	cmd.AddCommand(withInteractive(newCouponsGenerateCodesCmd()))
 	cmd.AddCommand(newCouponsListCodesCmd())
 	return cmd
 }
@@ -546,6 +546,8 @@ func newCouponsCreateFreeTrialCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("free-trial-amount")
 	_ = cmd.MarkFlagRequired("free-trial-unit")
+
+	setFlagOptions(cmd, "free-trial-unit", []string{"day", "week", "month", "year"})
 
 	return cmd
 }

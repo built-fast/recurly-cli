@@ -332,7 +332,7 @@ func TestAccountRedemptionsCreate_AllOptionalFlags(t *testing.T) {
 }
 
 func TestAccountRedemptionsCreate_MissingCouponID_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("accounts", "redemptions", "create", "acct-1")
+	_, stderr, err := executeCommand("accounts", "redemptions", "create", "acct-1", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when --coupon-id is not provided")
 	}

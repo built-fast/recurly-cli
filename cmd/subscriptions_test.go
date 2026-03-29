@@ -1391,7 +1391,7 @@ func TestSubscriptionsPause_MissingArg_ReturnsError(t *testing.T) {
 }
 
 func TestSubscriptionsPause_MissingRequiredFlag_ReturnsError(t *testing.T) {
-	_, stderr, err := executeCommand("subscriptions", "pause", "sub-123", "--yes")
+	_, stderr, err := executeCommand("subscriptions", "pause", "sub-123", "--yes", "--no-input")
 	if err == nil {
 		t.Fatal("expected error when required flag is missing")
 	}

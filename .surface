@@ -176,6 +176,7 @@ FLAG recurly accounts reactivate --yes bool
 FLAG recurly accounts redemptions create --coupon-id string
 FLAG recurly accounts redemptions create --currency string
 FLAG recurly accounts redemptions create --from-file string
+FLAG recurly accounts redemptions create --no-input bool
 FLAG recurly accounts redemptions create --subscription-id string
 FLAG recurly accounts redemptions list --all bool
 FLAG recurly accounts redemptions list --limit int
@@ -221,6 +222,7 @@ FLAG recurly coupons create-fixed --item-codes stringSlice
 FLAG recurly coupons create-fixed --max-redemptions int
 FLAG recurly coupons create-fixed --max-redemptions-per-account int
 FLAG recurly coupons create-fixed --name string
+FLAG recurly coupons create-fixed --no-input bool
 FLAG recurly coupons create-fixed --plan-codes stringSlice
 FLAG recurly coupons create-fixed --redeem-by string
 FLAG recurly coupons create-fixed --redemption-resource string
@@ -238,6 +240,7 @@ FLAG recurly coupons create-free-trial --invoice-description string
 FLAG recurly coupons create-free-trial --max-redemptions int
 FLAG recurly coupons create-free-trial --max-redemptions-per-account int
 FLAG recurly coupons create-free-trial --name string
+FLAG recurly coupons create-free-trial --no-input bool
 FLAG recurly coupons create-free-trial --plan-codes stringSlice
 FLAG recurly coupons create-free-trial --redeem-by string
 FLAG recurly coupons create-free-trial --redemption-resource string
@@ -256,6 +259,7 @@ FLAG recurly coupons create-percent --item-codes stringSlice
 FLAG recurly coupons create-percent --max-redemptions int
 FLAG recurly coupons create-percent --max-redemptions-per-account int
 FLAG recurly coupons create-percent --name string
+FLAG recurly coupons create-percent --no-input bool
 FLAG recurly coupons create-percent --plan-codes stringSlice
 FLAG recurly coupons create-percent --redeem-by string
 FLAG recurly coupons create-percent --redemption-resource string
@@ -263,6 +267,7 @@ FLAG recurly coupons create-percent --temporal-amount int
 FLAG recurly coupons create-percent --temporal-unit string
 FLAG recurly coupons create-percent --unique-code-template string
 FLAG recurly coupons deactivate --yes bool
+FLAG recurly coupons generate-codes --no-input bool
 FLAG recurly coupons generate-codes --number-of-codes int
 FLAG recurly coupons get --watch string
 FLAG recurly coupons list --all bool
@@ -491,6 +496,7 @@ FLAG recurly subscriptions list --order string
 FLAG recurly subscriptions list --plan-id string
 FLAG recurly subscriptions list --sort string
 FLAG recurly subscriptions list --state string
+FLAG recurly subscriptions pause --no-input bool
 FLAG recurly subscriptions pause --remaining-pause-cycles int
 FLAG recurly subscriptions pause --yes bool
 FLAG recurly subscriptions reactivate --yes bool

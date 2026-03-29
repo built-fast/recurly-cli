@@ -18,7 +18,7 @@ func newAccountRedemptionsCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newAccountRedemptionsListCmd())
 	cmd.AddCommand(newAccountRedemptionsListActiveCmd())
-	cmd.AddCommand(withFromFile(newAccountRedemptionsCreateCmd()))
+	cmd.AddCommand(withFromFile(withInteractive(newAccountRedemptionsCreateCmd())))
 	cmd.AddCommand(newAccountRedemptionsRemoveCmd())
 	return cmd
 }

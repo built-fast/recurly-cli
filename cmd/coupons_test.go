@@ -519,6 +519,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 
 	// Missing --code
 	_, stderr, err := executeCommand("coupons", "create-percent",
+		"--no-input",
 		"--name", "Test",
 		"--discount-percent", "10",
 	)
@@ -531,6 +532,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 
 	// Missing --name
 	_, stderr, err = executeCommand("coupons", "create-percent",
+		"--no-input",
 		"--code", "TEST",
 		"--discount-percent", "10",
 	)
@@ -543,6 +545,7 @@ func TestCouponsCreatePercent_MissingRequiredFlags(t *testing.T) {
 
 	// Missing --discount-percent
 	_, stderr, err = executeCommand("coupons", "create-percent",
+		"--no-input",
 		"--code", "TEST",
 		"--name", "Test",
 	)
@@ -801,6 +804,7 @@ func TestCouponsCreateFreeTrial_MissingRequiredFlags(t *testing.T) {
 
 	// Missing --free-trial-amount and --free-trial-unit
 	_, stderr, err := executeCommand("coupons", "create-free-trial",
+		"--no-input",
 		"--code", "TEST",
 		"--name", "Test",
 	)
@@ -1153,7 +1157,7 @@ func TestCouponsGenerateCodes_Success(t *testing.T) {
 }
 
 func TestCouponsGenerateCodes_MissingRequiredFlag(t *testing.T) {
-	_, stderr, err := executeCommand("coupons", "generate-codes", "BULK-COUPON")
+	_, stderr, err := executeCommand("coupons", "generate-codes", "BULK-COUPON", "--no-input")
 	if err == nil {
 		t.Fatal("expected error for missing --number-of-codes")
 	}

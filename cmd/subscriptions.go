@@ -23,7 +23,7 @@ func newSubscriptionsCmd() *cobra.Command {
 	cmd.AddCommand(withFromFile(newSubscriptionsUpdateCmd()))
 	cmd.AddCommand(newSubscriptionsCancelCmd())
 	cmd.AddCommand(newSubscriptionsReactivateCmd())
-	cmd.AddCommand(newSubscriptionsPauseCmd())
+	cmd.AddCommand(withInteractive(newSubscriptionsPauseCmd()))
 	cmd.AddCommand(newSubscriptionsResumeCmd())
 	cmd.AddCommand(newSubscriptionsTerminateCmd())
 	cmd.AddCommand(newSubscriptionsConvertTrialCmd())
