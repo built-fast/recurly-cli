@@ -131,13 +131,13 @@ load "test_helper"
 # Remove Redemption
 # =============================================================================
 
-@test "accounts redemptions remove most recent returns success" {
-  run "$RECURLY_BINARY" accounts redemptions remove "code-test123"
+@test "accounts redemptions remove with --yes returns success" {
+  run "$RECURLY_BINARY" accounts redemptions remove "code-test123" --yes
   assert_success
 }
 
-@test "accounts redemptions remove --output json returns valid JSON" {
-  run "$RECURLY_BINARY" accounts redemptions remove "code-test123" --output json
+@test "accounts redemptions remove --yes --output json returns valid JSON" {
+  run "$RECURLY_BINARY" accounts redemptions remove "code-test123" --yes --output json
   assert_success
   is_valid_json
   local obj_type
@@ -145,13 +145,25 @@ load "test_helper"
   [ "$obj_type" = "object" ]
 }
 
-@test "accounts redemptions remove specific redemption returns success" {
-  run "$RECURLY_BINARY" accounts redemptions remove "code-test123" "redemption123"
+@test "accounts redemptions remove --yes specific redemption returns success" {
+  run "$RECURLY_BINARY" accounts redemptions remove "code-test123" "redemption123" --yes
   assert_success
 }
 
+@test "accounts redemptions remove without --yes piping 'n' cancels" {
+  run bash -c "echo 'n' | \"$RECURLY_BINARY\" accounts redemptions remove \"code-test123\" 2>&1"
+  assert_success
+  assert_output_contains "cancelled"
+}
+
+@test "accounts redemptions remove without --yes piping 'y' confirms" {
+  run bash -c "echo 'y' | \"$RECURLY_BINARY\" accounts redemptions remove \"code-test123\" 2>&1"
+  assert_success
+  assert_output_not_contains "cancelled"
+}
+
 @test "accounts redemptions remove without account_id fails" {
-  run "$RECURLY_BINARY" accounts redemptions remove
+  run "$RECURLY_BINARY" accounts redemptions remove --yes
   assert_failure
 }
 
