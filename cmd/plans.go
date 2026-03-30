@@ -69,7 +69,7 @@ type planFlags struct {
 	unitAmounts, setupFees                              []float64
 	trialUnit                                           string
 	trialLength                                         int
-	trialRequiresBillingInfo                             bool
+	trialRequiresBillingInfo                            bool
 	autoRenew                                           bool
 	totalBillingCycles                                  int
 	taxCode                                             string
