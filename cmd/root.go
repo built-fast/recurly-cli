@@ -14,10 +14,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-// version is set via ldflags at build time:
-//
-//	go build -ldflags "-X github.com/built-fast/recurly-cli/cmd.version=v0.1.0"
-var version = "dev"
+// version, commit, and date are set via ldflags at build time.
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
 
 // NewRootCmd creates and returns the root command with all subcommands registered.
 func NewRootCmd() *cobra.Command {
@@ -27,7 +29,7 @@ func NewRootCmd() *cobra.Command {
 		Version: version,
 	}
 
-	rootCmd.SetVersionTemplate("recurly-cli {{.Version}}\n")
+	rootCmd.SetVersionTemplate(fmt.Sprintf("recurly-cli {{.Version}} (commit: %s, built: %s)\n", commit, date))
 	rootCmd.SilenceErrors = true
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {

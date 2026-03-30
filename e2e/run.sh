@@ -18,7 +18,7 @@ fi
 # --- Build CLI binary ---
 echo "==> Building CLI binary..."
 make build
-RECURLY_BINARY="$PROJECT_ROOT/recurly"
+RECURLY_BINARY="$PROJECT_ROOT/bin/recurly"
 
 # --- Select a random available port ---
 get_random_port() {

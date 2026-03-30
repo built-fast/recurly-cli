@@ -57,16 +57,23 @@ Key resource paths (see `openapi/api.yaml` for full spec — 130 endpoints):
 ```bash
 make check             # All checks (local CI gate)
 make test              # Go unit tests only
+make test-race         # Unit tests with race detector
+make test-coverage     # Generate coverage report
 make lint              # golangci-lint
 make vet               # go vet
 make fmt               # Format code (gofmt)
 make fmt-check         # Check formatting (fails if not formatted)
+make tidy              # Run go mod tidy
 make tidy-check        # Verify go.mod/go.sum are tidy (non-mutating)
 make test-e2e          # BATS e2e tests (requires Prism)
-make build             # Build binary to ./recurly
+make build             # Build binary to ./bin/recurly
 make surface           # Regenerate .surface snapshot
 make check-surface     # Verify .surface is up to date
 make vuln              # govulncheck for dependency vulnerabilities
+make security          # govulncheck + gitleaks
+make verify            # Verify module dependencies
+make tools             # Install dev tools via Brewfile
+make help              # Show all available targets
 ```
 
 When iterating on a specific area, use targeted targets for faster feedback,

@@ -20,7 +20,7 @@ go install github.com/built-fast/recurly-cli@latest
 Or build from source:
 
 ```bash
-make build    # produces ./recurly
+make build    # produces ./bin/recurly
 ```
 
 ## Configuration

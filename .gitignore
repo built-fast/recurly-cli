@@ -1,2 +1,7 @@
 .chief/
 openapi/api-scrubbed.yaml
+/bin/
+/recurly
+coverage.out
+coverage.html
+/.envrc

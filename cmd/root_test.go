@@ -92,7 +92,7 @@ func TestRootVersion_PrintsVersionString(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	expected := "recurly-cli dev\n"
+	expected := "recurly-cli dev (commit: unknown, built: unknown)\n"
 	if out != expected {
 		t.Errorf("expected %q, got %q", expected, out)
 	}

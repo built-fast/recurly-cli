@@ -1,0 +1,37 @@
+# GoReleaser configuration for recurly-cli
+# Docs: https://goreleaser.com
+version: 2
+project_name: recurly-cli
+
+builds:
+  - binary: recurly
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/built-fast/recurly-cli/cmd.version=v{{ .Version }}
+      - -X github.com/built-fast/recurly-cli/cmd.commit={{ .Commit }}
+      - -X github.com/built-fast/recurly-cli/cmd.date={{ .Date }}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+# release:
+#   github:
+#     owner: built-fast
+#     name: recurly-cli
+#   draft: false
+#   prerelease: auto
+#   replace_existing_artifacts: true
+#   name_template: "{{.ProjectName}} v{{.Version}}"
+#   header: |
+#     {{ if .Env.RELEASE_CHANGELOG }}{{ .Env.RELEASE_CHANGELOG }}{{ end }}
