@@ -1,4 +1,5 @@
 .chief/
+.claude/settings.local.json
 openapi/api-scrubbed.yaml
 /bin/
 /recurly
