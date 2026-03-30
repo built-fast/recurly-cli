@@ -243,7 +243,7 @@ load "test_helper"
 }
 
 @test "subscriptions pause without --remaining-pause-cycles fails" {
-  run "$RECURLY_BINARY" subscriptions pause "sub-test123" --yes
+  run "$RECURLY_BINARY" subscriptions pause "sub-test123" --yes --no-input
   assert_failure
 }
 
