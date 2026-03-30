@@ -19,8 +19,8 @@ permissions:
   contents: read
 
 jobs:
-  lint-actions:
-    name: Run actionlint
+  actions:
+    name: Check GitHub Actions
 
     runs-on: ubuntu-latest
 
