@@ -18602,7 +18602,7 @@ components:
           title: Accounting code
           description: Accounting code for invoice line items for this add-on. If
             no value is provided, it defaults to add-on's code.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
     AddOn:
       type: object
@@ -18685,7 +18685,7 @@ components:
           title: Accounting code
           description: Accounting code for invoice line items for this add-on. If
             no value is provided, it defaults to add-on's code.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -18810,7 +18810,7 @@ components:
           description: Unique code to identify an item. Available when the `Credit
             Invoices` feature is enabled. If `item_id` and `item_code` are both present,
             `item_id` will be used.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         item_id:
           type: string
@@ -18897,7 +18897,7 @@ components:
           description: Accounting code for invoice line items for this add-on. If
             no value is provided, it defaults to add-on's code. If `item_code`/`item_id`
             is part of the request then `accounting_code` must be absent.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -19058,7 +19058,7 @@ components:
           description: Accounting code for invoice line items for this add-on. If
             no value is provided, it defaults to add-on's code. If an `Item` is associated
             to the `AddOn` then `accounting code` must be absent.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         liability_gl_account_id:
           type: string
@@ -20087,7 +20087,7 @@ components:
           title: Field name
           description: Fields must be created in the UI before values can be assigned
             to them.
-          pattern: "^[a-z0-9_-]+$"
+          pattern: "/^[a-z0-9_-]+$/i"
           maxLength: 50
         value:
           type: string
@@ -20126,7 +20126,7 @@ components:
           title: Name
           description: Used by the API to identify the field or reading and writing.
             The name can only be used once per Recurly object type.
-          pattern: "^[a-z0-9_-]+$"
+          pattern: "/^[a-z0-9_-]+$/i"
           maxLength: 50
         user_access:
           title: User access
@@ -20149,7 +20149,7 @@ components:
           title: Tooltip description
           description: Displayed as a tooltip when editing the field in the Recurly
             admin UI.
-          pattern: "^[a-z0-9_-]+$"
+          pattern: "/^[a-z0-9_-]+$/i"
           maxLength: 255
         created_at:
           type: string
@@ -20189,7 +20189,7 @@ components:
         Unique code to identify the ledger account. Each code must start
         with a letter or number. The following special characters are
         allowed: `-_.,:`
-      pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+      pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
       maxLength: 255
     GeneralLedgerAccountDescription:
       type: string
@@ -20220,7 +20220,7 @@ components:
             Unique code to identify the ledger account. Each code must start
             with a letter or number. The following special characters are
             allowed: `-_.,:`
-          pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+          pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
           maxLength: 255
         description:
           type: string
@@ -20267,7 +20267,7 @@ components:
             Unique code to identify the ledger account. Each code must start
             with a letter or number. The following special characters are
             allowed: `-_.,:`
-          pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+          pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
           maxLength: 255
         description:
           type: string
@@ -20287,7 +20287,7 @@ components:
             Unique code to identify the ledger account. Each code must start
             with a letter or number. The following special characters are
             allowed: `-_.,:`
-          pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+          pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
           maxLength: 255
         description:
           type: string
@@ -20363,7 +20363,7 @@ components:
           type: string
           title: Item code
           description: Unique code to identify the item.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         state:
           title: State
@@ -20397,7 +20397,7 @@ components:
           type: string
           title: Item code
           description: Unique code to identify the item.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         state:
           title: State
@@ -20424,7 +20424,7 @@ components:
           type: string
           title: Item accounting code
           description: Accounting code for invoice line items.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -20523,7 +20523,7 @@ components:
           type: string
           title: Item code
           description: Unique code to identify the item.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         name:
           type: string
@@ -20545,7 +20545,7 @@ components:
           type: string
           title: Item accounting code
           description: Accounting code for invoice line items.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -20632,7 +20632,7 @@ components:
           type: string
           title: Item code
           description: Unique code to identify the item.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         name:
           type: string
@@ -20654,7 +20654,7 @@ components:
           type: string
           title: Item accounting code
           description: Accounting code for invoice line items.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -21326,7 +21326,7 @@ components:
           type: string
           title: Display name
           description: Display name for the measured unit.
-          pattern: "^[\\w ]+$"
+          pattern: "/^[\\w ]+$/"
           maxLength: 50
         description:
           type: string
@@ -21347,7 +21347,7 @@ components:
           type: string
           title: Display name
           description: Display name for the measured unit.
-          pattern: "^[\\w ]+$"
+          pattern: "/^[\\w ]+$/"
           maxLength: 50
         description:
           type: string
@@ -21380,7 +21380,7 @@ components:
           title: Item Code
           description: Unique code to identify an item. Available when the Credit
             Invoices feature is enabled.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         item_id:
           type: string
@@ -21565,7 +21565,7 @@ components:
             Unique code to identify the ledger account. Each code must start
             with a letter or number. The following special characters are
             allowed: `-_.,:`
-          pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+          pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
           maxLength: 255
         revenue_gl_account_code:
           type: string
@@ -21574,7 +21574,7 @@ components:
             Unique code to identify the ledger account. Each code must start
             with a letter or number. The following special characters are
             allowed: `-_.,:`
-          pattern: "^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$"
+          pattern: "/^[A-Za-z0-9](( *)?[\\-A-Za-z0-9_.,:])*$/"
           maxLength: 255
         performance_obligation_id:
           type: string
@@ -21792,7 +21792,7 @@ components:
           title: Item Code
           description: Unique code to identify an item. Available when the Credit
             Invoices feature is enabled.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 50
         item_id:
           type: string
@@ -21822,7 +21822,7 @@ components:
           title: Accounting Code
           description: Accounting Code for the `LineItem`. If `item_code`/`item_id`
             is part of the request then `accounting_code` must be absent.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         liability_gl_account_id:
           type: string
@@ -21958,7 +21958,7 @@ components:
       title: Plan code
       description: Unique code to identify the plan. This is used in Hosted Payment
         Page URLs and in the invoice exports.
-      pattern: "^[a-z0-9_+-]+$"
+      pattern: "/^[a-z0-9_+-]+$/"
       maxLength: 50
     PlanName:
       type: string
@@ -22002,7 +22002,7 @@ components:
           title: Plan accounting code
           description: Accounting code for invoice line items for the plan. If no
             value is provided, it defaults to plan's code.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         revenue_schedule_type:
           title: Revenue schedule type
@@ -22018,7 +22018,7 @@ components:
           title: Setup fee accounting code
           description: Accounting code for invoice line items for the plan's setup
             fee. If no value is provided, it defaults to plan's accounting code.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/"
           maxLength: 20
         setup_fee_revenue_schedule_type:
           title: Setup fee revenue schedule type
@@ -22446,13 +22446,13 @@ components:
       type: string
       description: The price segment code, e.g. `my-price-segment`.
       maxLength: 50
-      pattern: "^[a-z0-9_+-]+$"
+      pattern: "/^[a-z0-9_+-]+$/"
     PriceSegmentIdOrCode:
       type: string
       description: The price segment ID or code. For ID no prefix is used e.g. `e28zov4fw0v2`.
         For requests, the code can also be used. Use prefix `code-`, e.g. `code-gold`.
       maxLength: 55
-      pattern: "^[a-z0-9_+-]+$"
+      pattern: "/^[a-z0-9_+-]+$/"
     Tier:
       type: object
       properties:
@@ -22863,7 +22863,7 @@ components:
           type: string
           title: Code
           description: The internal name used identify the shipping method.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/i"
           maxLength: 50
         name:
           type: string
@@ -22925,7 +22925,7 @@ components:
           type: string
           title: Code
           description: The internal name used identify the shipping method.
-          pattern: "^[a-z0-9_+-]+$"
+          pattern: "/^[a-z0-9_+-]+$/i"
           maxLength: 50
         name:
           type: string

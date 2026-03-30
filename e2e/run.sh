@@ -27,6 +27,16 @@ get_random_port() {
 PRISM_PORT=$(get_random_port)
 PRISM_URL="http://127.0.0.1:${PRISM_PORT}"
 
+# --- Scrubbed OpenAPI spec for Prism ---
+# The upstream spec uses JS-style regex delimiters in pattern fields
+# (e.g. "/^[a-z]+$/i") which Prism treats literally, causing false
+# validation failures. Generate a scrubbed copy with bare regex.
+PRISM_SPEC="$PROJECT_ROOT/openapi/api-scrubbed.yaml"
+if [ ! -f "$PRISM_SPEC" ] || [ openapi/api.yaml -nt "$PRISM_SPEC" ]; then
+  echo "==> Generating scrubbed OpenAPI spec for Prism..."
+  sed -E 's/(pattern: )"\/(.*)\/[a-z]*"/\1"\2"/g' openapi/api.yaml > "$PRISM_SPEC"
+fi
+
 # --- Cleanup trap ---
 PRISM_PID=""
 cleanup() {
@@ -39,7 +49,7 @@ trap cleanup EXIT INT TERM
 
 # --- Start Prism mock server ---
 echo "==> Starting Prism mock server on port ${PRISM_PORT}..."
-npx @stoplight/prism-cli mock openapi/api.yaml \
+npx @stoplight/prism-cli mock "$PRISM_SPEC" \
   --port "$PRISM_PORT" \
   --host 127.0.0.1 \
   > /dev/null 2>&1 &
