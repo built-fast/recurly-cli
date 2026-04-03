@@ -13,6 +13,12 @@ Command-line interface for the [Recurly](https://recurly.com) v3 API. Manage acc
 
 ## Install
 
+### Homebrew (macOS)
+
+```bash
+brew install built-fast/devtools/recurly-cli
+```
+
 ```bash
 go install github.com/built-fast/recurly-cli@latest
 ```
