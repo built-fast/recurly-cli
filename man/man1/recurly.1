@@ -1,0 +1,510 @@
+.\" recurly.1 - man page for the Recurly CLI
+.TH RECURLY 1 "2026-04-03" "recurly" "Recurly CLI Manual"
+.SH NAME
+recurly \- manage Recurly billing resources from the command line
+.SH SYNOPSIS
+.B recurly
+.RI [ command ]
+.RI [ subcommand ]
+.RI [ flags ]
+.SH DESCRIPTION
+.B recurly
+is a command-line interface for the Recurly billing platform. It provides
+access to accounts, subscriptions, plans, invoices, items, coupons, and
+transactions through the Recurly v3 API.
+.PP
+Before using most commands, configure authentication with
+.BR "recurly configure" .
+.SH GLOBAL FLAGS
+These flags apply to all commands:
+.TP
+.BI \-\-api\-key " string"
+Recurly API key. Overrides config file and
+.B RECURLY_API_KEY
+environment variable.
+.TP
+.BI \-\-region " string"
+Recurly region:
+.B us
+(default) or
+.BR eu .
+.TP
+.BI \-\-output " string"
+Output format:
+.BR table " (default),"
+.BR json ", or"
+.BR json\-pretty .
+.TP
+.BI \-f ", " \-\-field " string"
+Comma-separated list of fields to display in output.
+.TP
+.BI \-\-jq " string"
+Filter JSON output with a jq expression (built-in, no external
+.BR jq (1)
+required).
+.SH COMMANDS
+.SS Configuration
+.TP
+.B recurly configure
+Interactive setup wizard. Prompts for API key, region, and site subdomain.
+Saves to
+.IR ~/.config/recurly/config.toml .
+.SS Accounts
+.TP
+.B recurly accounts list
+List accounts. Supports filtering by
+.BR \-\-email ,
+.BR \-\-subscriber ,
+and
+.BR \-\-past\-due .
+.TP
+.BI "recurly accounts get " account_id
+Show account details.
+.TP
+.B recurly accounts create
+Create an account with flags such as
+.BR \-\-code ,
+.BR \-\-email ,
+.BR \-\-first\-name ,
+.BR \-\-last\-name ,
+.BR \-\-company .
+.TP
+.BI "recurly accounts update " account_id
+Update an account.
+.TP
+.BI "recurly accounts deactivate " account_id
+Deactivate an account. Requires confirmation or
+.BR \-\-yes .
+.TP
+.BI "recurly accounts reactivate " account_id
+Reactivate a deactivated account.
+.TP
+.BI "recurly accounts billing\-info get " account_id
+Get billing info for an account.
+.TP
+.BI "recurly accounts billing\-info update " account_id
+Update billing info (address, payment token, etc.).
+.TP
+.BI "recurly accounts billing\-info remove " account_id
+Remove billing info from an account.
+.TP
+.BI "recurly accounts subscriptions list " account_id
+List subscriptions for an account.
+.TP
+.BI "recurly accounts invoices list " account_id
+List invoices for an account.
+.TP
+.BI "recurly accounts transactions list " account_id
+List transactions for an account.
+.TP
+.BI "recurly accounts redemptions list " account_id
+List coupon redemptions for an account.
+.TP
+.BI "recurly accounts redemptions list\-active " account_id
+List active coupon redemptions.
+.TP
+.BI "recurly accounts redemptions create " account_id
+Create a coupon redemption with
+.B \-\-coupon\-id
+and optional
+.BR \-\-currency .
+.TP
+.BI "recurly accounts redemptions remove " redemption_id
+Remove a coupon redemption.
+.SS Subscriptions
+.TP
+.B recurly subscriptions list
+List subscriptions. Filter by
+.BR \-\-state ,
+.BR \-\-plan\-id ,
+and time ranges.
+.TP
+.BI "recurly subscriptions get " subscription_id
+Show subscription details.
+.TP
+.B recurly subscriptions create
+Create a subscription. Key flags:
+.BR \-\-plan\-code ,
+.BR \-\-account\-code ,
+.BR \-\-currency .
+.TP
+.BI "recurly subscriptions update " subscription_id
+Update a subscription.
+.TP
+.BI "recurly subscriptions cancel " subscription_id
+Cancel a subscription. Use
+.B \-\-timeframe
+to set
+.B bill_date
+or
+.BR term_end .
+.TP
+.BI "recurly subscriptions reactivate " subscription_id
+Reactivate a canceled subscription.
+.TP
+.BI "recurly subscriptions pause " subscription_id
+Pause a subscription with
+.BR \-\-remaining\-pause\-cycles .
+.TP
+.BI "recurly subscriptions resume " subscription_id
+Resume a paused subscription.
+.TP
+.BI "recurly subscriptions terminate " subscription_id
+Terminate a subscription immediately. Use
+.B \-\-refund
+.RB ( full ", " partial ", " none )
+and
+.B \-\-charge
+to invoice unbilled usage.
+.TP
+.BI "recurly subscriptions convert\-trial " subscription_id
+Convert a trial subscription to paid.
+.SS Plans
+.TP
+.B recurly plans list
+List plans. Filter by
+.BR \-\-state .
+.TP
+.BI "recurly plans get " plan_id
+Show plan details.
+.TP
+.B recurly plans create
+Create a plan with
+.BR \-\-code ,
+.BR \-\-name ,
+.BR \-\-currency ,
+.BR \-\-unit\-amount ,
+.BR \-\-interval\-unit ,
+.BR \-\-interval\-length ,
+and many more options.
+.TP
+.BI "recurly plans update " plan_id
+Update a plan.
+.TP
+.BI "recurly plans deactivate " plan_id
+Deactivate a plan.
+.TP
+.BI "recurly plans add\-ons list " plan_id
+List add-ons for a plan.
+.TP
+.BI "recurly plans add\-ons get " plan_id " " add_on_id
+Get add-on details.
+.TP
+.BI "recurly plans add\-ons create " plan_id
+Create a plan add-on.
+.TP
+.BI "recurly plans add\-ons update " plan_id " " add_on_id
+Update a plan add-on.
+.TP
+.BI "recurly plans add\-ons delete " plan_id " " add_on_id
+Delete a plan add-on.
+.SS Items
+.TP
+.B recurly items list
+List items. Filter by
+.BR \-\-state .
+.TP
+.BI "recurly items get " item_id
+Show item details.
+.TP
+.B recurly items create
+Create an item with
+.BR \-\-code ,
+.BR \-\-name ,
+.BR \-\-currency ,
+.BR \-\-unit\-amount .
+.TP
+.BI "recurly items update " item_id
+Update an item.
+.TP
+.BI "recurly items deactivate " item_id
+Deactivate an item.
+.TP
+.BI "recurly items reactivate " item_id
+Reactivate an item.
+.SS Coupons
+.TP
+.B recurly coupons list
+List coupons.
+.TP
+.BI "recurly coupons get " coupon_id
+Show coupon details.
+.TP
+.B recurly coupons create\-percent
+Create a percentage discount coupon with
+.BR \-\-discount\-percent .
+.TP
+.B recurly coupons create\-fixed
+Create a fixed amount coupon with
+.B \-\-currency
+and
+.BR \-\-discount\-amount .
+.TP
+.B recurly coupons create\-free\-trial
+Create a free trial coupon with
+.B \-\-free\-trial\-amount
+and
+.BR \-\-free\-trial\-unit .
+.TP
+.BI "recurly coupons update " coupon_id
+Update a coupon.
+.TP
+.BI "recurly coupons deactivate " coupon_id
+Deactivate a coupon.
+.TP
+.BI "recurly coupons restore " coupon_id
+Restore a deactivated coupon.
+.TP
+.BI "recurly coupons generate\-codes " coupon_id
+Generate unique coupon codes with
+.BR \-\-number\-of\-codes .
+.TP
+.BI "recurly coupons list\-codes " coupon_id
+List codes for a bulk coupon.
+.SS Invoices
+.TP
+.B recurly invoices list
+List invoices. Filter by
+.BR \-\-state " and"
+.BR \-\-type .
+.TP
+.BI "recurly invoices get " invoice_id
+Show invoice details. Use
+.B \-\-line\-items
+to include line items.
+.TP
+.BI "recurly invoices line\-items " invoice_id
+List line items on an invoice.
+.TP
+.BI "recurly invoices collect " invoice_id
+Collect payment on an open invoice.
+.TP
+.BI "recurly invoices void " invoice_id
+Void an invoice.
+.TP
+.BI "recurly invoices mark\-failed " invoice_id
+Mark an invoice as failed collection.
+.SS Transactions
+.TP
+.B recurly transactions list
+List transactions. Filter by
+.B \-\-type
+and
+.BR \-\-success .
+.TP
+.BI "recurly transactions get " transaction_id
+Show transaction details.
+.SS Dashboard
+.TP
+.B recurly open \fR[\fIresource\fR] [\fIidentifier\fR]
+Open a Recurly resource in the web dashboard. Valid resources:
+.BR accounts ,
+.BR plans ,
+.BR subscriptions ,
+.BR invoices ,
+.BR transactions ,
+.BR items ,
+.BR coupons .
+Use
+.B \-\-url
+to print the URL instead of opening a browser.
+.SS Shell Completion
+.TP
+.B recurly completion bash
+Generate Bash completion script.
+.TP
+.B recurly completion zsh
+Generate Zsh completion script.
+.SS Skill
+.TP
+.B recurly skill
+Print the embedded AI skill reference document.
+.TP
+.B recurly skill install
+Install the skill to the Claude Code skills directory.
+.TP
+.B recurly skill uninstall
+Remove the installed skill.
+.SH COMMON FLAGS
+Many commands share the following flags:
+.SS List Commands
+.TP
+.BI \-\-limit " int"
+Maximum number of results to return (default 20).
+.TP
+.B \-\-all
+Fetch all pages of results.
+.TP
+.BI \-\-order " string"
+Sort order:
+.B asc
+or
+.BR desc .
+.TP
+.BI \-\-sort " string"
+Sort field (e.g.,
+.BR created_at ,
+.BR updated_at ).
+.TP
+.BI \-\-begin\-time " string"
+Filter results after this time (ISO 8601).
+.TP
+.BI \-\-end\-time " string"
+Filter results before this time (ISO 8601).
+.SS Get Commands
+.TP
+.BI \-\-watch " duration"
+Poll for updates on an interval (e.g.,
+.BR 5s ,
+.BR 1m ).
+.SS Destructive Commands
+.TP
+.B \-\-yes
+Skip interactive confirmation prompt.
+.SS Create/Update Commands
+.TP
+.BI \-\-from\-file " path"
+Load request body from a JSON or YAML file.
+.TP
+.B \-\-no\-input
+Skip interactive prompts when fields are missing.
+.SH CONFIGURATION
+Configuration is stored in
+.IR ~/.config/recurly/config.toml .
+Run
+.B recurly configure
+to set it up interactively.
+.PP
+Example config file:
+.PP
+.RS
+.nf
+api_key = "your-api-key"
+region = "us"
+site = "your-site-subdomain"
+.fi
+.RE
+.PP
+Configuration precedence (highest to lowest):
+.IP 1. 4
+Command-line flags
+.IP 2. 4
+Environment variables
+.IP 3. 4
+Config file
+.SH ENVIRONMENT
+.TP
+.B RECURLY_API_KEY
+Recurly API key.
+.TP
+.B RECURLY_REGION
+Recurly region
+.RB ( us " or " eu ).
+.TP
+.B RECURLY_SITE
+Recurly site subdomain.
+.SH EXAMPLES
+Configure the CLI:
+.PP
+.RS
+.nf
+$ recurly configure
+.fi
+.RE
+.PP
+List the first 50 accounts as JSON:
+.PP
+.RS
+.nf
+$ recurly accounts list \-\-limit 50 \-\-output json
+.fi
+.RE
+.PP
+Get an account showing only email and state:
+.PP
+.RS
+.nf
+$ recurly accounts get acct123 \-f email,state
+.fi
+.RE
+.PP
+Create an account from a JSON file:
+.PP
+.RS
+.nf
+$ recurly accounts create \-\-from\-file account.json
+.fi
+.RE
+.PP
+List active subscriptions sorted by creation date:
+.PP
+.RS
+.nf
+$ recurly subscriptions list \-\-state active \-\-sort created_at \-\-order desc
+.fi
+.RE
+.PP
+Cancel a subscription at term end:
+.PP
+.RS
+.nf
+$ recurly subscriptions cancel sub123 \-\-timeframe term_end \-\-yes
+.fi
+.RE
+.PP
+Use jq to extract account codes from a list:
+.PP
+.RS
+.nf
+$ recurly accounts list \-\-jq '.[].code'
+.fi
+.RE
+.PP
+Watch a subscription for changes every 10 seconds:
+.PP
+.RS
+.nf
+$ recurly subscriptions get sub123 \-\-watch 10s
+.fi
+.RE
+.PP
+Open an account in the Recurly dashboard:
+.PP
+.RS
+.nf
+$ recurly open accounts acct123
+.fi
+.RE
+.PP
+Generate Zsh completions:
+.PP
+.RS
+.nf
+$ recurly completion zsh > "${fpath[1]}/_recurly"
+.fi
+.RE
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+General error (API error, invalid input, network failure).
+.SH FILES
+.TP
+.I ~/.config/recurly/config.toml
+CLI configuration file.
+.SH NOTES
+This is an unofficial, community-maintained CLI client and is not supported by
+or affiliated with Recurly, Inc.
+.PP
+Report bugs and feature requests at
+.UR https://github.com/built-fast/recurly-cli/issues
+GitHub
+.UE .
+.SH SEE ALSO
+.UR https://developers.recurly.com/api/v2021-02-25
+Recurly API v3 Documentation
+.UE
+.SH AUTHORS
+BuiltFast.com

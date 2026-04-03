@@ -25,6 +25,9 @@ archives:
   - formats:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - src: man/man1/recurly.1
+        dst: share/man/man1
 
 release:
   github:
