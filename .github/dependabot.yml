@@ -11,6 +11,11 @@ updates:
       go-modules:
         patterns:
           - "*"
+    cooldown:
+      default-days: 10
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 2
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -23,3 +28,5 @@ updates:
       github-actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
