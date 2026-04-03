@@ -121,7 +121,7 @@ func parseAutoDetect(data []byte) (map[string]any, error) {
 	}
 	result, yamlErr := parseYAML(data)
 	if yamlErr != nil {
-		return nil, fmt.Errorf("unable to parse input as JSON or YAML:\n  JSON: %s\n  YAML: %s", err, yamlErr)
+		return nil, fmt.Errorf("unable to parse input as JSON or YAML:\n  JSON: %w\n  YAML: %w", err, yamlErr)
 	}
 	return result, nil
 }

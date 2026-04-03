@@ -492,7 +492,7 @@ func newSubscriptionsCancelCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Cancellation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Cancellation canceled.")
 					return err
 				}
 			}
@@ -550,7 +550,7 @@ func newSubscriptionsReactivateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation canceled.")
 					return err
 				}
 			}
@@ -603,7 +603,7 @@ func newSubscriptionsPauseCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Pause cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Pause canceled.")
 					return err
 				}
 			}
@@ -659,7 +659,7 @@ func newSubscriptionsResumeCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Resume cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Resume canceled.")
 					return err
 				}
 			}
@@ -713,7 +713,7 @@ func newSubscriptionsTerminateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Termination cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Termination canceled.")
 					return err
 				}
 			}
@@ -773,7 +773,7 @@ func newSubscriptionsConvertTrialCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Conversion cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Conversion canceled.")
 					return err
 				}
 			}

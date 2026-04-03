@@ -58,7 +58,7 @@ func withWatch(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
-// watchLoop polls the command on the given interval until the context is cancelled.
+// watchLoop polls the command on the given interval until the context is canceled.
 func watchLoop(ctx context.Context, cmd *cobra.Command, args []string, runE func(*cobra.Command, []string) error, interval time.Duration, piped bool) {
 	runWatchIteration(cmd, args, runE, piped, interval)
 

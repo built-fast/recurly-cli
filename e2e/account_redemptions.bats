@@ -140,13 +140,13 @@ load "test_helper"
 @test "accounts redemptions remove without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" accounts redemptions remove \"code-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "accounts redemptions remove without --yes piping 'y' confirms" {
   run bash -c "echo 'y' | \"$RECURLY_BINARY\" accounts redemptions remove \"code-test123\" 2>&1"
   assert_success
-  assert_output_not_contains "cancelled"
+  assert_output_not_contains "canceled"
 }
 
 @test "accounts redemptions remove without account_id fails" {

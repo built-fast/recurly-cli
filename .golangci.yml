@@ -2,19 +2,91 @@ version: "2"
 
 linters:
   enable:
+    # Defaults
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    - cyclop
     - gocritic
     - paralleltest
     - tparallel
-    - cyclop
+
+    # HTTP/Context linters
+    - bodyclose      # Checks whether HTTP response body is closed
+    - noctx          # Find HTTP requests without context.Context
+
+    # Error handling linters
+    - errorlint      # Find code that will cause problems with error wrapping
+    - nilerr         # Find code that returns nil even if it checks error is not nil
+
+    # Code quality linters
+    - misspell       # Check for misspelled English words
+    - prealloc       # Find slice declarations that could use preallocation
+    - unconvert      # Remove unnecessary type conversions
+    - unparam        # Report unused function parameters
+    - wastedassign   # Find wasted assignment statements
+
+    # Security linter
+    - gosec          # Security checker
+
+    # Context and duration linters
+    - contextcheck   # Check function context parameter usage
+    - durationcheck  # Check for two durations multiplied together
+
+    # Naming and completeness linters
+    - errname        # Check error type naming conventions
+    - exhaustive     # Check exhaustiveness of enum switch statements
+    - predeclared    # Find shadowing of Go's predeclared identifiers
 
   settings:
     cyclop:
       max-complexity: 30
 
     errcheck:
+      check-type-assertions: true
+      check-blank: false  # Don't check explicitly ignored errors with _
       exclude-functions:
         - fmt.Fprint
         - fmt.Fprintf
         - fmt.Fprintln
         - (*os.File).Close
         - (net/http.ResponseWriter).Write
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment  # Too noisy for minimal gains
+        - shadow          # Too noisy - variable shadowing is common in Go
+
+    errorlint:
+      asserts: false
+      comparison: false
+
+    gosec:
+      excludes:
+        - G104  # Unhandled errors (covered by errcheck)
+        - G115  # Integer overflow conversion — standard Go pattern (e.g., os.Stdin.Fd())
+        - G204  # Subprocess with variable — expected in CLI tools (open URLs)
+        - G301  # Directory permissions 0755 — standard for user config dirs
+        - G304  # File path provided as taint input — common in CLI tools
+        - G306  # WriteFile permissions 0644 — fine for non-secret files
+
+    misspell:
+      locale: US
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    staticcheck:
+      checks:
+        - all
+        - -SA1019  # Ignore deprecation warnings (handle separately)
+        - -ST1000  # Package comments — low value for internal CLI
+        - -ST1003  # Id vs ID naming — forced by upstream Recurly API client
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

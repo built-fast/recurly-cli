@@ -27,11 +27,11 @@ func openBrowser(url string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url)
+		cmd = exec.Command("open", url) //nolint:noctx // fire-and-forget browser launch
 	case "linux":
-		cmd = exec.Command("xdg-open", url)
+		cmd = exec.Command("xdg-open", url) //nolint:noctx // fire-and-forget browser launch
 	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", url)
+		cmd = exec.Command("cmd", "/c", "start", url) //nolint:noctx // fire-and-forget browser launch
 	default:
 		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}

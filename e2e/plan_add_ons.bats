@@ -169,7 +169,7 @@ load "test_helper"
 @test "plans add-ons delete without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" plans add-ons delete \"code-plan123\" \"test-addon\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "plans add-ons delete without args fails" {

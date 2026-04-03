@@ -121,7 +121,7 @@ func withInteractive(cmd *cobra.Command) *cobra.Command {
 
 		if len(missing) > 0 {
 			if noInput || !stdinIsTerminal() {
-				var names []string
+				names := make([]string, 0, len(missing))
 				for _, f := range missing {
 					names = append(names, fmt.Sprintf(`"--%s"`, f.Name))
 				}

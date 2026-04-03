@@ -17,7 +17,7 @@ type ClientConfig struct {
 	// Region is the Recurly data-center region (e.g. "us" or "eu").
 	Region string
 	// IsJSON reports whether the current output format is JSON-based.
-	// It is used to decide retry/logging behaviour.
+	// It is used to decide retry/logging behavior.
 	IsJSON func() bool
 }
 

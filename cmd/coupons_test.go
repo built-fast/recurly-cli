@@ -880,7 +880,7 @@ func TestCouponsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to deactivate coupon SAVE25? [y/N]") {
 		t.Error("expected confirmation prompt with coupon ID in stderr")
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -892,7 +892,7 @@ func TestCouponsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

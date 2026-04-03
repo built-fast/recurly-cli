@@ -1421,7 +1421,7 @@ func TestPlanAddOnsDelete_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Delete add-on addon-456 from plan plan-123? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Deletion cancelled.") {
+	if !strings.Contains(stderr, "Deletion canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1433,7 +1433,7 @@ func TestPlanAddOnsDelete_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Deletion cancelled.") {
+	if !strings.Contains(stderr, "Deletion canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

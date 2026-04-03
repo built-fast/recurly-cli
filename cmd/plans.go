@@ -619,7 +619,7 @@ func newPlansDeactivateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation canceled.")
 					return err
 				}
 			}

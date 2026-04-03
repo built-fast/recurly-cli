@@ -668,7 +668,7 @@ func newCouponsDeactivateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation canceled.")
 					return err
 				}
 			}
@@ -801,16 +801,16 @@ func newCouponsGenerateCodesCmd() *cobra.Command {
 
 			columns := []output.Column{
 				{Header: "Limit", Extract: func(v any) string {
-					return strconv.Itoa(v.(*recurly.UniqueCouponCodeParams).Limit)
+					return strconv.Itoa(v.(*recurly.UniqueCouponCodeParams).Limit) //nolint:errcheck // type guaranteed
 				}},
 				{Header: "Order", Extract: func(v any) string {
-					return v.(*recurly.UniqueCouponCodeParams).Order
+					return v.(*recurly.UniqueCouponCodeParams).Order //nolint:errcheck // type guaranteed
 				}},
 				{Header: "Sort", Extract: func(v any) string {
-					return v.(*recurly.UniqueCouponCodeParams).Sort
+					return v.(*recurly.UniqueCouponCodeParams).Sort //nolint:errcheck // type guaranteed
 				}},
 				{Header: "Begin Time", Extract: func(v any) string {
-					p := v.(*recurly.UniqueCouponCodeParams)
+					p := v.(*recurly.UniqueCouponCodeParams) //nolint:errcheck // type guaranteed
 					if p.BeginTime != nil {
 						return p.BeginTime.Format(time.RFC3339)
 					}

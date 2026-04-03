@@ -520,7 +520,7 @@ func TestAccountBillingInfoRemove_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Remove billing info from account acct-123? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Removal cancelled.") {
+	if !strings.Contains(stderr, "Removal canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -532,7 +532,7 @@ func TestAccountBillingInfoRemove_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Removal cancelled.") {
+	if !strings.Contains(stderr, "Removal canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

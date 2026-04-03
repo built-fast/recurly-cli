@@ -428,7 +428,7 @@ func newPlanAddOnsDeleteCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deletion cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deletion canceled.")
 					return err
 				}
 			}

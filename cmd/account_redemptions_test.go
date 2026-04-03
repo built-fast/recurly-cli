@@ -437,7 +437,7 @@ func TestAccountRedemptionsRemove_ConfirmationNo(t *testing.T) {
 	if !strings.Contains(stderr, "[y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Removal cancelled.") {
+	if !strings.Contains(stderr, "Removal canceled.") {
 		t.Error("expected cancellation message in stderr")
 	}
 }
@@ -449,7 +449,7 @@ func TestAccountRedemptionsRemove_ConfirmationEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Removal cancelled.") {
+	if !strings.Contains(stderr, "Removal canceled.") {
 		t.Error("expected cancellation message for empty input")
 	}
 }

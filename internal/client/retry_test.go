@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -32,7 +33,7 @@ func TestRetryTransport_NoRetryOn200(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, io.Discard, false)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -63,7 +64,7 @@ func TestRetryTransport_RetriesOn429(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -93,7 +94,7 @@ func TestRetryTransport_MaxRetriesExhausted(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -137,7 +138,7 @@ func TestRetryTransport_RespectsRetryAfterHeader(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -167,7 +168,7 @@ func TestRetryTransport_ExponentialBackoffDelays(t *testing.T) {
 	}
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -205,7 +206,7 @@ func TestRetryTransport_RetryAfterCappedAt30s(t *testing.T) {
 	}
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -236,7 +237,7 @@ func TestRetryTransport_JSONOutputNoANSI(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -271,7 +272,7 @@ func TestRetryTransport_NonJSONOutputUsesANSI(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, false)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -302,7 +303,7 @@ func TestRetryTransport_RetryWithRequestBody(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, io.Discard, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("POST", server.URL, strings.NewReader(`{"code":"test"}`))
+	req, _ := http.NewRequestWithContext(context.Background(), "POST", server.URL, strings.NewReader(`{"code":"test"}`))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
@@ -337,7 +338,7 @@ func TestRetryTransport_NoRetryOnOtherErrors(t *testing.T) {
 			rt, server := newTestRetryTransport(handler, io.Discard, true)
 			defer server.Close()
 
-			req, _ := http.NewRequest("GET", server.URL, nil)
+			req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 			resp, err := rt.RoundTrip(req)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -420,7 +421,7 @@ func TestRetryTransport_StderrOutput(t *testing.T) {
 	rt, server := newTestRetryTransport(handler, &stderr, true)
 	defer server.Close()
 
-	req, _ := http.NewRequest("GET", server.URL, nil)
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", server.URL, nil)
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

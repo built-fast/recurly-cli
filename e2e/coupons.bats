@@ -275,7 +275,7 @@ load "test_helper"
 @test "coupons deactivate without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" coupons deactivate \"code-coupon123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "coupons deactivate without coupon_id fails" {

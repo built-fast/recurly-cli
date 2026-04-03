@@ -672,7 +672,7 @@ func TestInvoicesVoid_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to void invoice inv-abc123? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Void cancelled.") {
+	if !strings.Contains(stderr, "Void canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -856,7 +856,7 @@ func TestInvoicesCollect_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to collect invoice inv-abc123? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Collection cancelled.") {
+	if !strings.Contains(stderr, "Collection canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1040,7 +1040,7 @@ func TestInvoicesMarkFailed_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to mark invoice inv-abc123 as failed? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Mark failed cancelled.") {
+	if !strings.Contains(stderr, "Mark failed canceled.") {
 		t.Error("expected cancellation message")
 	}
 }

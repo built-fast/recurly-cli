@@ -856,7 +856,7 @@ func TestAccountsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to deactivate this account? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -868,7 +868,7 @@ func TestAccountsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1010,7 +1010,7 @@ func TestAccountsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to reactivate this account? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1022,7 +1022,7 @@ func TestAccountsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

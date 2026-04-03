@@ -186,7 +186,7 @@ load "test_helper"
 @test "subscriptions cancel without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions cancel \"sub-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions cancel without subscription_id fails" {
@@ -212,7 +212,7 @@ load "test_helper"
 @test "subscriptions reactivate without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions reactivate \"sub-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions reactivate without subscription_id fails" {
@@ -250,7 +250,7 @@ load "test_helper"
 @test "subscriptions pause without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions pause \"sub-test123\" --remaining-pause-cycles 3 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions pause without subscription_id fails" {
@@ -276,7 +276,7 @@ load "test_helper"
 @test "subscriptions resume without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions resume \"sub-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions resume without subscription_id fails" {
@@ -322,7 +322,7 @@ load "test_helper"
 @test "subscriptions terminate without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions terminate \"sub-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions terminate without subscription_id fails" {
@@ -348,7 +348,7 @@ load "test_helper"
 @test "subscriptions convert-trial without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" subscriptions convert-trial \"sub-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "subscriptions convert-trial without subscription_id fails" {

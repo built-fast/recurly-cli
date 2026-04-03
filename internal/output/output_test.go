@@ -12,8 +12,8 @@ type testItem struct {
 }
 
 var testColumns = []Column{
-	{Header: "Name", Extract: func(v any) string { return v.(testItem).Name }},
-	{Header: "Email", Extract: func(v any) string { return v.(testItem).Email }},
+	{Header: "Name", Extract: func(v any) string { return v.(testItem).Name }},   //nolint:errcheck // test
+	{Header: "Email", Extract: func(v any) string { return v.(testItem).Email }}, //nolint:errcheck // test
 }
 
 func TestValidateFormat(t *testing.T) {

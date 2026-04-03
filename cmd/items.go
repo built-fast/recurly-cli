@@ -423,7 +423,7 @@ func newItemsDeactivateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Deactivation canceled.")
 					return err
 				}
 			}
@@ -473,7 +473,7 @@ func newItemsReactivateCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Reactivation canceled.")
 					return err
 				}
 			}

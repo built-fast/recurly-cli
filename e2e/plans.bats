@@ -203,7 +203,7 @@ load "test_helper"
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" plans deactivate \"code-plan123\" 2>&1"
   # The command exits 0 on cancellation (prints message to stderr)
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "plans deactivate without plan_id fails" {

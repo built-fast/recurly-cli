@@ -242,7 +242,7 @@ func newInvoicesVoidCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Void cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Void canceled.")
 					return err
 				}
 			}
@@ -302,7 +302,7 @@ func newInvoicesCollectCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Collection cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Collection canceled.")
 					return err
 				}
 			}
@@ -362,7 +362,7 @@ func newInvoicesMarkFailedCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Mark failed cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Mark failed canceled.")
 					return err
 				}
 			}

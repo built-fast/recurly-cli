@@ -211,7 +211,7 @@ func newAccountBillingInfoRemoveCmd() *cobra.Command {
 					return err
 				}
 				if !confirmed {
-					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Removal cancelled.")
+					_, err = fmt.Fprintln(cmd.ErrOrStderr(), "Removal canceled.")
 					return err
 				}
 			}

@@ -1394,7 +1394,7 @@ func TestItemsDeactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to deactivate item item-123? [y/N]") {
 		t.Error("expected confirmation prompt with item ID in stderr")
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1406,7 +1406,7 @@ func TestItemsDeactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Deactivation cancelled.") {
+	if !strings.Contains(stderr, "Deactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1581,7 +1581,7 @@ func TestItemsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to reactivate item item-123? [y/N]") {
 		t.Error("expected confirmation prompt with item ID in stderr")
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1593,7 +1593,7 @@ func TestItemsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

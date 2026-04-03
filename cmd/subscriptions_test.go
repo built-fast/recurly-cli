@@ -994,7 +994,7 @@ func TestSubscriptionsCancel_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to cancel this subscription? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Cancellation cancelled.") {
+	if !strings.Contains(stderr, "Cancellation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1006,7 +1006,7 @@ func TestSubscriptionsCancel_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Cancellation cancelled.") {
+	if !strings.Contains(stderr, "Cancellation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1182,7 +1182,7 @@ func TestSubscriptionsReactivate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to reactivate this subscription? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1194,7 +1194,7 @@ func TestSubscriptionsReactivate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Reactivation cancelled.") {
+	if !strings.Contains(stderr, "Reactivation canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1354,7 +1354,7 @@ func TestSubscriptionsPause_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to pause this subscription? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Pause cancelled.") {
+	if !strings.Contains(stderr, "Pause canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1366,7 +1366,7 @@ func TestSubscriptionsPause_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Pause cancelled.") {
+	if !strings.Contains(stderr, "Pause canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1496,7 +1496,7 @@ func TestSubscriptionsResume_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to resume this subscription? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Resume cancelled.") {
+	if !strings.Contains(stderr, "Resume canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1508,7 +1508,7 @@ func TestSubscriptionsResume_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Resume cancelled.") {
+	if !strings.Contains(stderr, "Resume canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1657,7 +1657,7 @@ func TestSubscriptionsTerminate_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to terminate this subscription? This cannot be undone. [y/N]") {
 		t.Error("expected confirmation prompt with warning in stderr")
 	}
-	if !strings.Contains(stderr, "Termination cancelled.") {
+	if !strings.Contains(stderr, "Termination canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1669,7 +1669,7 @@ func TestSubscriptionsTerminate_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Termination cancelled.") {
+	if !strings.Contains(stderr, "Termination canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }
@@ -1848,7 +1848,7 @@ func TestSubscriptionsConvertTrial_ConfirmNo_Cancels(t *testing.T) {
 	if !strings.Contains(stderr, "Are you sure you want to convert this trial subscription? [y/N]") {
 		t.Error("expected confirmation prompt in stderr")
 	}
-	if !strings.Contains(stderr, "Conversion cancelled.") {
+	if !strings.Contains(stderr, "Conversion canceled.") {
 		t.Error("expected cancellation message")
 	}
 }
@@ -1860,7 +1860,7 @@ func TestSubscriptionsConvertTrial_ConfirmDefault_Cancels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(stderr, "Conversion cancelled.") {
+	if !strings.Contains(stderr, "Conversion canceled.") {
 		t.Error("expected cancellation message when pressing Enter without input")
 	}
 }

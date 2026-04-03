@@ -78,7 +78,7 @@ load "test_helper"
 @test "accounts billing-info remove without --yes piping 'n' cancels" {
   run bash -c "echo 'n' | \"$RECURLY_BINARY\" accounts billing-info remove \"code-test123\" 2>&1"
   assert_success
-  assert_output_contains "cancelled"
+  assert_output_contains "canceled"
 }
 
 @test "accounts billing-info remove without account_id fails" {

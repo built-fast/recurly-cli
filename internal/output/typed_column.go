@@ -18,7 +18,7 @@ func ToColumns[T any](typed []TypedColumn[T]) []Column {
 		cols[i] = Column{
 			Header: tc.Header,
 			Extract: func(v any) string {
-				return extract(v.(T))
+				return extract(v.(T)) //nolint:errcheck // type guaranteed by generics
 			},
 		}
 	}
