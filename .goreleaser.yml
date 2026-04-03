@@ -25,13 +25,13 @@ archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
-# release:
-#   github:
-#     owner: built-fast
-#     name: recurly-cli
-#   draft: false
-#   prerelease: auto
-#   replace_existing_artifacts: true
-#   name_template: "{{.ProjectName}} v{{.Version}}"
-#   header: |
-#     {{ if .Env.RELEASE_CHANGELOG }}{{ .Env.RELEASE_CHANGELOG }}{{ end }}
+release:
+  github:
+    owner: built-fast
+    name: recurly-cli
+  draft: false
+  prerelease: auto
+  replace_existing_artifacts: true
+  name_template: "{{.ProjectName}} v{{.Version}}"
+  header: |
+    {{ if .Env.RELEASE_CHANGELOG }}{{ .Env.RELEASE_CHANGELOG }}{{ end }}
