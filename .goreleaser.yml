@@ -22,7 +22,8 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 release:
@@ -33,5 +34,3 @@ release:
   prerelease: auto
   replace_existing_artifacts: true
   name_template: "{{.ProjectName}} v{{.Version}}"
-  header: |
-    {{ if .Env.RELEASE_CHANGELOG }}{{ .Env.RELEASE_CHANGELOG }}{{ end }}
