@@ -14,12 +14,8 @@ import (
 func TestSkillCmd(t *testing.T) {
 	t.Parallel()
 
-	root := NewRootCmd()
-	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetArgs([]string{"skill"})
-
-	if err := root.Execute(); err != nil {
+	out, _, err := executeCommand(nil, "skill")
+	if err != nil {
 		t.Fatalf("skill command failed: %v", err)
 	}
 
@@ -29,8 +25,8 @@ func TestSkillCmd(t *testing.T) {
 		t.Fatalf("reading embedded SKILL.md: %v", err)
 	}
 
-	if !bytes.Equal(buf.Bytes(), expected) {
-		t.Errorf("output does not match embedded SKILL.md byte-for-byte (got %d bytes, want %d bytes)", buf.Len(), len(expected))
+	if out != string(expected) {
+		t.Errorf("output does not match embedded SKILL.md byte-for-byte (got %d bytes, want %d bytes)", len(out), len(expected))
 	}
 }
 
