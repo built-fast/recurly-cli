@@ -4,9 +4,9 @@ go 1.26.4
 
 require (
 	charm.land/huh/v2 v2.0.3
-	charm.land/lipgloss/v2 v2.0.4
+	charm.land/lipgloss/v2 v2.0.5
 	github.com/itchyny/gojq v0.12.19
-	github.com/recurly/recurly-client-go/v5 v5.14.0
+	github.com/recurly/recurly-client-go/v5 v5.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
